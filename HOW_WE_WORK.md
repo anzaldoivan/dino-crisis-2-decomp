@@ -38,6 +38,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | genend_index | `PY tools/genend_index.py` | assemble and lint a GenerationEnd |
 | commit_task | `bash tools/commit_task.sh` | the only commit path; explicit paths, no trailers, never pushes |
 | run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
+| dc | `bash tools/docker/dc.sh` | amd64 build host: `build`, `sync` (tree → volume `dc2-work`), `run <cmd>` in `/work` |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
@@ -50,7 +51,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - Scratch: `.run/` (gitignored; never the system temp); cap 25 GB, warn at 20 GB; pruning is the developer's call
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Build: `make build` inside the Docker host (`tools/docker/Dockerfile`, amd64) — `TODO(phase-3)`
+- Build: `bash tools/docker/dc.sh build|sync|run <cmd>` (amd64, volume `dc2-work`; `docs/ops/docker-host.md`); `make build` — `TODO(phase-3)`
 - Run: the emulator on the Mac host — `TODO(phase-2)`
 - Test / the gate: the clean fleet check — `TODO(phase-3)` — green means N of N byte-identical from a clean rebuild
 - Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump
@@ -63,7 +64,7 @@ Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
 ## Environment <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - OS / shells: Darwin / bash, zsh
 - Python: /opt/homebrew/opt/python@3.14/bin/python3.14 (3.14.7)
-- Pins: compiler triple `TODO(phase-4)`; build host Ubuntu 24.04 amd64 in Docker — detail in `docs/ops/INDEX.md`
+- Pins: compiler triple `TODO(phase-4)`; build host `ubuntu:24.04@sha256` digest-pinned, amd64, via `tools/docker/dc.sh` — detail in `docs/ops/docker-host.md`
 - Harness gotchas that bite here: arm64 Mac, so every build runs in the amd64 container (source in a named volume, not a bind mount)
 
 ## Docs map <!-- roles: expert coder router planner review critic discuss auditor curator -->
