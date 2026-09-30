@@ -10,7 +10,8 @@ dino-crisis-2-decomp — A matching decompilation of Dino Crisis 2 (PlayStation,
 rules `rules/INDEX.md`; techniques `cookbook/INDEX.md`; ops detail `docs/ops/INDEX.md`.
 
 ## Developer <!-- roles: router planner review discuss auditor curator -->
-Who: anzaldoivan. Experience: advanced. Domain: PlayStation matching decompilation.
+Who: anzaldoivan, solo. Experience: advanced; shipped BFM-decomp (PSX, PA3) to 100%. Plan: Claude Pro (tight budget:
+free local work before paid). Models: Opus 5.5 for experts/coders; never Fable; deep judgments via `/discuss max`.
 Preferences: recommendations, not questions. Plain-English recaps at phase end. A notification
 whenever anything waits on them. Autonomy: full inside an approved plan; stop only at the two gates. Notification channel: toast.
 The developer pushes; agents never do. They ratify rules at the next planner session.
@@ -37,35 +38,33 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | genend_index | `PY tools/genend_index.py` | assemble and lint a GenerationEnd |
 | commit_task | `bash tools/commit_task.sh` | the only commit path; explicit paths, no trailers, never pushes |
 | run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
-| <!-- TODO PROJECT_TOOL: no source found --> | `<!-- TODO PROJECT_TOOL_COMMAND: no source found -->` | <!-- TODO PROJECT_TOOL_PURPOSE: no source found --> |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
-- <!-- TODO SKILL_NAME: no source found --> — <what it automates, when to invoke it>
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Oracles (the ground truth X3 names): <!-- TODO ORACLES: no source found -->
-- Data: <!-- TODO DATA_PATHS: no source found -->
-- Generated (never hand-edited, H1): <!-- TODO GENERATED_PATHS: no source found -->
-- Hand-edited: <!-- TODO HAND_EDITED_PATHS: no source found -->
-- Scratch: `.run/` (gitignored; never the system temp)
+- Oracles (X3): the byte gate (whole-binary hash); disassembler DB + MCP; scriptable emulator — `TODO(phase-2)`
+- Data: the dump, machine-local (`docs/ops/decomp-environment.md`), never in git; extraction gitignored
+- Generated (never hand-edited, H1): `asm/`, `assets/`, linker scripts, progress reports
+- Hand-edited: `src/`, `include/`, `config/`, `tools/`, `docs/`
+- Scratch: `.run/` (gitignored; never the system temp); cap 25 GB, warn at 20 GB; pruning is the developer's call
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Build: `<!-- TODO BUILD_COMMAND: no source found -->`
-- Run: `<!-- TODO RUN_COMMAND: no source found -->`
-- Test / the gate: `<!-- TODO TEST_COMMAND: no source found -->` — green means <!-- TODO GREEN_MEANS: no source found -->
-- Modes: <!-- TODO TEST_MODES: no source found -->
+- Build: `make build` inside the Docker host (`docker/`, amd64) — `TODO(phase-3)`
+- Run: the emulator on the Mac host — `TODO(phase-2)`
+- Test / the gate: the clean fleet check — `TODO(phase-3)` — green means N of N byte-identical from a clean rebuild
+- Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump
 Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
 
 ## Conventions & house style <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- <!-- TODO PROJECT_CONVENTION: no source found -->
+- Repo is public: no game-derived byte or proprietary code in any tracked file; docs cite commits by date + subject
 <!-- project-specific only; the general house style is in the project-architect skill -->
 
 ## Environment <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - OS / shells: Darwin / bash, zsh
 - Python: /opt/homebrew/opt/python@3.14/bin/python3.14 (3.14.7)
-- Pins: <!-- TODO PINS_SUMMARY: no source found --> — detail in `docs/ops/INDEX.md`
-- Harness gotchas that bite here: <!-- TODO HARNESS_GOTCHAS: no source found -->
+- Pins: compiler triple `TODO(phase-4)`; build host Ubuntu 24.04 amd64 in Docker — detail in `docs/ops/INDEX.md`
+- Harness gotchas that bite here: arm64 Mac, so every build runs in the amd64 container (source in a named volume, not a bind mount)
 
 ## Docs map <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - `docs/ops/INDEX.md` — setup, env, pins, per-topic ops notes
