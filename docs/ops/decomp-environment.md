@@ -78,6 +78,7 @@ Breadth — the same analysis over many independent items — is fan-out, not de
 | Tool | Location | Purpose |
 |---|---|---|
 | `tools/audit_public.py` | `tools/` | the ROM audit (purge paths, the derived hash set, the size cap, the pasted-disassembly check); the first-push gate and the CI job; its sources are `config/firewall.txt` |
+| `tools/firewall_control.sh` | `tools/` | the firewall negative control: plants the `config/firewall-fixture.sha1` blob under `.run/firewall-control/`, asserts the audit FAILs naming it, removes it, asserts the tree PASSes; exit 0 iff both (the Phase 1.0 milestone check) |
 | `make format` | `Makefile` | clang-format over `src/` with the tracked `.clang-format` (the community style) |
 | TODO(phase-1): the extractor, the manifest | `tools/` | — |
 
