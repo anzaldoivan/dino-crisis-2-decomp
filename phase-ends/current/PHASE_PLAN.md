@@ -53,7 +53,7 @@ Approved: 2026-09-30   Planner: claude-opus-5-5/medium   Plan-hash: 0cc7aa50de98
 
 ## Tasks
 
-- T1 | next | expert-opus55 | title: firewall negative control, both ways | coder: none | effort: medium | files: tools/firewall_control.sh, docs/ops/decomp-environment.md | done-when: `tools/firewall_control.sh` exists per ## Interfaces, reports planted FAIL (rc 1, OFFENDER names the planted path) and tree PASS (rc 0), leaves no file under `.run/firewall-control/`, and a deliberately broken run (fixture hash mismatch simulated by planting different bytes, scratch only, not committed) makes the script exit 1 naming step (a) or (b); Tooling inventory in `docs/ops/decomp-environment.md` gains its row | verify: `bash tools/firewall_control.sh; echo rc=$?; test -e .run/firewall-control/planted.bin && echo LEFTOVER` → `rc=0`, no `LEFTOVER` | reads: — | deps: — | est-ctx: 30k | review: no | wait-for: —
+- T1 | done | expert-opus55 | title: firewall negative control, both ways | coder: none | effort: medium | files: tools/firewall_control.sh, docs/ops/decomp-environment.md | done-when: `tools/firewall_control.sh` exists per ## Interfaces, reports planted FAIL (rc 1, OFFENDER names the planted path) and tree PASS (rc 0), leaves no file under `.run/firewall-control/`, and a deliberately broken run (fixture hash mismatch simulated by planting different bytes, scratch only, not committed) makes the script exit 1 naming step (a) or (b); Tooling inventory in `docs/ops/decomp-environment.md` gains its row | verify: `bash tools/firewall_control.sh; echo rc=$?; test -e .run/firewall-control/planted.bin && echo LEFTOVER` → `rc=0`, no `LEFTOVER` | reads: — | deps: — | est-ctx: 30k | review: no | wait-for: —
   Expert writes the script itself (≤ ~20 lines, one edit + one verification run allowed); the broken-run check is a scratch invocation (e.g. an env override of the planted bytes, or a copy of the script under `.run/`), never a tracked change to the fixture or `config/firewall.txt`.
   Record in the summary the exact audit output lines for both runs (counts with denominators). Never edit `tools/audit_public.py`; a defect there is a `harness:` gotcha.
   Commit: `bash tools/commit_task.sh T1 "T1: Add the firewall negative control script" tools/firewall_control.sh docs/ops/decomp-environment.md`.
@@ -72,3 +72,4 @@ Approved: 2026-09-30   Planner: claude-opus-5-5/medium   Plan-hash: 0cc7aa50de98
 - Sync leaks ignored or scratch files into the volume (`.run/`, `disks/`). Detection: `dc.sh run sh -c 'ls -a /work'` shows no `.run`, `disks`. Low impact in 1.0 (no game data present on the host tree yet besides empty dirs).
 
 ## Changes
+- 2026-09-30 router: T1 next -> done
