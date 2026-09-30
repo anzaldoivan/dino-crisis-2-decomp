@@ -50,7 +50,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - Scratch: `.run/` (gitignored; never the system temp); cap 25 GB, warn at 20 GB; pruning is the developer's call
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Build: `make build` inside the Docker host (`docker/`, amd64) — `TODO(phase-3)`
+- Build: `make build` inside the Docker host (`tools/docker/Dockerfile`, amd64) — `TODO(phase-3)`
 - Run: the emulator on the Mac host — `TODO(phase-2)`
 - Test / the gate: the clean fleet check — `TODO(phase-3)` — green means N of N byte-identical from a clean rebuild
 - Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump
