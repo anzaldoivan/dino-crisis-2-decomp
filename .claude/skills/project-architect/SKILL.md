@@ -138,3 +138,7 @@ change a decision. Commit lines ≤ 100 chars, imperative, naming the task id.
 
 ## 11. Project rules
 (none yet -- add headlines with tools/rules_add.py promote)
+- G3 — A match is byte-for-byte, and the whole binary still hashes
+- G12 — No game-derived bytes in any tracked or published artifact, from the first commit
+- G18 — Never `git clean -x` where irreplaceable data is ignored-but-present
+- G61 — The byte gate is the only claim of success

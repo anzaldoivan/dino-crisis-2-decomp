@@ -11,4 +11,4 @@ never Read `phase-ends/*/logs/`, `research/`, PhaseEnds or `tool-results/*.txt` 
 a retriever; commands that may print >40 lines run via `tools/run.sh`; commit via `tools/commit_task.sh`;
 a one-time fetch is a fetch, not a tool.
 
-Fail-safes: never push · the milestone gate is the arbiter
+Fail-safes: never push · the milestone gate is the arbiter · no game-derived byte in git, from the first commit (config/firewall.txt, tools/audit_public.py) · a match is byte-identical with the whole-binary hash green, from a clean rebuild · never `git clean -x`: the game data and the RE database are ignored-but-present

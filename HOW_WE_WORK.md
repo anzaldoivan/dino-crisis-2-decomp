@@ -73,3 +73,4 @@ Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
 - `phase-ends/TASK_INDEX.md`, `phase-ends/RESEARCH_INDEX.md` — what was done and what was learned
 - `docs/research-archive/` — migrated legacy reports
 - `docs/retired/` — everything moved out of the load order
+- `docs/decomp-architect.md` — the decomp method; `docs/README.md` maps the decomp docs (kernels, tools manifest, wave playbook, corpus front pages); `docs/ops/decomp-environment.md`

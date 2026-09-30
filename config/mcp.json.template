@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "disassembler": {
+      "type": "sse",
+      "url": "TODO(phase-2)"
+    }
+  }
+}

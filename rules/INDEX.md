@@ -33,3 +33,137 @@ M9 | The real gate, not the proxy | method, gates | active | seed-2.0
 M10 | Determinism and pinning at every boundary | determinism, pinning | active | seed-2.0
 M11 | Provenance on every imported datum | provenance | active | seed-2.0
 M12 | Preserve the raw record | archive, raw-record | active | seed-2.0
+
+G1 | Two oracles; guess neither | decomp,oracles,gate | active | decomp-architect
+
+G2 | Oracle precondition | decomp,oracles,gate | active | decomp-architect
+
+G3 | A match is byte-for-byte, and the whole binary still hashes | decomp,oracles,gate | active | decomp-architect
+
+G4 | No unmatched C in a default build | decomp,oracles,gate | active | decomp-architect
+
+G5 | Address provenance and region tags | decomp,oracles,gate | active | decomp-architect
+
+G6 | Never rename blind | decomp,oracles,gate | active | decomp-architect
+
+G7 | Duplicates first | decomp,oracles,gate | active | decomp-architect
+
+G8 | Compiler honesty | decomp,oracles,gate | active | decomp-architect
+
+G9 | Decisive verification is a clean rebuild | decomp,oracles,gate | active | decomp-architect
+
+G10 | A standalone match is not a bank | decomp,oracles,gate | active | decomp-architect
+
+G11 | Pasted assembly is a verbatim, not a bank | decomp,oracles,gate | active | decomp-architect
+
+G12 | No game-derived bytes in any tracked or published artifact, from the first commit | decomp,firewall | active | decomp-architect
+
+G13 | The audit derives its forbidden set and asserts its own coverage | decomp,firewall | active | decomp-architect
+
+G14 | Rehearse every irreversible repository operation | decomp,firewall | active | decomp-architect
+
+G15 | A linked worktree's HEAD is a ref | decomp,firewall | active | decomp-architect
+
+G16 | A probe or guard never writes into the repository it guards | decomp,firewall | active | decomp-architect
+
+G17 | A rewritten history is not private until the host has purged the objects | decomp,firewall | active | decomp-architect
+
+G18 | Never `git clean -x` where irreplaceable data is ignored-but-present | decomp,firewall | active | decomp-architect
+
+G19 | Assert your coverage | decomp,instruments | active | decomp-architect
+
+G20 | Derive, don't re-derive | decomp,instruments | active | decomp-architect
+
+G21 | A second, DISAGREEING oracle — on a schedule | decomp,instruments | active | decomp-architect
+
+G22 | Fix the instrument before trusting its measurement | decomp,instruments | active | decomp-architect
+
+G23 | Probe before costing | decomp,instruments | active | decomp-architect
+
+G24 | Read the recorded verdicts before designing an experiment | decomp,instruments | active | decomp-architect
+
+G25 | Negative-control every new refusal-check | decomp,instruments | active | decomp-architect
+
+G26 | Exonerate the instrument before blaming the subject | decomp,instruments | active | decomp-architect
+
+G27 | Every number ships with its denominator | decomp,instruments | active | decomp-architect
+
+G28 | Refuse unsupported input; a helper refuses an empty work list | decomp,instruments | active | decomp-architect
+
+G29 | A soft error inside a success envelope is that error | decomp,instruments | active | decomp-architect
+
+G30 | A guard that is downstream, or not running, is not a guard; unattended lanes leave evidence | decomp,instruments | active | decomp-architect
+
+G31 | A derived property stored as configuration goes stale | decomp,instruments | active | decomp-architect
+
+G32 | Check against a known-true case first | decomp,instruments | active | decomp-architect
+
+G33 | A verdict names its instrument; never re-implement a gate you have | decomp,instruments | active | decomp-architect
+
+G34 | Measure the steady state; report every lane | decomp,instruments | active | decomp-architect
+
+G35 | Distinguish "judged and failed" from "not judged" | decomp,instruments | active | decomp-architect
+
+G36 | A score is not a closeness until its diff is read | decomp,instruments | active | decomp-architect
+
+G37 | Commit banked work the moment it exists | decomp,campaign | active | decomp-architect
+
+G38 | Draw-time bankability | decomp,campaign | active | decomp-architect
+
+G39 | A budget is part of the harness | decomp,campaign | active | decomp-architect
+
+G40 | Consume every verdict layer | decomp,campaign | active | decomp-architect
+
+G41 | Never key by bare function name | decomp,campaign | active | decomp-architect
+
+G42 | Periodic whole-fleet verification; the baseline before the verdict | decomp,campaign | active | decomp-architect
+
+G43 | Carve state belongs to its binary | decomp,campaign | active | decomp-architect
+
+G44 | A card names only what the knowledge base contains, and carries the banked twin | decomp,campaign | active | decomp-architect
+
+G45 | Harvest before the next wave — a hard gate | decomp,campaign | active | decomp-architect
+
+G46 | Rescan twins after every bank | decomp,campaign | active | decomp-architect
+
+G47 | Agents write their deliverables early | decomp,campaign | active | decomp-architect
+
+G48 | Every excluded population gets its own lane; never stop the drafter to ship a change | decomp,campaign | active | decomp-architect
+
+G49 | Validate the target list; an empty tier terminates the pipeline | decomp,campaign | active | decomp-architect
+
+G50 | Gate the directory, never the verdict list; recover before re-drawing | decomp,campaign | active | decomp-architect
+
+G51 | Read the compiler's source before the first "unsteerable" verdict | decomp,compiler-walls | active | decomp-architect
+
+G52 | A wall verdict names the pass and quotes the dump line | decomp,compiler-walls | active | decomp-architect
+
+G53 | A producer census before any spelling sweep; "PROVED" names its list | decomp,compiler-walls | active | decomp-architect
+
+G54 | Port the banked sibling's spelling before touching a dial | decomp,compiler-walls | active | decomp-architect
+
+G55 | Reproducers before probes; read the allocation order before any register lever | decomp,compiler-walls | active | decomp-architect
+
+G56 | Provenance → archive → link → compiler | decomp,compiler-walls | active | decomp-architect
+
+G57 | Nothing is unmatchable before the lever ladder is exhausted | decomp,compiler-walls | active | decomp-architect
+
+G58 | Published numbers are generated, never typed | decomp,publishing,record | active | decomp-architect
+
+G59 | The hand-off is written to be replayed, and the record keeps the why | decomp,publishing,record | active | decomp-architect
+
+G60 | The matching flywheel (the decomp instance of X4) | decomp,publishing,record | active | decomp-architect
+
+G66 | Consult the tool dictionary before designing or debugging a tool | decomp,dictionaries | active | decomp-architect
+
+G67 | Translate an inherited idiom through its pass; never copy the lever | decomp,dictionaries | active | decomp-architect
+
+G61 | The byte gate is the only claim of success | decomp,ai-conduct | active | decomp-architect
+
+G62 | Names and types are evidence-based, never guessed | decomp,ai-conduct | active | decomp-architect
+
+G63 | Outward text is written by a person | decomp,ai-conduct | active | decomp-architect
+
+G64 | No automated traffic against community infrastructure | decomp,ai-conduct | active | decomp-architect
+
+G65 | Agents assist; a person owns | decomp,ai-conduct | active | decomp-architect
