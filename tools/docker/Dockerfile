@@ -1,7 +1,7 @@
 # Build host for a PlayStation / PsyQ matching decompilation (x86-64 Linux, Ubuntu 24.04).
 # Use it when the host is not x86-64 Linux, for example an arm64 Mac.
 # Keep the source tree in a named volume. Do not build on a host bind mount.
-FROM ubuntu:24.04
+FROM ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bchunk binutils-mipsel-linux-gnu bsdmainutils clang-format coreutils curl gcc-mipsel-linux-gnu \
