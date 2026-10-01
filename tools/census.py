@@ -109,6 +109,7 @@ class Bin:
         self.text = None  # (text_start, text_end) or None (raw bin, no base)
         self.c_spans = []  # (vstart, vend, unit)
         self.jd = []  # jtbl / data-island rows (start, end)
+        self.jt = []  # jtbl rows (jr, start, end) -- R2
         self.lib = []  # lib-object rows (start, end)
         self.edges = []  # boundary edges for crossings
         self.tail = None  # (vstart, vend) odd tail
@@ -132,6 +133,9 @@ def load_fleet():
             s, e = int(r[2], 16), int(r[3], 16)
             if r[1] in ("jtbl", "data-island"):
                 b.jd.append((s, e)); b.edges += [s, e]
+                m = re.search(r"\bjr=0x([0-9a-fA-F]+)", r[4] if len(r) > 4 else "")
+                if r[1] == "jtbl" and m:
+                    b.jt.append((int(m.group(1), 16), s, e))
             elif r[1] == "lib-object":
                 b.lib.append((s, e)); b.edges += [s, e]
             elif r[1] == "text-end":
@@ -161,12 +165,34 @@ def load_fleet():
     return bins
 
 
+RD_FUNCTS = {0x00, 0x02, 0x03, 0x04, 0x06, 0x07, 0x09, 0x10, 0x12} | set(range(0x20, 0x28)) | {0x2A, 0x2B}
+RT_OPS = set(range(0x08, 0x10)) | set(range(0x20, 0x27))  # ALU-immediate, lui, loads: write rt
+MEM_OPS = set(range(0x20, 0x27)) | {0x28, 0x29, 0x2A, 0x2B, 0x2E, 0x32, 0x3A}  # loads, stores, lwc2/swc2
+
+
+def never_emitted(w):
+    """R3 (T2.c7): a non-zero word that decodes to an instruction a compiler never emits -- writes $zero (SPECIAL rd
+    or I-type rt = 0 on an instruction that writes it; mfc/cfc rt = 0) or a load/store with base $zero."""
+    if not w:
+        return False
+    op, rs, rt, rd = w >> 26, (w >> 21) & 31, (w >> 16) & 31, (w >> 11) & 31
+    if op == 0:
+        return (w & 63) in RD_FUNCTS and rd == 0
+    if op in MEM_OPS and rs == 0:
+        return True
+    if op in RT_OPS and rt == 0:
+        return True
+    return op in (0x10, 0x12) and rs in (0, 2) and rt == 0
+
+
 def scan_asm(asm_dir):
     """-> dict: funcs [(name, [(vram, mnem, ops)])], refs set(UPPER hex), split_g, nm_g, words {vram: insn|data|
     invalid} (.text lines), targets set(int) (jal/j/branch operands, jlabels, `.word .L` jtbl entries), drefs
-    {addr: set(src vram|None)} (%hi/%lo, la, .word operands), raw set(int) (`.word 0x…` literals)."""
+    {addr: set(src vram|None)} (%hi/%lo, la, .word operands), raw set(int) (`.word 0x…` literals), wv {vram: 32-bit
+    word} (.text lines), jtw {vram: target} (`.word .L…` lines, any section), r3 (count of .text insn words R3 marks
+    invalid: see never_emitted)."""
     sc = {"funcs": [], "refs": set(), "split_g": 0, "nm_g": 0, "words": {}, "targets": set(), "drefs": {},
-          "raw": set()}
+          "raw": set(), "wv": {}, "jtw": {}, "r3": 0}
     funcs, refs = sc["funcs"], sc["refs"]
     if not asm_dir.is_dir():
         return sc
@@ -188,6 +214,9 @@ def scan_asm(asm_dir):
             if mn == ".word":
                 sc["raw"].update(int(h, 16) for h in RAW_WORD.findall(ops))
                 sc["targets"].update(int(h, 16) for h in JT_TOK.findall(ops))
+                jm = JT_TOK.fullmatch(ops.strip())
+                if jm and m:
+                    sc["jtw"][src] = int(jm.group(1), 16)
             if mn in (".word", "la") or "%hi(" in ops or "%lo(" in ops:
                 for h in DREF_TOK.findall(ops):
                     sc["drefs"].setdefault(int(h, 16), set()).add(src)
@@ -198,7 +227,12 @@ def scan_asm(asm_dir):
             if sect != ".text":
                 continue
             if m:
-                sc["words"][src] = "invalid" if "invalid instruction" in ops else "data" if mn == ".word" else "insn"
+                k = "invalid" if "invalid instruction" in ops else "data" if mn == ".word" else "insn"
+                w = int.from_bytes(bytes.fromhex(m.group(0).split("*/")[0].split()[-1]), "little")
+                if k == "insn" and never_emitted(w):  # R3 (T2.c7)
+                    k = "invalid"
+                    sc["r3"] += 1
+                sc["words"][src], sc["wv"][src] = k, w
             if s.startswith("glabel "):
                 cur = (s.split()[1], [])
                 funcs.append(cur)
@@ -288,7 +322,7 @@ def data_spans(b, gaps, scan, glob):
     return data, rest
 
 
-CRIT = ("a ref", "b fallthrough", "b' entry", "c lib-start", "d c-def", "e raw-word", "f jal-split")
+CRIT = ("a ref", "b fallthrough", "b' entry", "c lib-start", "d c-def", "e raw-word", "f jal-split", "g transfer-split")
 
 
 def analyze(b, glob, scan):
@@ -297,7 +331,7 @@ def analyze(b, glob, scan):
     res = {"recs": [], "covered": 0, "B": 0, "P": 0, "T": 0, "pd": dict.fromkeys(("no-insn", "outside-text",
            "in-jtbl/data", "unconfirmed"), 0), "cf": dict.fromkeys(CRIT, 0), "sole": dict.fromkeys(CRIT, 0),
            "gaps": [], "data": [], "ovl": [], "cross": [], "pex": [], "split_g": split_g, "nm_g": nm_g, "cdefs": 0,
-           "insns": {}, "jsplit": 0}
+           "insns": {}, "jsplit": 0, "gsplit": 0}
     if b.text is None:
         return res
     ts, te = b.text
@@ -336,6 +370,34 @@ def analyze(b, glob, scan):
         split.append([st, en, name, ins, srck])
     recs = split
     res["jsplit"] = len(jstarts)
+    # R2 (T2.c7, criterion g): inside F, the first non-zero word A after an unconditional transfer + delay slot starts
+    # a function unless A is a j/branch target from inside F or a target of a boundaries.tsv jtbl whose jr is in F
+    # (a target in the delay slot or the zero words before A reaches A by fall-through: hand-written asm)
+    wv, split, gstarts = scan["wv"], [], set()
+    for st, en, name, ins, srck in recs:
+        inner = {int(h, 16) for _, mn, ops in ins if BRANCH.match(mn) and mn != "jal" for h in TGT_TOK.findall(ops)}
+        inner |= {scan["jtw"][a] for jr, s, e in b.jt if st <= jr < en for a in range(s, e, 4) if a in scan["jtw"]}
+        cut = []
+        for k, x in enumerate(ins[:-2]):
+            if not uncond(x):
+                continue
+            a = next((y[0] for y in ins[k + 2:] if wv.get(y[0], 1)), None)
+            if a is not None and not any(x[0] + 4 <= t <= a for t in inner) and (not cut or a > cut[-1]):
+                cut.append(a)
+        for t in cut:
+            split.append([st, t, name, [x for x in ins if x[0] < t], srck])
+            st, name, ins = t, "func_%08X" % t, [x for x in ins if x[0] >= t]
+            gstarts.add(t)
+        split.append([st, en, name, ins, srck])
+    recs = split
+    res["gsplit"] = len(gstarts)
+    # R3 (T2.c7): leading R3/invalid words of a function that no control flow reaches leave it (data head; a
+    # %hi/%lo or pointer reference to them is data evidence, not a block)
+    for r in recs:
+        while len(r[3]) > 1 and scan["words"].get(r[3][0][0]) == "invalid" and r[3][0][0] not in (
+                glob["targets"] if b.family == "exe" else scan["targets"]) and r[3][0][0] not in jstarts | gstarts:
+            r[3] = r[3][1:]
+            r[0], r[2] = r[3][0][0], "func_%08X" % r[3][0][0]
     one, gaps, ovl = spans([(r[0], r[1]) for r in recs], ts, te)
     res["data"], res["gaps"] = data_spans(b, gaps, scan, glob)
     res["covered"], res["ovl"] = one, ovl
@@ -359,7 +421,8 @@ def analyze(b, glob, scan):
             st in lib_starts,
             srck == "c" and st in cdef_starts,
             st in glob["raw"],
-            st in jstarts)))
+            st in jstarts,
+            st in gstarts)))
         hit = [k for k in CRIT if conf[k]]
         for k in hit:
             res["cf"][k] += 1
@@ -400,7 +463,7 @@ def run(bins, only_full, write=True):
             glob["drefs"].setdefault(x, set()).update((a, y) for y in srcs)
     out, results = [], {}
     tot = {"F": 0, "b": 0, "B": 0, "P": 0, "T": 0, "gapB": 0, "gapN": 0, "ovlB": 0, "ovlN": 0, "C": 0,
-           "split_g": 0, "nm_g": 0, "cdefs": 0, "jsplit": 0, "dB": 0, "dN": 0, "dlabel-head": 0, "invalid-insn": 0}
+           "split_g": 0, "nm_g": 0, "cdefs": 0, "jsplit": 0, "gsplit": 0, "r3": 0, "dB": 0, "dN": 0, "dlabel-head": 0, "invalid-insn": 0}
     pd, cf, sole = {}, {}, {}
     for a in sorted(bins):
         b = bins[a]
@@ -419,8 +482,9 @@ def run(bins, only_full, write=True):
         tot["gapN"] += len(r["gaps"]); tot["gapB"] += sum(e - s for s, e, _ in r["gaps"])
         tot["ovlN"] += len(r["ovl"]); tot["ovlB"] += sum(e - s for s, e in r["ovl"])
         tot["C"] += len(r["cross"])
-        for k in ("split_g", "nm_g", "cdefs", "jsplit"):
+        for k in ("split_g", "nm_g", "cdefs", "jsplit", "gsplit"):
             tot[k] += r[k]
+        tot["r3"] += scans[a]["r3"]
         for k, v in r["pd"].items():
             pd[k] = pd.get(k, 0) + v
         for k, v in r["cf"].items():
@@ -444,6 +508,8 @@ def run(bins, only_full, write=True):
         "no-insn", "outside-text", "in-jtbl/data", "unconfirmed")), ", ".join(
         "%s %d" % (k, cf.get(k, 0)) for k in CRIT), ", ".join("%s %d" % (k.split()[0], sole.get(k, 0)) for k in CRIT)))
     print("(f) jal target split: %d" % tot["jsplit"])
+    print("(g) transfer split: %d" % tot["gsplit"])
+    print("R3 words: %d" % tot["r3"])
     print("truncations: %d" % tot["T"])
     print("truncation detail: gaps %d B (%d spans), overlaps %d B, crossings %d" % (
         tot["gapB"], tot["gapN"], tot["ovlB"], tot["C"]))
@@ -459,10 +525,11 @@ def run(bins, only_full, write=True):
     if tex:
         print("truncation examples: " + "; ".join(tex[:10]))
     if only_full:
-        n = tot["split_g"] + tot["nm_g"] + tot["cdefs"] + tot["jsplit"]
-        print("cross-check: glabels %d (cc_fingerprint split %d + nonmatchings %d) + C-defined %d + jal splits %d = %d,"
-              " census %d: %s" % (tot["split_g"] + tot["nm_g"], tot["split_g"], tot["nm_g"], tot["cdefs"],
-                                  tot["jsplit"], n, tot["F"], "ok" if n == tot["F"] else "MISMATCH"))
+        n = tot["split_g"] + tot["nm_g"] + tot["cdefs"] + tot["jsplit"] + tot["gsplit"]
+        print("cross-check: glabels %d (cc_fingerprint split %d + nonmatchings %d) + C-defined %d + jal splits %d"
+              " + transfer splits %d = %d, census %d: %s" % (
+                  tot["split_g"] + tot["nm_g"], tot["split_g"], tot["nm_g"], tot["cdefs"], tot["jsplit"],
+                  tot["gsplit"], n, tot["F"], "ok" if n == tot["F"] else "MISMATCH"))
     return tot, results
 
 

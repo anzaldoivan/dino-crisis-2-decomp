@@ -185,6 +185,16 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
 - **R1 jal split (T2.c4):** a `jal func_X|.LX|0x…` target taken from this binary's census instruction lines that lies
   strictly inside a function's extent starts a new function there (the earlier one ends at the split); criterion (f),
   printed `(f) jal target split: n` (2026-10-01: 2, functions 3887); cross-check adds `+ jal splits n`.
+- **R2 transfer split (T2.c7, criterion g):** inside a function F (asm records, after R1), the first non-zero word A
+  after an unconditional transfer (`jr` any reg, `j`, `b`/`beq $zero,$zero`) + delay slot starts a new function unless
+  a j/branch target from inside F, or a target of a `config/boundaries.tsv` `jtbl` row (table words = the `.word .L…`
+  lines) whose jr lies in F, lands in `[delay slot, A]` (a target in the delay slot falls through to A: hand-written
+  library asm, e.g. exe `SquareRoot0` 0x80078e5c). Printed `(g) transfer split: n`; cross-check adds
+  `+ transfer splits n`.
+- **R3 never-emitted words (T2.c7):** a `.text` word spimdisasm decodes as an instruction that writes `$zero` (other
+  than nop) or a load/store with base `$zero` counts as `invalid` (data-in-text evidence); printed `R3 words: n`.
+  Leading invalid words of a function that no control-flow target reaches leave it (its start moves past them; the
+  span becomes an `invalid-insn` data span, confirming the new start by (b')), e.g. psx_bin_st9 0x800d5a58..0x800d5a68.
 - **Truncation:** text bytes not covered by exactly one function, or a function crossing a boundary edge.
 - **Data in text:** an uncovered span is data (leaves the denominator, printed per span) iff every word is a spimdisasm
   `.word` (or flagged invalid instruction), no control-flow target lands in it (jal/j/branch operands, jlabels,
@@ -226,6 +236,13 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `DecompilerSwitchAnalysisCmd` applied (case targets disassembled, `COMPUTED_JUMP` refs, body fixed), to a fixed point;
   an s4/s3-made function is switch-resolved at once; s4/s3 skip targets inside a body or reached by a `COMPUTED_JUMP`
   ref. s4 runs before s3 so s3 (jump-table words) does not seed the case labels of an s4-made switch function first.
+  T2.c7: s3/s4 (and s2 when every reference to the target is non-flow) skip a target that is fall-through reachable:
+  scanning back over zero words, it is seeded only after the region start, >= 2 zero words, a last non-zero word that
+  is no Ghidra instruction or a never-emitted word (census R3), a transfer + delay slot, or one word after zero
+  padding. s4 jal words count only from inside a Ghidra function body of their source program: `dump_functions.sh`
+  writes an unfiltered `xprog_unfiltered.tsv`, runs a bodies pass (`DumpFunctions.java bodies <outdir> <seeds>`: full
+  seeding, rolled back, `<prog>.bodies.tsv`), then the filtered `xprog_targets.tsv` (`xprog_targets.py … <bodies dir>`)
+  for the main pass (exe 0x80040500 had been seeded from a psx_bin_st1 data word decoding as `jal`). ~4.5 min total.
 - **Label merge n3 (T2.c5, `DumpFunctions.java`, before writing):** a row whose every reference to its entry is a
   jump/branch/call/fall-through from `[preceding row entry, entry)` (address range; implicit fall-through = instructions
   at entry-8/-4 in that range, entry-8 not `jr`/`j`/`b`), none from a `jal`/`jalr`/`bal`-class word (opcode checked:
@@ -276,7 +293,11 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   an end-ghidra-shorter row, equal to a target of a `config/boundaries.tsv` `jtbl` row's table (words read from the
   binary) whose jr lies in the census function containing the start (shorter: the census function at the start, target
   inside it); basis `jtbl <start>-<end>`, instrument `tools/boundaries.py jtbl`. Candidate kinds per class: ghidra-only
-  data-span + switch-case, census-only unreferenced, end-ghidra-shorter switch-case. `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
+  data-span + switch-case, census-only unreferenced + data-head, end-ghidra-shorter switch-case. T2.c7:
+  `unreferenced` skips zero padding words before the start when testing the previous transfer; `data-head` = a
+  census-only start strictly inside a Ghidra function that starts on non-judged (n1) bytes or in a census data span,
+  the census start being the first census start after that Ghidra start (basis `g 0x<start> n1|in census <kind> span`,
+  instrument `tools/oracle_diff.py:<pred_data_head line>`). `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
   (`alias start kind predicate basis instrument`); copy only `predicate=true` rows. Also printed: `C0020: k of 10 exe
   switch functions present (source txn n)` (txn rows of `config/ghidra/SLUS_012.79.switch_tables.tsv` whose jr lies in
   an exe cache function).

@@ -14,14 +14,19 @@ predicate is false leaves the disagreement counted (`failed`):
                 outside the census function at the start, 0 aligned pointer words equal to it (own file), not an s4
                 cross-program target (.run/ghidra_functions/xprog_targets.tsv, other fleet programs' jal/pointer
                 words), 0 Ghidra references to it (.run/ghidra_functions/<prog>.refs.tsv, DumpFunctions.java), and the
-                previous census function ends at the start with an unconditional transfer (jr, j, b) + delay slot;
+                previous census function ends at the start with an unconditional transfer (jr, j, b) + delay slot
+                (T2.c7: zero padding words before the start are skipped first);
   switch-case   (T2.c6) a ghidra-only start, or the ghidra_end of an end-ghidra-shorter row, equal to a target of a
                 config/boundaries.tsv `jtbl` row's table (targets = the table words read from the binary) whose jr
                 lies in the census function containing the start (end-ghidra-shorter: the census function at the
                 start, the target inside it). basis `jtbl <start>-<end>`, instrument `tools/boundaries.py jtbl`.
+  data-head     (T2.c7) a census-only start strictly inside a Ghidra function that starts on non-judged bytes (n1:
+                outside the census text region) or inside a census data-in-text span, the census start being the
+                first census start after that Ghidra start (Ghidra's function begins on the data head the census
+                leaves out). basis `g 0x<start> n1|in census <kind> span`, instrument `tools/oracle_diff.py:<line>`.
 --propose-exceptions writes .run/oracle/proposed_exceptions.tsv (`alias start kind predicate basis instrument`) for
 every residual census-only / ghidra-only / end-ghidra-shorter row, one per candidate kind (ghidra-only: data-span
-and switch-case); only predicate-true rows may be copied into the config.
+and switch-case; census-only: unreferenced and data-head); only predicate-true rows may be copied into the config.
 C0020 line: the txn rows of config/ghidra/SLUS_012.79.switch_tables.tsv (switch functions Ghidra auto-analysis
 missed) whose jr lies inside an exe cache function (`k of 10 … (source txn n)`).
 Disagreement = a start in one list and not the other (class census-only | ghidra-only), or the same start with a
@@ -69,9 +74,9 @@ GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghi
 FILES = ROOT / ".run/extracted/retail/files"
 EVIDENCE = ROOT / ".run/ghidra_functions"
 SWITCHES = ROOT / "config/ghidra/SLUS_012.79.switch_tables.tsv"
-KINDS_OF = {"ghidra-only": ("data-span", "switch-case"), "census-only": ("unreferenced",),
+KINDS_OF = {"ghidra-only": ("data-span", "switch-case"), "census-only": ("unreferenced", "data-head"),
             "end-ghidra-shorter": ("switch-case",)}
-KINDS = ("data-span", "unreferenced", "switch-case")
+KINDS = ("data-span", "unreferenced", "switch-case", "data-head")
 BOUNDARIES = ROOT / "config/boundaries.tsv"
 OUT = ROOT / ".run/oracle"
 CLASSES = ("census-only", "ghidra-only", "end-ghidra-shorter", "end-ghidra-longer")
@@ -189,10 +194,25 @@ def pred_unreferenced(ca, s, word, jal, jmp, br, ptr, xprog, grefs):
     g = None if grefs is None else grefs.get(s, 0)
     refs = (jal.get(s, 0), out, ptr.get(s, 0), int(s in xprog), g)
     prev = max((x for x in ca if x < s), default=None)
-    tr = uncond(word(s - 8)) if prev is not None and ca[prev] == s else None
+    v = s - 4
+    while prev is not None and v > prev and word(v) == 0:  # T2.c7: skip zero padding
+        v -= 4
+    tr = (uncond(word(v - 4)) or (uncond(word(v)) if v < s - 4 else None)) if prev is not None and ca[prev] == s \
+        else None
     ok = tr is not None and g is not None and not any(refs)
     return ok, "prev 0x%08x ends %s; refs 0" % (prev, tr) if ok else "prev %s ends %s; jal %d xj/br %d ptr %d xprog %d ghidra %s" % (
         "-" if prev is None else "0x%08x" % prev, tr, *refs[:4], "n/a" if g is None else g)
+
+
+def pred_data_head(ca, gh, s, text, spans):
+    """data-head: (true?, basis) -- see the module doc."""
+    g = parent(gh, s)
+    if g is None:
+        return False, None
+    sp = next(((x, e, k) for x, e, k in spans if x <= g < e), None)
+    where = "n1" if not text[0] <= g < text[1] else sp and "in census %s span" % sp[2]
+    ok = bool(where) and min((c for c in ca if c > g), default=None) == s
+    return ok, ok and "g 0x%08x %s" % (g, where)
 
 
 def jtbls(path, word):
@@ -340,7 +360,8 @@ def main(argv=None):
             hit = False
             for kind in KINDS_OF.get(d[0], ()):
                 pq = pred_data_span(dspans.get(alias, []), s) if kind == "data-span" else pred_unreferenced(
-                    ca, s, word, jal, jmp, br, ptr, xp, grefs) if kind == "unreferenced" else pred_switch_case(
+                    ca, s, word, jal, jmp, br, ptr, xp, grefs) if kind == "unreferenced" else pred_data_head(
+                    ca, gh, s, b.text, dspans.get(alias, [])) if kind == "data-head" else pred_switch_case(
                     d[0], ca, s, d[3], tbls)
                 if (alias, s, kind) in exc:
                     if pq[0]:
@@ -421,7 +442,8 @@ def main(argv=None):
     if args.propose_exceptions:
         inst = {"data-span": "tools/census.py data spans",
                 "unreferenced": "tools/oracle_diff.py:%d" % pred_unreferenced.__code__.co_firstlineno,
-                "switch-case": "tools/boundaries.py jtbl"}
+                "switch-case": "tools/boundaries.py jtbl",
+                "data-head": "tools/oracle_diff.py:%d" % pred_data_head.__code__.co_firstlineno}
         (OUT / "proposed_exceptions.tsv").write_text("# alias\tstart\tkind\tpredicate\tbasis\tinstrument\n" + "".join(
             "%s\t0x%08x\t%s\t%s\t%s\t%s\n" % (a, s, kd, "true" if ok else "false", bs, inst[kd])
             for a, s, kd, ok, bs in props))

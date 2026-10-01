@@ -28,6 +28,18 @@
 //       switch-resolved at once.
 //   s4  (T2.c4; T2.c5: runs before s3, so case labels of an s4-made switch function are not seeded by s3 first) cross-program targets: rows `<this program name>\t0x<target>` of the seed file (built by
 //       tools/ghidra/xprog_targets.py from OTHER fleet programs' bytes + loadmap windows) that are block addresses.
+//       T2.c7: a jal-word source counts only when it lies inside a function body of its source program after a
+//       bodies-mode pass (below; e.g. exe 0x80040500 was seeded from a data word of psx_bin_st1 decoding as jal).
+//   T2.c7: s3/s4 seed a target only when it is not fall-through reachable (fallReachable): scanning back over zero
+//       words, the region start, >= 2 zero words (padding), a last non-zero word that is not a Ghidra instruction
+//       (data or never disassembled: rodata before the first function), a transfer + delay slot (jr rs, j, b), a
+//       never-emitted data word (writes $zero, or load/store with base $zero; tools/census.py R3), or one word after
+//       zero padding / the region start precede it. Also s2 when every reference to the target is non-flow (data,
+//       param: a pointer seed; e.g. bin_wep05 0x80180000 after `jal` + delay, a PARAM ref).
+// Bodies mode (T2.c7): `DumpFunctions.java bodies <outdir> <seed file>` runs s1, s2, sw, s4, s3 in the rolled-back
+// transaction (s4 from the unfiltered seed file), writes only <outdir>/<program>.bodies.tsv (`0x<start>\t0x<end>`,
+// end exclusive, every address range of every function body at that point) and returns; dump_functions.sh runs it
+// between an unfiltered and the filtered xprog_targets.py.
 // Label merge n3 (T2.c5, before writing, inside the transaction): a function whose references to its entry are all
 // jump/branch/call/fall-through from inside the preceding row ([its entry, entry), address range: T2.c5 tried body
 // containment instead, 261 -> 298 disagreements), none from a jal/jalr/bal-class instruction word
@@ -93,8 +105,10 @@ public class DumpFunctions extends GhidraScript {
     @Override
     public void run() throws Exception {
         String[] args = getScriptArgs();
-        if (args.length < 1) throw new IllegalArgumentException("usage: DumpFunctions.java <outdir>");
-        File out = new File(args[0], currentProgram.getName() + ".raw.tsv");
+        if (args.length < 1) throw new IllegalArgumentException("usage: DumpFunctions.java <outdir> | bodies <outdir>");
+        boolean bodiesOnly = args[0].equals("bodies") && args.length > 1;     // T2.c7 bodies mode
+        File out = new File(bodiesOnly ? args[1] : args[0], currentProgram.getName() + ".raw.tsv");
+        String seedFile = args.length > (bodiesOnly ? 2 : 1) ? args[bodiesOnly ? 2 : 1] : null;
         Program p = currentProgram;
         TreeMap<Long, String> rows = new TreeMap<>();
         int[] nonContig = {0};
@@ -134,8 +148,8 @@ public class DumpFunctions extends GhidraScript {
             for (long t : s2) recover(p, t, 1, made, tried);
             switchStep(p, sw);
             TreeSet<Long> s4 = new TreeSet<>();
-            if (args.length > 1)
-                for (String l : Files.readAllLines(Paths.get(args[1]), StandardCharsets.UTF_8)) {
+            if (seedFile != null)
+                for (String l : Files.readAllLines(Paths.get(seedFile), StandardCharsets.UTF_8)) {
                     String[] r = l.split("\t");
                     if (r.length < 2 || !r[0].equals(p.getName())) continue;
                     long v = Long.parseLong(r[1].substring(2), 16);
@@ -151,6 +165,7 @@ public class DumpFunctions extends GhidraScript {
                 if (blk.contains(va)) s3.add(v);
             }
             for (long t : s3) recover(p, t, 2, made, tried);
+            if (bodiesOnly) { writeBodies(p, args[1]); return; }     // T2.c7: rolled back in finally
             for (Function f : p.getFunctionManager().getFunctions(true))
                 if (!rows.containsKey(f.getEntryPoint().getOffset())) addRow(rows, f, "txn", nonContig);
             mergeLabels(p, rows, merged);
@@ -226,14 +241,68 @@ public class DumpFunctions extends GhidraScript {
 
     private final Map<Long, String> seedOf = new HashMap<>();
 
+    /** T2.c7 bodies mode: every address range of every function body (after s1..s4), end exclusive. */
+    private static void writeBodies(Program p, String dir) throws Exception {
+        try (PrintWriter w = new PrintWriter(new File(dir, p.getName() + ".bodies.tsv"), StandardCharsets.UTF_8)) {
+            w.print("# start\tend\n");
+            for (Function f : p.getFunctionManager().getFunctions(true)) {
+                if (f.isExternal()) continue;
+                for (AddressRange r : f.getBody())
+                    w.print(String.format("0x%08x\t0x%08x\n", r.getMinAddress().getOffset(), r.getMaxAddress().getOffset() + 1));
+            }
+        }
+    }
+
+    /** T2.c7: word at v, or null outside the initialized blocks. */
+    private static Integer wordAt(Program p, long v) throws Exception {
+        Address a = p.getAddressFactory().getDefaultAddressSpace().getAddress(v);
+        MemoryBlock b = p.getMemory().getBlock(a);
+        if (b == null || !b.isInitialized() || !b.contains(a.add(3))) return null;
+        return p.getMemory().getInt(a);
+    }
+
+    /** T2.c7: tools/census.py never_emitted -- writes $zero, or a load/store with base $zero. */
+    private static boolean neverEmitted(int w) {
+        if (w == 0) return false;
+        int op = w >>> 26, rs = (w >>> 21) & 31, rt = (w >>> 16) & 31, rd = (w >>> 11) & 31, fn = w & 63;
+        if (op == 0) return rd == 0 && (fn == 0 || fn == 2 || fn == 3 || fn == 4 || fn == 6 || fn == 7 || fn == 9
+                || fn == 0x10 || fn == 0x12 || (fn >= 0x20 && fn <= 0x27) || fn == 0x2a || fn == 0x2b);
+        if (((op >= 0x20 && op <= 0x26) || op == 0x28 || op == 0x29 || op == 0x2a || op == 0x2b || op == 0x2e
+                || op == 0x32 || op == 0x3a) && rs == 0) return true;
+        if (((op >= 0x08 && op <= 0x0f) || (op >= 0x20 && op <= 0x26)) && rt == 0) return true;
+        return (op == 0x10 || op == 0x12) && (rs == 0 || rs == 2) && rt == 0;
+    }
+
+    /** T2.c7: can t be reached by falling through the words before it? (see header) */
+    private static boolean fallReachable(Program p, long t) throws Exception {
+        long n = t - 4;
+        int z = 0;
+        Integer w;
+        while ((w = wordAt(p, n)) != null && w == 0) { z++; n -= 4; }
+        if (w == null || z >= 2 || neverEmitted(w)) return false;
+        if (p.getListing().getInstructionContaining(p.getAddressFactory().getDefaultAddressSpace().getAddress(n)) == null)
+            return false;                                            // data / never disassembled before t
+        Integer w1 = wordAt(p, n - 4), w2 = wordAt(p, n - 8);
+        if (w1 != null && uncondWord(w1)) return false;              // n = delay slot of a transfer
+        if (z == 1 && uncondWord(w)) return false;                   // transfer + nop delay slot
+        return !(z == 0 && (w1 == null || (w1 == 0 && (w2 == null || w2 == 0))));   // one word after padding/start
+    }
+
     /** Seed t (class k): skip if inside a function; else disassemble + CreateFunctionCmd. */
     private void recover(Program p, long t, int k, int[] made, int[] tried) throws Exception {
         FunctionManager fm = p.getFunctionManager();
         Address a = p.getAddressFactory().getDefaultAddressSpace().getAddress(t);
         if (fm.getFunctionContaining(a) != null) return;
-        if (k >= 2)                                                  // T2.c5: s3/s4 skip switch-case targets
+        if (k >= 2) {                                                // T2.c5: s3/s4 skip switch-case targets
             for (Reference r : p.getReferenceManager().getReferencesTo(a))
                 if (r.getReferenceType().isComputed() && r.getReferenceType().isJump()) return;
+            if (fallReachable(p, t)) return;                         // T2.c7
+        }
+        if (k == 1 && fallReachable(p, t)) {                         // T2.c7: s2 by data/param refs only = a pointer seed
+            boolean flow = false;
+            for (Reference r : p.getReferenceManager().getReferencesTo(a)) flow |= r.getReferenceType().isFlow();
+            if (!flow) return;
+        }
         tried[k]++;
         if (p.getListing().getInstructionAt(a) == null) new DisassembleCommand(a, null, true).applyTo(p, monitor);
         if (p.getListing().getInstructionAt(a) == null) return;

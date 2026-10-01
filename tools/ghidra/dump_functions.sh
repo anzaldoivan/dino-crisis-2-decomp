@@ -14,7 +14,10 @@
 #      oracle_diff.py's `unreferenced` exception predicate; prints `merged labels: n` (DumpFunctions.java n3 merges).
 # Before step 3 (T2.c4): tools/ghidra/xprog_targets.py writes .run/ghidra_functions/xprog_targets.tsv (`prog target`:
 #   jal targets / pointer words in OTHER fleet programs' bytes whose loadmap window does not overlap prog's, landing in
-#   prog's window), passed to DumpFunctions.java as the s4 seed file.
+#   prog's window), passed to DumpFunctions.java as the s4 seed file. (T2.c7) First an unfiltered xprog list
+#   (xprog_unfiltered.tsv) feeds a read-only bodies pass (DumpFunctions.java bodies: full seeding, then
+#   .run/ghidra_functions/<prog>.bodies.tsv); the final xprog_targets.py keeps a jal word only when it lies inside a
+#   Ghidra function body of its own program from that pass.
 #
 # Fleet = config/splat/*.yaml (alias = yaml stem, blob = its target_path, loadmap row = that path, class exe|code).
 # Program name mapping (deterministic): alias slus_012_79 -> SLUS_012.79 (the exe keeps its name); every overlay
@@ -73,7 +76,12 @@ echo "dump_functions: imported $imported, failed $failed"
 
 rm -rf "$RAW"; mkdir -p "$RAW" "$OUT"
 for f in "${FLEET[@]}"; do IFS=$'\t' read -r alias prog path _ <<<"$f"; printf '%s\t%s\n' "$prog" "$path"; done >"$RAW/fleet.tsv"
-"${PY:-python3}" tools/ghidra/xprog_targets.py "$RAW/fleet.tsv" "$RAW/xprog_targets.tsv" || exit 2
+"${PY:-python3}" tools/ghidra/xprog_targets.py "$RAW/fleet.tsv" "$RAW/xprog_unfiltered.tsv" || exit 2
+"$GHIDRA/support/analyzeHeadless" "$PROJ_DIR" "$PROJ" -process -noanalysis -readOnly -scriptPath "$SCRIPTS" \
+    -postScript DumpFunctions.java bodies "$RAW" "$RAW/xprog_unfiltered.tsv" >.run/logs/dump_functions_bodies.log 2>&1 \
+    || { echo "dump_functions: ERROR -- bodies pass failed (.run/logs/dump_functions_bodies.log)" >&2; exit 2; }
+echo "dump_functions: bodies $(ls "$RAW"/*.bodies.tsv 2>/dev/null | wc -l | tr -d ' ') programs"
+"${PY:-python3}" tools/ghidra/xprog_targets.py "$RAW/fleet.tsv" "$RAW/xprog_targets.tsv" "$RAW" || exit 2
 "$GHIDRA/support/analyzeHeadless" "$PROJ_DIR" "$PROJ" -process -noanalysis -readOnly \
     -scriptPath "$SCRIPTS" -postScript DumpFunctions.java "$RAW" "$RAW/xprog_targets.tsv" >.run/logs/dump_functions_headless.log 2>&1
 rc=$?
