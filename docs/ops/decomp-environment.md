@@ -541,6 +541,33 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   no `.git`).
 - **Cost:** fleet_check elapsed 55 s before T6 → 120 s with the harness (harness 60 s); `--scanners` 76 s (2026-10-01).
 
+## The multipliers (Phase 1.6)
+Six tools that turn one bank into many. All run in the container (`dc.sh run python3 tools/<tool>.py`); each has a
+row in `config/scanners.tsv`; container-written tracked files come back via `dc.sh run cat <f> > <f>`.
+- **twins.py** `[--check]` → `.run/twins/twins.tsv` `# alias start twin_alias twin_start distance ratio twin_banked`;
+  recomputed every run. See `### Twin band`.
+- **types_check.py** → stdout `types: D duplicates, R raw address casts`; canonical layer `include/dc2.h`; fixtures
+  `.run/types_fixture/`. See `### Canonical types`.
+- **carve.py** `<alias> <start> [--end E] [--unit name]` → `config/c_units.tsv` (5th col `end`),
+  `config/splat/<alias>.yaml` (generated), `src/<alias>/<unit>.c`. See `### Carve chain`.
+- **propagate.py** `--dry-run [--family F]` / `--apply --family F` → `config/families.tsv`
+  `# family role alias start unit basis`, `src/shared/func_<A>.inc.c`; scratch `.run/propagate/<alias>/`.
+  See `### Propagation`.
+- **reconcile.py** `<draft.c> --target alias:start [--apply]` → `.run/reconcile/<alias>_<start>/verdict`
+  (`banked <rung>|failed <rung> <reason>|no-verdict`). See `### Reconcile ladder`.
+- **draw_filter.py** `--all | --list FILE` → `.run/draw/{accepted,refused}.tsv` `# alias start reason evidence`.
+  See `### Draw filter`.
+
+Working order:
+1. **twins:** rescan after every bank.
+2. **draw_filter:** candidates from `.run/draw/accepted.tsv`; rerun after every bank.
+3. **probe:** `tools/probe.py --pinned` proves a draft standalone (`config/probes.tsv`, `tools/probes/<name>.c`).
+4. **reconcile / propagate:** `reconcile.py --apply` banks a standalone draft into its real unit; `propagate.py --apply`
+   instantiates a banked exemplar at every family member (`carve.py` first when the member has no C unit;
+   `types_check.py` after any `dc2.h` change).
+5. **fleet:** `dc.sh sync && dc.sh run bash tools/fleet_check.sh`, then `dc.sh run python3 tools/harness.py --scanners`
+   (fleet_check prints no scanner lines); `census.py --check` after every bank.
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything

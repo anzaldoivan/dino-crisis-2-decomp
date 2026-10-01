@@ -45,6 +45,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | dup_census | `dc.sh run python3 tools/dup_census.py --check` | dup tiers, reach → `.run/census/dup.tsv` |
 | progress | `dc.sh run make progress` | game functions in C, denominators from build |
 | harness | `dc.sh run python3 tools/harness.py [--scanners]` | 6 pairs (fleet_check runs it); `config/scanners.tsv` |
+| multipliers | `dc.sh run python3 tools/{twins,draw_filter,probe,reconcile,propagate,carve,types_check}.py` | order, records: decomp-environment.md "The multipliers" |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
@@ -53,7 +54,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - ghidra-mcp-scratch-copy — Run MCP smoke tests on a scratch copy of the Ghidra project so a live headless job never hits the project lock
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Oracles (X3): the byte gate; Ghidra 12.1.3 project `ghidra/dc2` (ignored; MCP `127.0.0.1:8080/sse`, docs/ops/disassembler-mcp.md); PCSX-Redux API `127.0.0.1:8081`
+- Oracles (X3): the byte gate; Ghidra project `ghidra/dc2` (ignored); PCSX-Redux API: docs/ops/decomp-environment.md "The oracles"
 - Data: the dump, machine-local (`docs/ops/decomp-environment.md`), never in git; extraction gitignored
 - Generated (never hand-edited, H1): `asm/`, `assets/`, linker scripts, progress reports
 - Hand-edited: `src/`, `include/`, `config/`, `tools/`, `docs/`
@@ -61,7 +62,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - Build: `dc.sh sync && dc.sh run make -j build [ONLY="<alias>…"]` (amd64, pinned: `docs/ops/docker-host.md`)
-- Run: `bash tools/emu/emu.sh start|stop|status` (headless PCSX-Redux; `DC2_BREAK`, `prove_load.sh`: docs/ops/decomp-environment.md)
+- Run: `bash tools/emu/emu.sh start|stop|status` (headless PCSX-Redux; docs/ops/decomp-environment.md)
 - Test / the gate: `dc.sh run bash tools/fleet_check.sh` (clean+extract+build+harness) — green = `83 of 83 byte-identical` + `harness: 6 of 6 pairs agree, 0 disagreements`
 - Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump
 Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
@@ -73,8 +74,8 @@ Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
 ## Environment <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - OS / shells: Darwin / bash, zsh
 - Python: /opt/homebrew/opt/python@3.14/bin/python3.14 (3.14.7)
-- Pins: triple psyq4.6/a2.86/G0/O2; candidates `/opt/cc` per `config/toolchains.tsv` (`fetch_toolchain.sh --verify`); image digest-pinned amd64 — `docs/ops/docker-host.md`
-- Harness gotchas that bite here: arm64 Mac, so every build runs in the amd64 container (source in a named volume, not a bind mount)
+- Pins: triple psyq4.6/a2.86/G0/O2; candidates `config/toolchains.tsv`; image digest-pinned amd64 — `docs/ops/docker-host.md`
+- Gotcha: arm64 Mac, every build runs in the amd64 container (docs/ops/docker-host.md)
 
 ## Docs map <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - `docs/ops/INDEX.md` — setup, env, pins, per-topic ops notes
