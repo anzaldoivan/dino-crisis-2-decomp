@@ -26,7 +26,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 
 | Name | Command | Purpose |
 |---|---|---|
-| launch | `PY tools/launch.py --seed-only` | the pa-session's state detector; writes `.run/seed.md`; never typed by the developer |
+| launch | `PY tools/launch.py --seed-only` | pa-session state detector → `.run/seed.md`; never typed by the developer |
 | plan_edit | `PY tools/plan_edit.py` | the only writer of `PHASE_PLAN.md` (status, Changes, add/reopen) |
 | status | `PY tools/status.py` | `.run/status.json` for the statusline; INBOX consume; waiting flags |
 | task_log | `PY tools/task_log.py` | lint and finish a task summary (`Verified:` required) |
@@ -40,6 +40,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
 | dc | `bash tools/docker/dc.sh` | amd64 build host: `build`, `sync` (tree → volume `dc2-work`), `run <cmd>` in `/work` |
 | extract | `make extract [OUT=…]` | own disc extractor → files/ + manifest |
+| census | `dc.sh run python3 tools/census.py [--check]` | function census of 83 binaries → `.run/census/functions.tsv`; phantom/truncation controls |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
@@ -48,7 +49,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - ghidra-mcp-scratch-copy — Run MCP smoke tests on a scratch copy of the Ghidra project so a live headless job never hits the project lock
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Oracles (X3): the byte gate (whole-binary hash); disassembler DB = Ghidra 12.1.3 project `ghidra/dc2` (ignored) via `tools/ghidra/import.sh <exe>` / `--info <prog>`; MCP GhidrAssistMCP `bash tools/ghidra/mcp_start.sh [prog]` → `http://127.0.0.1:8080/sse` (stop+save `mcp_stop.sh`, check `mcp_verify.sh <addr> <name>`); emulator PCSX-Redux web API `127.0.0.1:8081` (`tools/emu/emu.sh`, RAM `tools/emu/ram_probe.py`; docs/ops/decomp-environment.md)
+- Oracles (X3): the byte gate (whole-binary hash); disassembler DB = Ghidra 12.1.3 project `ghidra/dc2` (ignored) via `tools/ghidra/import.sh`; MCP `tools/ghidra/mcp_start.sh` → `127.0.0.1:8080/sse` (docs/ops/disassembler-mcp.md); emulator PCSX-Redux API `127.0.0.1:8081` (`tools/emu/emu.sh`; docs/ops/decomp-environment.md)
 - Data: the dump, machine-local (`docs/ops/decomp-environment.md`), never in git; extraction gitignored
 - Generated (never hand-edited, H1): `asm/`, `assets/`, linker scripts, progress reports
 - Hand-edited: `src/`, `include/`, `config/`, `tools/`, `docs/`
