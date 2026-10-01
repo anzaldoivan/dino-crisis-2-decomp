@@ -11,3 +11,4 @@
      or an earlier phase, or an id not in GENERATION_PLAN.md, routes now. -->
 
 - <note, correction, priority change, or question>
+- BIOS: developer's own dump at /Users/ThinkPad/GameInputs/dino-crisis-2/SCPH1001.BIN, machine-local, never in git; use for PCSX-Redux if OpenBIOS fails (T3/T5). MCP: build and smoke-test only, do not register until 1.8.
