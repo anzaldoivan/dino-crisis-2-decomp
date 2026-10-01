@@ -186,3 +186,26 @@ Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 tw
   exe + `status=proven` vs their sections here, built-in negative control).
 - N = rows with class exe or code.
 - N = 83 · rows 106 (tool output `rows=106 N=83`).
+
+<a id="boundaries"></a>
+## Boundaries
+
+- `config/boundaries.tsv`: generated (never hand-edited) by `tools/boundaries.py`; `binary kind start end basis`, end
+  exclusive, sorted (binary, start, kind). Binaries: SLUS_012.79 + the 81 `class=code` loadmap rows with a base.
+- Kinds: `jtbl` (own MIPS back-slice from `jr rY`, rY != ra; basis `jr=<addr> sltiu|run`), `lib-object` (exe only;
+  PsyQ 4.7 objects matched by psx_ldr sigs, non-low-entropy; basis `psyq470 <LIB>/<OBJ>`), `text-end` (row
+  `[base, text_end)`; exe = binding `0x80085f74`, asserted equal to the scan; overlays = after the last `jr ra` +
+  delay slot, a `jr ra` adjacent to another is data), `data-island` (`[text_end, loadmap end)`).
+- Ghidra caches (addresses + names only): `config/ghidra/SLUS_012.79.switch_tables.tsv` (DumpSwitchTables.java, 49
+  `switchdataD_` tables), `config/ghidra/SLUS_012.79.psyq_objects.tsv` (DumpPsyqObjects.java, 244 matches, 61 low).
+- Commands: `PY tools/boundaries.py` (write) · `PY tools/boundaries.py --check` (two regenerations equal + equal to
+  the tracked file; exe jtbl vs the Ghidra switch dump; control switch; exe text-end) · `PY tools/boundaries.py
+  --ghidra` (refresh the caches; headless read-only; refuses while :8080 listens).
+- Rows 481 (tool output `rows=481`): exe jtbl 59 · lib-object 183 · text-end 1 · data-island 1; code jtbl 77 ·
+  text-end 81 · data-island 79.
+- Overlay text-end cross-check: BIN/OPTION.BIN scan `0x801c4858` = the proven value ([above](#proven-overlays)).
+- lib-object: 12 overlapping pairs at the same start (identical code in two libs, e.g. LIBCD/LIBDS); both rows kept.
+- Ghidra comparison (exe, by jr): 49/49 Ghidra tables equal ours (jr, start, end); 10 ours-only, Ghidra has no
+  instruction at the jr (code never disassembled): jr `0x80026c94 0x80026e78 0x80026fe8 0x80027270 0x80027b88
+  0x80027ce0 0x80027f08 0x80028038 0x800285a8 0x80056028`, all `sltiu`-bounded. `--check` FAILs on them (not exempted).
+- Control switch: jr `0x8003500c` table `[0x80018624,0x800186f8)` (53 entries), found by both.
