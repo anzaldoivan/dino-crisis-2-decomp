@@ -24,7 +24,7 @@ extract:
 # (container). expected: all N aliases green, then build/<alias>.bin -> expected/<alias>.bin (else rc!=0, untouched).
 # Per alias (config/splat/<alias>.yaml, never edited): splat split with a generated build/<alias>.override.yaml
 # (target_path under $(BASEDIR); splat merges later configs) → asm/<alias>/; assemble every object the splat .ld
-# names; link; objcopy (odd-size tail: shrink-only trim ≤ 3 B, only when size(build) > size(target): SUBALIGN(4)
+# names (.s, .bin; a C unit: cpp → cc1 → maspsx → as, the pinned triple below, .i/.s beside its .o); link; objcopy (odd-size tail: shrink-only trim ≤ 3 B, only when size(build) > size(target): SUBALIGN(4)
 # pads the end); `sha1sum -c config/check.<alias>.sha`. build/overlays.mk is generated from the YAML list.
 # SPIMDISASM_SYMBOL_ALIGNMENT_REQUIRES_ALIGNED_SECTION: no `.align 3` on a jtbl in a non-8-aligned file.
 .PHONY: split build expected clean FORCE
@@ -40,6 +40,14 @@ endif
 SPLAT   := SPIMDISASM_SYMBOL_ALIGNMENT_REQUIRES_ALIGNED_SECTION=True /opt/splat/bin/python -m splat
 CROSS   := mipsel-linux-gnu-
 ASFLAGS := -march=r3000 -mabi=32 -G0 -no-pad-sections
+# Pinned C triple (docs/ops/decomp-environment.md, T4): psyq4.6 cc1 via wibo → maspsx (aspsx version explicit) → as.
+# Per-alias override hook: CPPFLAGS_<alias>, CFLAGS_<alias>, MASPSXFLAGS_<alias> (default empty, appended).
+CPP         := $(CROSS)cpp
+CC1         := /opt/cc/wibo/wibo /opt/cc/psyq4.6/CC1PSX.EXE
+MASPSX      := python3 /opt/cc/maspsx/maspsx.py
+CPPFLAGS    := -P -undef -nostdinc -D__GNUC__=2 -Iinclude
+CFLAGS      := -quiet -O2 -G0 -mips1 -fno-builtin
+MASPSXFLAGS := --aspsx-version=2.86 -G0
 
 split: $(foreach a,$(ONLY),build/$(a)/split.stamp)
 build: $(foreach a,$(ONLY),build/$(a).bin)
@@ -65,13 +73,18 @@ build/$(1)/split.stamp: config/splat/$(1).yaml build/$(1).override.yaml
 	@$(SPLAT) split $$^ > build/$(1)/split.log 2>&1 || { tail -5 build/$(1)/split.log; echo "FAILED split: $(1)"; exit 1; }
 	@touch $$@
 
-build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev/null)
+build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev/null) \
+  $$(shell find src/$(1) -name '*.c' 2>/dev/null) $$(wildcard include/*.h)
 	@rm -f $$@.bad
 	@for o in $$$$(grep -o 'build/$(1)/[^ ]*\.o' build/$(1).ld | sort -u); do \
 	  s=$$$${o#build/$(1)/}; s=$$$${s%.o}; mkdir -p $$$$(dirname $$$$o); \
 	  case $$$$s in \
 	    *.s) $(CROSS)as $(ASFLAGS) -I build/$(1)/include -o $$$$o $$$$s ;; \
-	    *.bin) printf '.section .data\n.incbin "%s"\n' $$$$s | $(CROSS)as $(ASFLAGS) -o $$$$o - ;; \
+	    *.c) $(CPP) $(CPPFLAGS) $(CPPFLAGS_$(1)) $$$$s -o $$$${o%.o}.i \
+      && $(CC1) $(CFLAGS) $(CFLAGS_$(1)) $$$${o%.o}.i -o $$$${o%.o}.s \
+      && $(MASPSX) $(MASPSXFLAGS) $(MASPSXFLAGS_$(1)) $$$${o%.o}.s > $$$${o%.o}.m.s \
+      && $(CROSS)as $(ASFLAGS) -I build/$(1)/include -o $$$$o $$$${o%.o}.m.s ;; \
+    *.bin) printf '.section .data\n.incbin "%s"\n' $$$$s | $(CROSS)as $(ASFLAGS) -o $$$$o - ;; \
 	    *) false ;; \
 	  esac || { echo "FAILED assemble: $(1): $$$$s"; exit 1; }; \
 	done

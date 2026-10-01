@@ -56,6 +56,12 @@ target is absolute; O1 differs on every probe. No per-module variation seen.
 | MISC | pinned (assumed, unprobed) | T2 41,158 / 317, 29 breaks, 0 gp-rel |
 | lib band | not ours | psyq470 archive code, G56; T2 23,836 / 480 |
 
+Build use (T5.c1, Phase 1.4): `Makefile` vars `CPP CC1 MASPSX CPPFLAGS CFLAGS MASPSXFLAGS` carry this triple (cpp adds
+`-Iinclude`); a splat object whose source is `src/<alias>/…/<f>.c` goes cpp → cc1 → maspsx (to a file, so its exit
+status counts) → as into `build/<alias>/…/<f>.c.o`, intermediates `.i`, `.s`, `.m.s` beside it. Per-alias override hook:
+`CPPFLAGS_<alias>`, `CFLAGS_<alias>`, `MASPSXFLAGS_<alias>` (empty by default, appended). Headers `include/common.h`
+(u8…s32, NULL) and `include/include_asm.h` (`INCLUDE_ASM(dir, name)`, `INCLUDE_RODATA`; -G0, so no maspsx hack wrapper).
+
 ## The game and the medium
 
 - **Title / platform / serial:** Dino Crisis 2 · Sony PlayStation (MIPS R3000A) · USA, SLUS-01279

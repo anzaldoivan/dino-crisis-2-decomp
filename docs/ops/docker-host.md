@@ -53,6 +53,7 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 
 ## Build (phase 1.3 T3.c1, 2026-10-01)
 - `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make -j build [ONLY="<alias> …"]`; green = one `<alias>.bin: OK` per alias, exit 0. Base files missing → the container extract above.
+- C units (T5.c1, phase 1.4): `*.c` objects build with the pinned triple already in `/opt/cc` (wibo, psyq4.6, maspsx; decomp-environment.md "Build use"); no new packages.
 - Targets: `split` (asm only), `build`, `expected`, `clean`. `ONLY` default = every `config/splat/*.yaml`; an unknown alias is a make error.
 - `BASEDIR ?=` first existing of `extracted/retail/files` (host), `.run/extracted/retail/files` (container), else the host path; no need to pass it.
 - `clean` (T4.c1): removes generated outputs only: `asm/`, `build/overlays.mk`, per alias `build/<alias>/` + `build/<alias>.{bin,bin.bad,bin.tmp,elf,map,ld,override.yaml}`. Any other `build/` entry (e.g. ignored `build/ghidra_rebuild/`) survives. `expected/` is not touched.
