@@ -98,6 +98,27 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
 - **Control** (every dry run, scanner `propagate`): `--apply --plant --family <first>` (member callee rebound to itself)
   must exit 1 on the hash gate with src/ config/ build/ tree-hash unchanged → `fail-closed control: ok`.
 
+### Reconcile ladder (T5, Phase 1.6)
+
+- **Command:** `dc.sh run python3 tools/reconcile.py <draft.c> --target <alias>:<start> [--apply]`. Draft = preamble
+  (includes/typedefs/#defines/externs/prototypes) + exactly one fn definition; the tool never edits the body (never
+  redrafts). Rungs, cumulative, each a scratch build+hash (`propagate.scratch_build` under
+  `.run/reconcile/scratch/<alias>/`): as-is (fn at its INCLUDE_ASM line, draft includes the unit has dropped) →
+  decl-sync (draft extern/prototype → the unit's or its headers' declaration) → callee-cast (callee whose prototype
+  decl-sync replaced is cast at call sites `((ret (*)(args))func_X)(…)`) → canon-sig (prototypes from `dc2.h`) →
+  self-decl (draft typedef/tag/#define already defined by dc2.h or the unit removed) → carve (no INCLUDE_ASM, or all
+  rungs failed; `--apply` only: `carve.carve` with the census end, unit gets common.h+dc2.h, reverted on failure) →
+  real-unit (`--apply`: unit written in-tree, `make build ONLY=<alias>` + `sha1sum -c`; failure restores it).
+- **Body hash** (fn definition, whitespace-normalised, inserted casts stripped) checked every rung:
+  differs → `failed <rung> body-changed`.
+- **Verdicts:** `.run/reconcile/<alias>_0x<start>/` holds `draft.c`, `verdict` (`banked <first green rung>` |
+  `failed <rung> <reason>` | `no-verdict`), `ladder.log`, `make.<rung>.log`. Every run ends `reconcile: K of N banked
+  without redraft` + `directory gate: banked+failed+no-verdict = drafts: ok|FAIL` (missing verdict = FAIL).
+- **Control** (`--check`, scanner `reconcile`): func_80037E18's body from `game_80037824.c` + planted
+  `extern short D_800AF11C;` against a scratch unit where it is INCLUDE_ASM → must end `control: banked decl-sync`
+  (as-is fails: `conflicting types`). Never writes src/. `--apply` output is container-written: copy the unit back
+  with `dc.sh run cat <f> > <f>`.
+
 ### Compile-only (no ROM) (T8, Phase 1.4)
 
 `bash tools/compile_only.sh` (container or any Linux host with `mipsel-linux-gnu-cpp` and python3): every
