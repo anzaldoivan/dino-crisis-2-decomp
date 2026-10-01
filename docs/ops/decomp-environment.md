@@ -26,8 +26,9 @@ the rules behind them are the G group in `rules/`.*
 ## Build / extract / verify (decomp)
 
 ```
-# extract the medium and verify against the committed manifest
-TODO(phase-1)
+# reference extract of the medium (dumpsxiso 2.30 in the build image; disc volume dc2-disc at /disc, see docker-host.md)
+bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin"'
+# TODO(phase-1): our own `make extract` verified against the reference and the committed manifest (T2-T3)
 # the clean fleet verification — every binary from clean → extract → build, exit code read
 TODO(phase-3)
 ```

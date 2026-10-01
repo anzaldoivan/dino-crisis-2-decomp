@@ -19,13 +19,24 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
   - python3 3.12.3-0ubuntu2.1
   - make 4.3-4.1build2
   - clang-format 1:18.0-59~exp2
+- T1.c1 (phase 1.1) adds apt `cmake g++` and builds `dumpsxiso` (mkpsxiso) from source: `https://github.com/Lameguy64/mkpsxiso`
+  tag `v2.30` (ARG `MKPSXISO_TAG`), commit `54fb1644ed8741223583e2dcda358b75a205e214` (ARG `MKPSXISO_SHA`, from
+  `git ls-remote … refs/tags/v2.30^{}`; build fails if `git rev-parse HEAD` differs); installed `/usr/local/bin/dumpsxiso`, source removed.
+  The image id above predates this layer.
 
 ## Volume and sync
 - Named volume `dc2-work` (override `DC2_VOLUME`), mounted at `/work`. dc.sh touches no other volume.
-- No bind mount of any host path, ever; never mounts `/Users/Shared/GameInputs`. No game data enters the image or volume.
-- `dc.sh sync`: `git ls-files -co --exclude-standard -z` | `COPYFILE_DISABLE=1 tar` over stdin into a container that first wipes `/work` (all top-level entries), then extracts. `/work` is thus an exact copy of tracked + untracked-unignored files.
-- Limits: ignored paths (`disks/`, `extracted/`, RE database, `.run/`) are never carried; data inside the container is out of scope until phase 1.1. `/work/.git` is not carried. Container-side edits are lost on the next sync.
+- No bind mount of any host path, ever; never mounts `/Users/Shared/GameInputs`. Game data lives only in the local volume `dc2-disc`, never in the image or git.
+- `dc.sh sync`: `git ls-files -co --exclude-standard -z` (paths deleted in the working tree skipped) | `COPYFILE_DISABLE=1 tar` over stdin into a container that wipes every top-level entry of `/work` except `/work/.run`, then extracts. `/work` is thus an exact copy of tracked + untracked-unignored files, plus the container scratch `/work/.run`.
+- Run `dc.sh sync` before any `dc.sh run` after host edits.
+- Limits: ignored paths (`disks/`, `extracted/`, RE database, host `.run/`) are never carried. `/work/.git` is not carried. Container-side edits outside `/work/.run` are lost on the next sync.
+
+## Disc volume
+- Named volume `dc2-disc` (override `DC2_DISC_VOLUME`); `dc.sh run` mounts it read-only at `/disc`.
+- Loaded with `bash tools/docker/dc.sh disc /Users/Shared/GameInputs/dino-crisis-2/usa`: top-level `*.cue` + `*.bin` of the dir (no `.DS_Store`), `COPYFILE_DISABLE=1 tar` over stdin into a container that wipes then fills the volume. No bind mount. Reload only when the dump changes.
+- Reference extract (T1.c1; output in `/work/.run/ref`, kept across syncs, never in git):
+  `bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin"'`
 - harness: macOS tar still emits `LIBARCHIVE.xattr.com.apple.provenance` headers; GNU tar in the container prints "Ignoring unknown extended header keyword" per file. Harmless noise.
 
 ## Use
-- `bash tools/docker/dc.sh build` · `bash tools/docker/dc.sh sync` · `bash tools/docker/dc.sh run <cmd…>` (exit code passed through).
+- `bash tools/docker/dc.sh build` · `bash tools/docker/dc.sh sync` · `bash tools/docker/dc.sh disc <dir>` · `bash tools/docker/dc.sh run <cmd…>` (exit code passed through).
