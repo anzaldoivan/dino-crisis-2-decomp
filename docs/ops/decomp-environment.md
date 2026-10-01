@@ -389,6 +389,23 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
 - **Fleet (T1.c1, 2026-10-01):** 2635 of 3426 game fns with a twin; exact pairs 26745 of 26745; control 71 of 10000;
   open with banked twin 16 (incl. psx_bin_st8 0x800d6ab4 → psx_bin_st6 0x800d5c40 at distance 0).
 
+### Canonical types (T2, Phase 1.6)
+
+- **Header rule:** a struct shape used by more than one unit, or any shape already in `include/dc2.h`, lives only in
+  `include/dc2.h` (includes `common.h`); units `#include "dc2.h"` and never redefine it. Single-unit shapes (Pair, Anim,
+  Stage) stay local. Fixed addresses (scratchpad `WORK` = `*(Work **)0x1F800000`) are `#define`s in dc2.h, never in a .c.
+  Each field cites the instruction proving width/signedness; unproven bytes are `padXX[n]` keeping offsets.
+- **duplicate:** a struct/union shape (`typedef struct … Name;` or `struct Name {`) in a src .c whose name is defined in
+  dc2.h, or whose name or normalised body (comments+whitespace stripped) appears in another src unit; each offending
+  definition counts.
+- **raw address cast:** a cast to a pointer type applied to a nonzero integer literal (hex or decimal), ignoring comments,
+  string literals and INCLUDE_ASM lines; `#define` lines in .c count. Headers are not scanned.
+- **Command:** `bash tools/docker/dc.sh run python3 tools/types_check.py` (scanner row `types`, game no; stdlib). Lines:
+  `units scanned: U`, `types: D duplicates, R raw address casts`, `path:line kind name` per offender, then
+  `control: planted duplicate refused, planted raw cast refused` (fixtures in `.run/types_fixture/`: a unit redefining
+  `Obj`; a unit with the raw cast live, in a comment and on an INCLUDE_ASM line, each must give exactly 1). rc 1 when
+  D>0, R>0 or a control fails.
+
 ### Progress denominators (T5, Phase 1.5)
 
 - **Command:** `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make progress`

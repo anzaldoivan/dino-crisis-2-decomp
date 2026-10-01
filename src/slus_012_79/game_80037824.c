@@ -1,4 +1,5 @@
 #include "common.h"
+#include "dc2.h"
 
 /* func_80037824 */
 typedef struct {
@@ -9,21 +10,7 @@ typedef struct {
 extern Pair D_800893D0;
 extern unsigned char D_800ABA96;
 
-/* func_80037E18 */
-typedef struct {
-    char pad0[0x50];
-    int flags;
-    char pad54[0xFD - 0x54];
-    unsigned char side;
-    char padfe[0x260 - 0xFE];
-} Unit;
-
-typedef struct {
-    char pad0[0x4E0];
-    Unit *units;
-} Work;
-
-#define WORK (*(Work **)0x1F800000)
+/* func_80037E18: Unit, Work, WORK in dc2.h */
 
 extern int D_800AF11C;
 

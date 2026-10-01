@@ -1,19 +1,7 @@
 #include "common.h"
+#include "dc2.h"
 
-/* func_800D5C40 */
-typedef struct {
-    int a;
-    int b;
-    int c;
-} Entry;
-
-typedef struct {
-    char pad0[0x98];
-    int x98;
-    short pad9c;
-    unsigned short x9e[8];
-} Obj;
-
+/* func_800D5C40: Entry, Obj in dc2.h */
 extern Entry D_800D6A70[];
 extern void func_80047814(Obj *p);
 
