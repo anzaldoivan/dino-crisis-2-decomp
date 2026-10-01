@@ -18,3 +18,13 @@
 1.3 | T3 | done | Makefile pipeline green on four pilots | - | phase-1.3/tasks/T3.md | phase-1.3/logs/T3.md | -
 1.3 | T4 | done | whole fleet green, make expected, clean fleet check | - | phase-1.3/tasks/T4.md | phase-1.3/logs/T4.md | -
 1.3 | T5 | done | contracts required, ops docs | - | phase-1.3/tasks/T5.md | phase-1.3/logs/T5.md | -
+1.4 | T1 | done | candidate toolchains fetched and pinned in the image | - | phase-1.4/tasks/T1.md | phase-1.4/logs/T1.md | R1.4-001
+1.4 | T2 | done | compiler fingerprint survey across the fleet | - | phase-1.4/tasks/T2.md | phase-1.4/logs/T2.md | -
+1.4 | T3 | done | standalone probe harness with controls | - | phase-1.4/tasks/T3.md | phase-1.4/logs/T3.md | -
+1.4 | T4 | done | probes run down the ladder; the fingerprint verdict | - | phase-1.4/tasks/T4.md | phase-1.4/logs/T4.md | -
+1.4 | T5 | done | the pin wired into the build | - | phase-1.4/tasks/T5.md | phase-1.4/logs/T5.md | -
+1.4 | T6 | done | c subsegments from a tracked unit list, zero C bodies | - | phase-1.4/tasks/T6.md | phase-1.4/logs/T6.md | -
+1.4 | T7 | done | first functions banked in their real units | - | phase-1.4/tasks/T7.md | phase-1.4/logs/T7.md | -
+1.4 | T8 | done | no-ROM compile-only job | - | phase-1.4/tasks/T8.md | phase-1.4/logs/T8.md | -
+1.4 | T9 | done | probe --pinned self-sufficient; ladder line in milestone wording | - | phase-1.4/tasks/T9.md | phase-1.4/logs/T9.md | -
+1.4 | T10 | done | verify binds milestone placeholders and checks their bounds | - | phase-1.4/tasks/T10.md | phase-1.4/logs/T10.md | -
