@@ -47,9 +47,24 @@ def basedir():
     if env:
         return ROOT / env
     for d in ("extracted/retail/files", ".run/extracted/retail/files"):
-        if (ROOT / d).is_dir():
+        if (ROOT / d / splat_gen.EXE_PATH).is_file():
             return ROOT / d
     return ROOT / "extracted/retail/files"
+
+
+def ensure_extracted():
+    """No BASEDIR and no extracted exe -> `make extract OUT=.run/extracted/retail`; return 0 or 2 (message printed)."""
+    if os.environ.get("BASEDIR") or (basedir() / splat_gen.EXE_PATH).is_file():
+        return 0
+    SCRATCH.mkdir(parents=True, exist_ok=True)
+    with open(SCRATCH / "extract.log", "w") as log:
+        rc = subprocess.run(["make", "extract", "OUT=.run/extracted/retail"], cwd=ROOT,
+                            stdout=log, stderr=subprocess.STDOUT).returncode
+    if rc != 0 or not (basedir() / splat_gen.EXE_PATH).is_file():
+        print(f"probe: extraction failed (make extract OUT=.run/extracted/retail, rc {rc}); "
+              "see .run/probe/extract.log", file=sys.stderr)
+        return 2
+    return 0
 
 
 def toolchains():
@@ -157,9 +172,11 @@ def classes(probes, res, triples):
 
 
 def ladder(probes, res, matches_all, triples):
-    """Print `ladder: exactly <m> triple(s) match all K` (m = classes) and one line per class."""
+    """Print `ladder: exactly 1 triple matches all K` (m == 1) or `ladder: exactly <m> triples match all K`
+    (m = classes), then one line per class."""
     cls = classes(probes, res, [t for t in triples if t in matches_all])
-    print(f"ladder: exactly {len(cls)} triple(s) match all {len(probes)}")
+    m = len(cls)
+    print(f"ladder: exactly {m} " + ("triple matches" if m == 1 else "triples match") + f" all {len(probes)}")
     for i, c in enumerate(cls, 1):
         print(f"  class {i}: {len(c)} triple(s): {' '.join(tname(t) for t in c)}")
 
@@ -256,6 +273,8 @@ def main():
             print("probe --pinned: no game probe rows (alias != self) selected", file=sys.stderr)
             return 2
 
+    if not a.selftest and any(r["alias"] != "self" for r in rows) and ensure_extracted():
+        return 2
     SCRATCH.mkdir(parents=True, exist_ok=True)
     rc = 0
     with ThreadPoolExecutor(max(1, a.j)) as pool:
