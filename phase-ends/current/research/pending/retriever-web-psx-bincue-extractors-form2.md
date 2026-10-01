@@ -1,0 +1,27 @@
+# PSX BIN/CUE extractors and Form 2 handling
+task: compare reference extractors for PS1 MODE2/2352 BIN/CUE
+agent: retriever-web
+tags: psx, dumpsxiso, jpsxdec, xa, form2, manifest
+
+## Answer
+See Findings. Only mkpsxiso/jPSXdec versions were fetched this session; the rest is from background knowledge (unverified).
+
+## Findings
+- dumpsxiso (mkpsxiso): v2.30 (fetched; release date given as "July 6", year not shown). Not in Ubuntu apt. Use the GitHub release binary (linux-x64 zip) or build with cmake. CLI: `dumpsxiso image.bin -x outdir -s outdir/layout.xml`. It reads the cue/bin, writes the XML with LBAs, and treats XA/STR files as raw 2336/2352 sectors, so the output is not a plain 2048-byte file.
+- jPSXdec: v2.1 beta rev4378, 17 May 2026 (fetched). Needs Java; no apt package, so download the zip. It builds an index (`-f disc.cue -x index.idx`), then extracts XA audio and STR video (`-a all`, `-i`). It does not simply dump files by ISO path. It also lists sector types (Form 1 or 2) and LBAs in the index.
+- 7-Zip (`7zz`, apt `7zip` in 24.04 universe, or `p7zip-full`): `7z x disc.bin` opens a raw 2352 bin as ISO. Mode 2 handling is inconsistent. Form 2 files may come out as 2048 bytes read from the wrong offset or truncated. Don't trust it for XA files. It gives no LBA XML. (Unverified.)
+- bchunk (apt `bchunk`) + isoinfo (apt `genisoimage`) or xorriso: `bchunk -r` writes raw 2352 and the default writes 2048 cooked, so Form 2 payload is lost or cut. isoinfo can list LBAs with `-l`. Poor for XA/STR. (Unverified.)
+- psxrip: old tool, no maintained apt package, build from source. Not checked.
+
+## Form 2 detection
+In a Mode 2 raw sector, the subheader is at offset 16..23 (file, channel, submode, coding, then a repeat of the four). Submode bit 0x20 means Form 2. Form 1 has 2048 data bytes plus 4 EDC, 172 P and 104 Q. Form 2 has 2324 data bytes plus 4 optional EDC. The ISO9660 size field for XA files is usually the Form 1 equivalent of 2048 * sectors. Check that both subheader copies match.
+
+## Manifest contents (typical)
+Path, LBA start, sector count, size in bytes, sha1 per file, and the form per sector (or the submode). For XA/STR also record the raw sector stream hash (2352 bytes per sector, or 2336 without sync/header). Many decomp projects (for example the dumpsxiso XML plus a splat config) also keep the volume descriptor fields and the file order or LBA layout. These are general conventions, not from a fetched source.
+
+## Dead ends
+No searches were made on 7-Zip, bchunk or psxrip behavior. apt names were not verified.
+
+sources:
+- https://github.com/Lameguy64/mkpsxiso/releases (fetched 2026-09-30)
+- https://github.com/m35/jpsxdec/releases (fetched 2026-09-30)
