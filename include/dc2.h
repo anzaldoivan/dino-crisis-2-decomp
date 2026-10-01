@@ -31,7 +31,9 @@ typedef struct {
 
 /* slus_012_79 func_80037E18: scratchpad-resident work block. Total size unproven. */
 typedef struct {
-    char pad0[0x4E0];
+    char pad0[0x228];
+    int x228;                   /* func_80052634: lw v1,0(0x1F800000); lw v0,0x228(v1); addiu; sw v0,0x228(v1) */
+    char pad22c[0x4E0 - 0x22C];
     Unit *units;                /* lw 0x4E0(v0) */
 } Work;
 
