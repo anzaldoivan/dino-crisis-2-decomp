@@ -171,3 +171,5 @@ G65 | Agents assist; a person owns | decomp,ai-conduct | active | decomp-archite
 G68 | Oracle comparisons are symmetric, unseeded and fixed in advance | decomp,oracle,proof | active | phase 1.2 T3.1/T5/T7
 
 G69 | The compiler triple and its flags are defined once, in the Makefile | decomp,build,toolchain | active | phase 1.4 T5/T8
+
+G70 | A scanner's control must be able to fail | decomp,instruments,scanners | active | phase 1.5 T6

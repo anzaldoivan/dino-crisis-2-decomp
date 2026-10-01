@@ -30,3 +30,10 @@ C0027 | make -n checks also see recipe comments and case branches | make,dry-run
 C0028 | splat 0.41 c subsegments can emit stub C bodies | splat,c,include_asm,match | 2026-10-01 | 1.4/T6 | T6 gotcha
 C0029 | INCLUDE_ASM through maspsx needs macro.inc in the assembled file | maspsx,include_asm,as,macro | 2026-10-01 | 1.4/T6 | T6 gotcha
 C0030 | A verify clause that reads extracted data must extract it itself | milestone,verify,extract,fresh-volume | 2026-10-01 | 1.4/T9 | phase-end gotcha
+C0031 | Classify uncovered text spans by evidence, not by trimming the range | census,splat,data-in-text | 2026-10-01 | 1.5/T1 | phase-ends/current/tasks/T1.md
+C0032 | Ghidra BinaryLoader on PSX overlays: seed functions in a rolled-back txn | ghidra,overlay,switch,oracle | 2026-10-01 | 1.5/T2 | phase-ends/current/tasks/T2.md
+C0033 | psx_ldr object-offset labels turn jumps into calls; check the opcode | ghidra,psx_ldr,oracle,mips | 2026-10-01 | 1.5/T2 | phase-ends/current/tasks/T2.md
+C0034 | A prologue after an unconditional transfer is a function start splat merges | splat,census,mips,function-boundary | 2026-10-01 | 1.5/T2 | phase-ends/current/tasks/T2.md
+C0035 | Relocation-masked dedup keys must mask raw hi/lo pairs and lo-reuses | dedup,splat,relocation,mips | 2026-10-01 | 1.5/T3 | phase-ends/current/tasks/T3.md
+C0036 | Propagating a label through duplicate classes needs a purity rule | dedup,lib,census | 2026-10-01 | 1.5/T4 | phase-ends/current/tasks/T4.md
+C0037 | census.py --check prints fixture totals after the real block | census,parsing,harness | 2026-10-01 | 1.5/T6 | phase-ends/current/tasks/T6.md
