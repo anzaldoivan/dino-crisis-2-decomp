@@ -20,3 +20,6 @@ C0017 | Headless Ghidra -readOnly -noanalysis for throwaway listings | ghidra,he
 C0018 | Snapshot RAM before writing a decompressor to prove an overlay base | emulator,overlay,compression,ram-proof | 2026-10-01 | 1.2/T5 | phase-ends/current/tasks/T5.md
 C0019 | PCSX-Redux Lua pad scripting | pcsx-redux,lua,input | 2026-10-01 | 1.2/T5 | phase-ends/current/tasks/T5.md
 C0020 | Ghidra misses whole switch-bearing functions on PSX exes | ghidra,switch,jump-table,mips | 2026-10-01 | 1.2/T7 | phase-ends/current/tasks/T7.md
+C0021 | Keep non-generated artifacts out of build/; make clean removes only generated outputs | make,clean,build,hygiene | 2026-10-01 | 1.3/T3 | PhaseEnd 1.3
+C0022 | splat: carve an overlay's pre-code data head as rodata (MIPS II+ ops rejected by as -march=r3000) | splat,overlay,rodata,mips,psx | 2026-10-01 | 1.3/T4 | PhaseEnd 1.3
+C0023 | splat 0.41 omits out-of-segment j targets from undefined_funcs_auto; generate them | splat,linker,undefined-symbols,overlay | 2026-10-01 | 1.3/T4 | PhaseEnd 1.3
