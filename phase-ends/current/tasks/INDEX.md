@@ -6,3 +6,4 @@ T3 | done | standalone probe harness with controls | - | tasks/T3.md | logs/T3.m
 T4 | done | probes run down the ladder; the fingerprint verdict | - | tasks/T4.md | logs/T4.md | -
 T5 | done | the pin wired into the build | - | tasks/T5.md | logs/T5.md | -
 T6 | done | c subsegments from a tracked unit list, zero C bodies | - | tasks/T6.md | logs/T6.md | -
+T7 | done | first functions banked in their real units | - | tasks/T7.md | logs/T7.md | -
