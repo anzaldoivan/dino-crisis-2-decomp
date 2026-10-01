@@ -82,3 +82,4 @@ Phase 1.0 left: the ROM audit + negative control, the amd64 build host, no extra
 - 2026-09-30 router: T1 next -> done
 - 2026-09-30 router: T2 next -> done
 - 2026-09-30 router: T3 next -> done
+- 2026-09-30 critic: critic: milestone clause 2 reads `diff -rq /work/.run/ref/files /work/.run/ours/files`. The header's `/work/.run/ours` contradicts Interfaces (`<out>/files/<path>`, manifest.* beside files/) and T2's done-when and verify. The claim is unchanged: extracted payloads, 0 differences. Reference normalised per T2 binding (license_data.dat = system area, ZNULL.WAV = Track 2 audio, neither a Track 1 ISO file; DA entry ZNULL.DAT not extracted; scope Track 1 per Rationale:24). The recap states both. Closing expert reruns clause 2 as corrected and records the result.
