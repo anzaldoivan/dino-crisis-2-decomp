@@ -16,12 +16,20 @@ different end (class end-ghidra-shorter | end-ghidra-longer), after these normal
 Staleness: each cache header carries `generator sha256=` = sha256(DumpFunctions.java bytes + dump_functions.sh bytes +
 "<ghidra>\n<loadmap sha1>\n<loadmap base>\n"); recomputed here from the current files and config/loadmap.tsv, a
 mismatch prints `stale: <prog>`. Controls every run (G25): a planted census start must be detected, a perturbed
-hash input must read stale. Full disagreement list: .run/oracle/disagreements.tsv.
+hash input must read stale. Full disagreement list: .run/oracle/disagreements.tsv (a --plant-start run writes
+.run/oracle/plant.tsv instead), each row with evidence columns: src (ghidra source auto|txn, - if none), jal_ref
+(jal words in the binary's own bytes targeting the start), prev_ends_jr (word at start-8 is `jr ra`), in_data_span
+(census data-in-text span kind containing the start, else -), parent (c:<start> census function / g:<start> Ghidra
+function strictly containing the start, from the list lacking it; - for end-* rows). A per-class x evidence
+breakdown is printed.
 Exit: 0 iff 83 of 83 compared, 0 disagreements, no stale cache, controls ok; 1 otherwise; 2 REFUSED (empty census or
 0 caches).
 """
 import argparse
+import bisect
+import contextlib
 import hashlib
+import io
 import subprocess
 import sys
 from pathlib import Path
@@ -38,6 +46,7 @@ GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghi
 FILES = ROOT / ".run/extracted/retail/files"
 OUT = ROOT / ".run/oracle"
 CLASSES = ("census-only", "ghidra-only", "end-ghidra-shorter", "end-ghidra-longer")
+JR_RA = 0x03E00008
 
 
 def prog_of(alias):
@@ -53,8 +62,8 @@ def gen_hash(ver, sha1, base):
 
 
 def read_cache(path):
-    """-> (header dict, {start: end}, noncontig, no_text)"""
-    hdr, funcs, nc, notext = {}, {}, 0, False
+    """-> (header dict, {start: end}, noncontig, no_text, {start: source})"""
+    hdr, funcs, nc, notext, src = {}, {}, 0, False, {}
     for line in path.read_text().splitlines():
         if line.startswith("# generator "):
             hdr = dict(kv.split("=", 1) for kv in line[len("# generator "):].split())
@@ -63,13 +72,14 @@ def read_cache(path):
         elif line == "# no-text":
             notext = True
         elif line and not line.startswith("#"):
-            s, z = line.split("\t")[:2]
+            s, z, so = (line.split("\t") + ["-"])[:3]
             funcs[int(s, 16)] = int(s, 16) + int(z, 16)
-    return hdr, funcs, nc, notext
+            src[int(s, 16)] = so
+    return hdr, funcs, nc, notext, src
 
 
 def code_reader(b):
-    """-> fn(v) -> 32-bit word at vaddr v (None if outside the file's code segment)."""
+    """-> (fn(v) -> 32-bit word at vaddr v (None outside the file), {target: n jal words in the file})."""
     _, segs = census.parse_yaml(ROOT / "config/splat" / (b.alias + ".yaml"))
     data = (FILES / b.path).read_bytes()
     seg = [s for s in segs if s["type"] == "code"][0]
@@ -77,7 +87,33 @@ def code_reader(b):
     def word(v):
         off = seg["start"] + (v - seg["vram"])
         return int.from_bytes(data[off:off + 4], "little") if 0 <= off <= len(data) - 4 else None
-    return word
+    jal = {}
+    for off in range(0, len(data) - 3, 4):
+        w = int.from_bytes(data[off:off + 4], "little")
+        if w >> 26 == 3:
+            v = seg["vram"] + off - seg["start"]
+            t = ((v + 4) & 0xF0000000) | ((w & 0x3FFFFFF) << 2)
+            jal[t] = jal.get(t, 0) + 1
+    return word, jal
+
+
+def parent(fs, s):
+    """the function in {start: end} fs strictly containing s (start < s < end), else None."""
+    ks = sorted(fs)
+    i = bisect.bisect_left(ks, s) - 1
+    return ks[i] if i >= 0 and fs[ks[i]] > s else None
+
+
+def data_spans(bins):
+    """-> {alias: [(s, e, kind)]} census data-in-text spans (census.run, output discarded; `make split` first when an
+    asm dir is missing, as census.py does -- dc.sh sync drops them)."""
+    if any(b.text is not None and not Path(b.asm_dir).is_dir() for b in bins.values()):
+        OUT.mkdir(parents=True, exist_ok=True)
+        with open(OUT / "split.log", "w") as log:
+            subprocess.run(["make", "-s", "-j", "split"], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+    with contextlib.redirect_stdout(io.StringIO()):
+        _, res = census.run(bins, False, write=False)
+    return {a: r["data"] for a, r in res.items()}
 
 
 def zero_between(word, a, b):
@@ -136,6 +172,7 @@ def main(argv=None):
         cen.setdefault(pa, {})[pv] = pv + 4
         print("plant: census start %s:0x%08x injected" % (pa, pv))
     bins = census.load_fleet()
+    dspans = data_spans(bins)
     lm = {r[0]: r for r in census.rows(census.LOADMAP) if len(r) > 3 and r[3] in ("exe", "code")}
     exc, invalid = set(), 0
     if EXCEPTIONS.exists():
@@ -153,7 +190,7 @@ def main(argv=None):
         if not cache.exists():
             print("missing cache: %s" % cache.relative_to(ROOT))
             continue
-        hdr, gh, n, notext = read_cache(cache)
+        hdr, gh, n, notext, gsrc = read_cache(cache)
         sha1, base = lm[b.path][2], lm[b.path][5]
         if hdr.get("sha256") != gen_hash(hdr.get("ghidra", ""), sha1, base):
             stale.append(prog_of(alias))
@@ -161,12 +198,21 @@ def main(argv=None):
             continue
         k += 1
         nc += n
-        word = code_reader(b) if b.text is not None else None
-        for d in compare(b, cen.get(alias, {}), gh, word, cnt):
+        word, jal = code_reader(b) if b.text is not None else (None, {})
+        ca = cen.get(alias, {})
+        for d in compare(b, ca, gh, word, cnt):
             if (alias, d[1], d[0]) in exc:
                 applied += 1
-            else:
-                dis.append((alias,) + d)
+                continue
+            s = d[1]
+            par = None
+            if d[0] == "census-only":
+                par = parent(gh, s); par = par and "g:0x%08x" % par
+            elif d[0] == "ghidra-only":
+                par = parent(ca, s); par = par and "c:0x%08x" % par
+            ev = (gsrc.get(s, "-"), jal.get(s, 0), "yes" if word(s - 8) == JR_RA else "no",
+                  next((k for x, e, k in dspans.get(alias, []) if x <= s < e), "-"), par or "-")
+            dis.append((alias,) + d + ev)
         if ctl_case is None and b.text is not None and gh:
             ctl_case = (b, alias, gh, word, sha1, base, hdr.get("ghidra", ""))
     if k == 0:
@@ -194,10 +240,20 @@ def main(argv=None):
         rows = [d for d in dis if d[1] == cl]
         ex = " ".join("%s:0x%08x" % (d[0], d[2]) for d in rows[:5])
         print("class %s: %d%s" % (cl, len(rows), ("  e.g. " + ex) if ex else ""))
+    print("breakdown: class n | src auto/txn/- | jal_ref>0 | prev_ends_jr | in_data_span | parent")
+    for cl in CLASSES:
+        rows = [d for d in dis if d[1] == cl]
+        if rows:
+            print("  %s %d | %d/%d/%d | %d | %d | %d | %d" % (
+                cl, len(rows), sum(d[5] == "auto" for d in rows), sum(d[5] == "txn" for d in rows),
+                sum(d[5] == "-" for d in rows), sum(d[6] > 0 for d in rows), sum(d[7] == "yes" for d in rows),
+                sum(d[8] != "-" for d in rows), sum(d[9] != "-" for d in rows)))
     OUT.mkdir(parents=True, exist_ok=True)
     fmt = lambda x: "-" if x is None else "0x%08x" % x
-    (OUT / "disagreements.tsv").write_text("# alias\tclass\tstart\tcensus_end\tghidra_end\n" + "".join(
-        "%s\t%s\t0x%08x\t%s\t%s\n" % (a, cl, s, fmt(ce), fmt(ge)) for a, cl, s, ce, ge in dis))
+    (OUT / ("plant.tsv" if args.plant_start else "disagreements.tsv")).write_text(
+        "# alias\tclass\tstart\tcensus_end\tghidra_end\tsrc\tjal_ref\tprev_ends_jr\tin_data_span\tparent\n" +
+        "".join("%s\t%s\t0x%08x\t%s\t%s\t%s\t%d\t%s\t%s\t%s\n" % (a, cl, s, fmt(ce), fmt(ge), *ev)
+                for a, cl, s, ce, ge, *ev in dis))
     if args.plant_start:
         hit = any(d[0] == pa and d[2] == pv for d in dis)
         print("plant: %s:0x%08x %s" % (pa, pv, "reported as a disagreement" if hit else

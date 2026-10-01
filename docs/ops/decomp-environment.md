@@ -207,9 +207,18 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   named by alias), dumps read-only (`DumpFunctions.java`) to `config/ghidra/<prog>.functions.tsv` (`start size source`,
   size = body max + 1 − entry; `# non-contiguous bodies: n`; `bin_wep_s00` = `# no-text`, 0 rows). Long: `bash
   tools/run.sh --bg t2-import -- bash tools/ghidra/dump_functions.sh`, then `--wait t2-import --max 280`.
+- **Seeding (T2.c2, `source=txn`):** after the auto rows, `DumpFunctions.java` recovers missed functions in a
+  transaction rolled back (`endTransaction(tx,false)`, C0020; `-readOnly`, nothing persists). Seeds from program bytes +
+  Ghidra only (never census/splat/config); block = initialized blocks starting in [0x80000000, 0xA0000000). s1 targets
+  of every aligned `jal` word landing in the block, to a fixed point; then s2 destinations of Ghidra references (any
+  type) at 4-aligned undefined bytes; then s3 values of aligned words outside instructions that are 4-aligned block
+  addresses of undefined bytes. Each ascending; a seed inside a function body is skipped; else disassemble (flow) +
+  `CreateFunctionCmd`. Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3=`.
 - **Diff:** `bash tools/docker/dc.sh sync && bash tools/docker/dc.sh run python3 tools/oracle_diff.py [--plant-start
   ALIAS:ADDR]` → classes `census-only|ghidra-only|end-ghidra-shorter|end-ghidra-longer` (5 examples each), full list
-  `.run/oracle/disagreements.tsv`, `oracle: k of 83 binaries compared, d disagreements`; exit 0 iff 83/83, d = 0, no
+  `.run/oracle/disagreements.tsv` (`--plant-start` writes `.run/oracle/plant.tsv` instead) with evidence columns
+  `src jal_ref prev_ends_jr in_data_span parent` and a printed `breakdown:` (class × evidence counts; runs `make split`
+  when asm dirs are missing, for census data spans), `oracle: k of 83 binaries compared, d disagreements`; exit 0 iff 83/83, d = 0, no
   stale, controls ok; REFUSED rc 2 on empty census / 0 caches. Runs census.py first if functions.tsv is missing/older.
 - **Normalisations (only these):** n1 judge only starts in the census text region (others `not judged: n`); n2 ends
   equal when the words between them are all zero. Exceptions: `config/oracle_exceptions.tsv` (rows need basis +

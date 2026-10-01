@@ -5,7 +5,8 @@
 #   2. imports every fleet program missing from the project via tools/ghidra/import_raw.sh at its loadmap base
 #      (auto-analysis on); SLUS_012.79 is never re-imported or overwritten;
 #   3. dumps every program read-only (DumpFunctions.java, -noanalysis -readOnly) and writes
-#      config/ghidra/<prog>.functions.tsv (`start size source`, source=auto) for all 83 fleet binaries.
+#      config/ghidra/<prog>.functions.tsv (`start size source`, source=auto|txn; txn = recovered in a rolled-back
+#      transaction from jal targets / reference targets / pointer words, see DumpFunctions.java) for all 83 binaries.
 #
 # Fleet = config/splat/*.yaml (alias = yaml stem, blob = its target_path, loadmap row = that path, class exe|code).
 # Program name mapping (deterministic): alias slus_012_79 -> SLUS_012.79 (the exe keeps its name); every overlay
