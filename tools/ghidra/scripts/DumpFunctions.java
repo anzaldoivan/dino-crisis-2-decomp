@@ -3,13 +3,14 @@
 //   # non-contiguous bodies: <n>
 //   0x%08x<TAB>0x%x<TAB>auto            (start = entry; size = body max address + 1 - entry)
 //   0x%08x<TAB>0x%x<TAB>txn             (T2.c2: recovered in a ROLLED-BACK transaction, C0020)
-// Rows sorted by entry; external functions skipped. tools/ghidra/dump_functions.sh adds the generator header and
-// moves the file to config/ghidra/<program>.functions.tsv.
+// Rows sorted by entry; external functions skipped. getScriptArgs()[1] (T2.c4, optional) = s4 seed file.
+// tools/ghidra/dump_functions.sh adds the generator header and moves the file to config/ghidra/<program>.functions.tsv.
 // T2.c3 evidence sidecar <outdir>/<program>.evidence.tsv (untracked; addresses/names/counts only, G12), one row per
 // cache row, taken at the end of the transaction (before rollback):
 //   start size source name symbol_source(DEFAULT|IMPORTED|ANALYSIS|USER_DEFINED) call_refs jump_refs data_refs seed
 //   call/data_refs = references to the entry whose type isCall / isData; jump_refs = isJump references to the entry
-//   from outside the function's own body; seed = auto | s1 | s2 | s3 (the seed class whose CreateFunctionCmd made it).
+//   from outside the function's own body; seed = auto | s1 | s2 | s3 | s4 (the seed class whose CreateFunctionCmd
+//   made it).
 // txn seeding (program bytes + Ghidra only; never census/splat/config). Block = initialized memory blocks starting
 // in [0x80000000, 0xA0000000). Ascending, a seed already inside a function body is skipped (T2.c3: s1/s3 seed it
 // whether or not Ghidra already disassembled it); each seed not yet an instruction is disassembled (flow-following),
@@ -19,6 +20,8 @@
 //   s2  then destinations of Ghidra references (any type) that are 4-aligned undefined bytes of the block;
 //   s3  then values of aligned words outside instructions that are 4-aligned block addresses (T2.c2 required
 //       undefined bytes there; dropped T2.c3).
+//   s4  (T2.c4) then cross-program targets: rows `<this program name>\t0x<target>` of the seed file (built by
+//       tools/ghidra/xprog_targets.py from OTHER fleet programs' bytes + loadmap windows) that are block addresses.
 // Run read-only (never saved):
 //   analyzeHeadless ghidra dc2 -process -noanalysis -readOnly -scriptPath tools/ghidra/scripts
 //     -postScript DumpFunctions.java <outdir>
@@ -40,6 +43,8 @@ import ghidra.program.model.symbol.Reference;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,7 +70,7 @@ public class DumpFunctions extends GhidraScript {
             long o = b.getStart().getOffset();
             if (b.isInitialized() && o >= 0x80000000L && o < 0xA0000000L) blk.add(b.getStart(), b.getEnd());
         }
-        int[] made = new int[3], tried = new int[3];
+        int[] made = new int[4], tried = new int[4];
         TreeMap<Long, String> ev = new TreeMap<>();
         int tx = p.startTransaction("recover missed functions");
         try {
@@ -99,6 +104,15 @@ public class DumpFunctions extends GhidraScript {
                 if (blk.contains(va)) s3.add(v);
             }
             for (long t : s3) recover(p, t, 2, made, tried);
+            TreeSet<Long> s4 = new TreeSet<>();
+            if (args.length > 1)
+                for (String l : Files.readAllLines(Paths.get(args[1]), StandardCharsets.UTF_8)) {
+                    String[] r = l.split("\t");
+                    if (r.length < 2 || !r[0].equals(p.getName())) continue;
+                    long v = Long.parseLong(r[1].substring(2), 16);
+                    if (blk.contains(p.getAddressFactory().getDefaultAddressSpace().getAddress(v))) s4.add(v);
+                }
+            for (long t : s4) recover(p, t, 3, made, tried);
             for (Function f : p.getFunctionManager().getFunctions(true))
                 if (!rows.containsKey(f.getEntryPoint().getOffset())) addRow(rows, f, "txn", nonContig);
             for (Function f : p.getFunctionManager().getFunctions(true)) {
@@ -119,9 +133,9 @@ public class DumpFunctions extends GhidraScript {
             w.print("# start\tsize\tsource\tname\tsymbol_source\tcall_refs\tjump_refs\tdata_refs\tseed\n");
             for (String r : ev.values()) w.print(r + "\n");
         }
-        println(String.format("DC2DUMPFUNCS %s rows=%d auto=%d txn=%d noncontig=%d s1=%d/%d s2=%d/%d s3=%d/%d",
+        println(String.format("DC2DUMPFUNCS %s rows=%d auto=%d txn=%d noncontig=%d s1=%d/%d s2=%d/%d s3=%d/%d s4=%d/%d",
                 p.getName(), rows.size(), nAuto, rows.size() - nAuto, nonContig[0],
-                made[0], tried[0], made[1], tried[1], made[2], tried[2]));
+                made[0], tried[0], made[1], tried[1], made[2], tried[2], made[3], tried[3]));
     }
 
     private static void addRow(TreeMap<Long, String> rows, Function f, String src, int[] nonContig) {

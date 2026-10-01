@@ -182,6 +182,9 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `jr|j|b|beq $zero,$zero|beqz $zero` + delay slot; (b') start = text start or = end of an evidenced data-in-text span;
   (c) lib-object row start; (d) C-defined; (e) start = a raw `.word 0x…` literal anywhere in the fleet. `phantom detail`
   counts each criterion independently plus `sole` (starts confirmed by that criterion alone).
+- **R1 jal split (T2.c4):** a `jal func_X|.LX|0x…` target taken from this binary's census instruction lines that lies
+  strictly inside a function's extent starts a new function there (the earlier one ends at the split); criterion (f),
+  printed `(f) jal target split: n` (2026-10-01: 2, functions 3887); cross-check adds `+ jal splits n`.
 - **Truncation:** text bytes not covered by exactly one function, or a function crossing a boundary edge.
 - **Data in text:** an uncovered span is data (leaves the denominator, printed per span) iff every word is a spimdisasm
   `.word` (or flagged invalid instruction), no control-flow target lands in it (jal/j/branch operands, jlabels,
@@ -212,16 +215,21 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   Ghidra only (never census/splat/config); block = initialized blocks starting in [0x80000000, 0xA0000000). s1 targets
   of every aligned `jal` word landing in the block, to a fixed point; then s2 destinations of Ghidra references (any
   type) at 4-aligned undefined bytes; then s3 values of aligned words outside instructions that are 4-aligned block
-  addresses (T2.c3: s1/s3 targets need only lie outside every function body, disassembled or not). Each ascending; a
+  addresses (T2.c3: s1/s3 targets need only lie outside every function body, disassembled or not); then s4 (T2.c4)
+  cross-program targets: `xprog_targets.py` (host, program bytes + loadmap only) lists jal targets / pointer words in
+  OTHER fleet programs whose loadmap window `[base, end)` does not overlap this one's, landing in this window
+  (`.run/ghidra_functions/xprog_targets.tsv`, script arg 2; 1902 targets, s4 281/643 made/tried). Each ascending; a
   seed inside a function body is skipped; else disassemble (flow) if not an instruction + `CreateFunctionCmd`.
-  Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3=`. Pcode `Program does not contain
+  Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3= s4=`. Generator hash also
+  covers `xprog_targets.py`. Pcode `Program does not contain
   referenced instruction` ERROR lines in `.run/logs/dump_functions_headless.log` come from seeds disassembled into
   data (missing delay slot); harmless, rolled back. The project also holds `OPTION_BIN` (not in the fleet): dumped to
   `.run/ghidra_functions/` but never written to `config/ghidra/`.
 - **Evidence sidecar (T2.c3):** `DumpFunctions.java` also writes untracked `.run/ghidra_functions/<prog>.evidence.tsv`
   (`start size source name symbol_source call_refs jump_refs data_refs seed`; jump refs from outside the body; seed
-  `auto|s1|s2|s3`); `dump_functions.sh` copies them into the volume's `/work/.run/ghidra_functions/` (kept by `dc.sh
-  sync`). `oracle_diff.py` joins them as `g_name g_symsrc g_call g_jump` (`-` no Ghidra function at the start; `n/a`
+  `auto|s1|s2|s3|s4`); `dump_functions.sh` copies them into the volume's `/work/.run/ghidra_functions/` (kept by `dc.sh
+  sync`). `oracle_diff.py` joins them as `g_name g_symsrc g_call g_jump g_seed` plus its own `xj` (T2.c4: `j` words in census text
+  targeting the start from outside the census function containing it) (`-` no Ghidra function at the start; `n/a`
   sidecar absent or its starts differ from the cache), prints `evidence: n of k sidecars joined` (82 of 83:
   `bin_wep_s00` is no-text).
 - **Diff:** `bash tools/docker/dc.sh sync && bash tools/docker/dc.sh run python3 tools/oracle_diff.py [--plant-start

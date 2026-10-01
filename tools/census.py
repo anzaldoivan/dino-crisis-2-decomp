@@ -40,6 +40,7 @@ TGT_TOK = re.compile(r"(?:\.L|\bfunc_|\bD_|\b0x)([0-9A-Fa-f]{8})\b")
 JT_TOK = re.compile(r"\.L([0-9A-Fa-f]{8})\b")  # `.word .L…` = jtbl entry
 DREF_TOK = re.compile(r"(?:\bD_|\b0x)([0-9A-Fa-f]{8})\b")
 RAW_WORD = re.compile(r"\b0x([0-9A-Fa-f]{8})\b")
+JAL_TOK = re.compile(r"(?:\.L|\bfunc_|\b0x)([0-9A-Fa-f]{8})\b")  # R1: `jal func_X|.LX|0x…` operand
 
 
 def rows(path):
@@ -287,7 +288,7 @@ def data_spans(b, gaps, scan, glob):
     return data, rest
 
 
-CRIT = ("a ref", "b fallthrough", "b' entry", "c lib-start", "d c-def", "e raw-word")
+CRIT = ("a ref", "b fallthrough", "b' entry", "c lib-start", "d c-def", "e raw-word", "f jal-split")
 
 
 def analyze(b, glob, scan):
@@ -296,7 +297,7 @@ def analyze(b, glob, scan):
     res = {"recs": [], "covered": 0, "B": 0, "P": 0, "T": 0, "pd": dict.fromkeys(("no-insn", "outside-text",
            "in-jtbl/data", "unconfirmed"), 0), "cf": dict.fromkeys(CRIT, 0), "sole": dict.fromkeys(CRIT, 0),
            "gaps": [], "data": [], "ovl": [], "cross": [], "pex": [], "split_g": split_g, "nm_g": nm_g, "cdefs": 0,
-           "insns": {}}
+           "insns": {}, "jsplit": 0}
     if b.text is None:
         return res
     ts, te = b.text
@@ -324,6 +325,17 @@ def analyze(b, glob, scan):
         cdef_starts |= set(defs)
         res["cdefs"] += len(defs)
     recs.sort(key=lambda r: (r[0], r[1], r[2]))
+    # R1 (T2.c4): a jal target (this binary's census instruction lines) strictly inside a function starts a new one
+    jt = {int(h, 16) for r in recs for _, mn, ops in r[3] if mn == "jal" for h in JAL_TOK.findall(ops)}
+    split, jstarts = [], set()
+    for st, en, name, ins, srck in recs:
+        for t in sorted(x for x in jt if st < x < en):
+            split.append([st, t, name, [x for x in ins if x[0] < t], srck])
+            st, name, ins = t, "func_%08X" % t, [x for x in ins if x[0] >= t]
+            jstarts.add(t)
+        split.append([st, en, name, ins, srck])
+    recs = split
+    res["jsplit"] = len(jstarts)
     one, gaps, ovl = spans([(r[0], r[1]) for r in recs], ts, te)
     res["data"], res["gaps"] = data_spans(b, gaps, scan, glob)
     res["covered"], res["ovl"] = one, ovl
@@ -345,8 +357,9 @@ def analyze(b, glob, scan):
             bool(i > 0 and recs[i - 1][3] and ends_flow(recs[i - 1][3])),
             st == ts or st in dends,
             st in lib_starts,
-            srck == "c",
-            st in glob["raw"])))
+            srck == "c" and st in cdef_starts,
+            st in glob["raw"],
+            st in jstarts)))
         hit = [k for k in CRIT if conf[k]]
         for k in hit:
             res["cf"][k] += 1
@@ -387,7 +400,7 @@ def run(bins, only_full, write=True):
             glob["drefs"].setdefault(x, set()).update((a, y) for y in srcs)
     out, results = [], {}
     tot = {"F": 0, "b": 0, "B": 0, "P": 0, "T": 0, "gapB": 0, "gapN": 0, "ovlB": 0, "ovlN": 0, "C": 0,
-           "split_g": 0, "nm_g": 0, "cdefs": 0, "dB": 0, "dN": 0, "dlabel-head": 0, "invalid-insn": 0}
+           "split_g": 0, "nm_g": 0, "cdefs": 0, "jsplit": 0, "dB": 0, "dN": 0, "dlabel-head": 0, "invalid-insn": 0}
     pd, cf, sole = {}, {}, {}
     for a in sorted(bins):
         b = bins[a]
@@ -406,7 +419,7 @@ def run(bins, only_full, write=True):
         tot["gapN"] += len(r["gaps"]); tot["gapB"] += sum(e - s for s, e, _ in r["gaps"])
         tot["ovlN"] += len(r["ovl"]); tot["ovlB"] += sum(e - s for s, e in r["ovl"])
         tot["C"] += len(r["cross"])
-        for k in ("split_g", "nm_g", "cdefs"):
+        for k in ("split_g", "nm_g", "cdefs", "jsplit"):
             tot[k] += r[k]
         for k, v in r["pd"].items():
             pd[k] = pd.get(k, 0) + v
@@ -430,6 +443,7 @@ def run(bins, only_full, write=True):
     print("phantom detail: %s; confirmed by %s; sole %s" % (", ".join("%s %d" % (k, pd.get(k, 0)) for k in (
         "no-insn", "outside-text", "in-jtbl/data", "unconfirmed")), ", ".join(
         "%s %d" % (k, cf.get(k, 0)) for k in CRIT), ", ".join("%s %d" % (k.split()[0], sole.get(k, 0)) for k in CRIT)))
+    print("(f) jal target split: %d" % tot["jsplit"])
     print("truncations: %d" % tot["T"])
     print("truncation detail: gaps %d B (%d spans), overlaps %d B, crossings %d" % (
         tot["gapB"], tot["gapN"], tot["ovlB"], tot["C"]))
@@ -445,10 +459,10 @@ def run(bins, only_full, write=True):
     if tex:
         print("truncation examples: " + "; ".join(tex[:10]))
     if only_full:
-        print("cross-check: glabels %d (cc_fingerprint split %d + nonmatchings %d) + C-defined %d = %d, census %d: %s"
-              % (tot["split_g"] + tot["nm_g"], tot["split_g"], tot["nm_g"], tot["cdefs"],
-                 tot["split_g"] + tot["nm_g"] + tot["cdefs"], tot["F"],
-                 "ok" if tot["split_g"] + tot["nm_g"] + tot["cdefs"] == tot["F"] else "MISMATCH"))
+        n = tot["split_g"] + tot["nm_g"] + tot["cdefs"] + tot["jsplit"]
+        print("cross-check: glabels %d (cc_fingerprint split %d + nonmatchings %d) + C-defined %d + jal splits %d = %d,"
+              " census %d: %s" % (tot["split_g"] + tot["nm_g"], tot["split_g"], tot["nm_g"], tot["cdefs"],
+                                  tot["jsplit"], n, tot["F"], "ok" if n == tot["F"] else "MISMATCH"))
     return tot, results
 
 

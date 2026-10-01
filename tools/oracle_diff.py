@@ -14,7 +14,7 @@ different end (class end-ghidra-shorter | end-ghidra-longer), after these normal
   n2  two ends are equal when every 32-bit word between them is zero (alignment nops); bytes are read from
       .run/extracted/retail/files/<loadmap path>, nothing about them is written.
 Staleness: each cache header carries `generator sha256=` = sha256(DumpFunctions.java bytes + dump_functions.sh bytes +
-"<ghidra>\n<loadmap sha1>\n<loadmap base>\n"); recomputed here from the current files and config/loadmap.tsv, a
+xprog_targets.py bytes + "<ghidra>\n<loadmap sha1>\n<loadmap base>\n"); recomputed here from the current files and config/loadmap.tsv, a
 mismatch prints `stale: <prog>`. Controls every run (G25): a planted census start must be detected, a perturbed
 hash input must read stale. Full disagreement list: .run/oracle/disagreements.tsv (a --plant-start run writes
 .run/oracle/plant.tsv instead), each row with evidence columns: src (ghidra source auto|txn, - if none), jal_ref
@@ -23,9 +23,10 @@ hash input must read stale. Full disagreement list: .run/oracle/disagreements.ts
 function strictly containing the start, from the list lacking it; - for end-* rows), and from the Ghidra evidence
 sidecar .run/ghidra_functions/<prog>.evidence.tsv (T2.c3; written by DumpFunctions.java, copied into the volume by
 dump_functions.sh): g_name, g_symsrc (DEFAULT|IMPORTED|ANALYSIS|USER_DEFINED), g_call (call refs to the start),
-g_jump (jump refs from outside the function) of the Ghidra function at the start, - when Ghidra has none there; n/a
-when the sidecar is absent or its starts differ from the cache's (`evidence: n of 83 sidecars joined`). A per-class
-x evidence breakdown is printed.
+g_jump (jump refs from outside the function), g_seed (auto|s1..s4, T2.c4) of the Ghidra function at the start, - when
+Ghidra has none there; n/a when the sidecar is absent or its starts differ from the cache's (`evidence: n of 83
+sidecars joined`); xj (T2.c4) = `j` (opcode 000010) words in the binary's census text region targeting the start from
+outside the census function containing it. A per-class x evidence breakdown is printed.
 Exit: 0 iff 83 of 83 compared, 0 disagreements, no stale cache, controls ok; 1 otherwise; 2 REFUSED (empty census or
 0 caches).
 """
@@ -46,7 +47,8 @@ CENSUS_PY = ROOT / "tools/census.py"
 CENSUS_TSV = ROOT / ".run/census/functions.tsv"
 GHIDRA_DIR = ROOT / "config/ghidra"
 EXCEPTIONS = ROOT / "config/oracle_exceptions.tsv"
-GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghidra/dump_functions.sh")
+GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghidra/dump_functions.sh",
+             ROOT / "tools/ghidra/xprog_targets.py")
 FILES = ROOT / ".run/extracted/retail/files"
 EVIDENCE = ROOT / ".run/ghidra_functions"
 OUT = ROOT / ".run/oracle"
@@ -84,7 +86,7 @@ def read_cache(path):
 
 
 def read_evidence(prog, starts):
-    """-> {start: (name, symsrc, call, jump)} from the sidecar, or None when absent / not matching the cache starts."""
+    """-> {start: (name, symsrc, call, jump, seed)} from the sidecar, or None when absent / not matching the cache starts."""
     path = EVIDENCE / (prog + ".evidence.tsv")
     if not path.exists():
         return None
@@ -92,12 +94,13 @@ def read_evidence(prog, starts):
     for line in path.read_text().splitlines():
         if line and not line.startswith("#"):
             r = line.split("\t")
-            ev[int(r[0], 16)] = (r[3], r[4], r[5], r[6])
+            ev[int(r[0], 16)] = (r[3], r[4], r[5], r[6], r[8] if len(r) > 8 else "-")
     return ev if set(ev) == set(starts) else None
 
 
 def code_reader(b):
-    """-> (fn(v) -> 32-bit word at vaddr v (None outside the file), {target: n jal words in the file})."""
+    """-> (fn(v) -> 32-bit word at vaddr v (None outside the file), {target: n jal words in the file},
+    {target: [vaddr of each `j` word in the census text region]})."""
     _, segs = census.parse_yaml(ROOT / "config/splat" / (b.alias + ".yaml"))
     data = (FILES / b.path).read_bytes()
     seg = [s for s in segs if s["type"] == "code"][0]
@@ -105,14 +108,16 @@ def code_reader(b):
     def word(v):
         off = seg["start"] + (v - seg["vram"])
         return int.from_bytes(data[off:off + 4], "little") if 0 <= off <= len(data) - 4 else None
-    jal = {}
+    jal, jmp = {}, {}
     for off in range(0, len(data) - 3, 4):
         w = int.from_bytes(data[off:off + 4], "little")
+        v = seg["vram"] + off - seg["start"]
+        t = ((v + 4) & 0xF0000000) | ((w & 0x3FFFFFF) << 2)
         if w >> 26 == 3:
-            v = seg["vram"] + off - seg["start"]
-            t = ((v + 4) & 0xF0000000) | ((w & 0x3FFFFFF) << 2)
             jal[t] = jal.get(t, 0) + 1
-    return word, jal
+        elif w >> 26 == 2 and b.text[0] <= v < b.text[1]:
+            jmp.setdefault(t, []).append(v)
+    return word, jal, jmp
 
 
 def parent(fs, s):
@@ -218,7 +223,7 @@ def main(argv=None):
         nc += n
         gev = read_evidence(prog_of(alias), gh)
         joined += gev is not None
-        word, jal = code_reader(b) if b.text is not None else (None, {})
+        word, jal, jmp = code_reader(b) if b.text is not None else (None, {}, {})
         ca = cen.get(alias, {})
         for d in compare(b, ca, gh, word, cnt):
             if (alias, d[1], d[0]) in exc:
@@ -230,9 +235,11 @@ def main(argv=None):
                 par = parent(gh, s); par = par and "g:0x%08x" % par
             elif d[0] == "ghidra-only":
                 par = parent(ca, s); par = par and "c:0x%08x" % par
+            cs = s if s in ca else parent(ca, s)
+            xj = sum(cs is None or not cs <= v < ca[cs] for v in jmp.get(s, ()))
             ev = (gsrc.get(s, "-"), jal.get(s, 0), "yes" if word(s - 8) == JR_RA else "no",
                   next((k for x, e, k in dspans.get(alias, []) if x <= s < e), "-"), par or "-") + (
-                  ("n/a",) * 4 if gev is None else gev.get(s, ("-",) * 4))
+                  ("n/a",) * 5 if gev is None else gev.get(s, ("-",) * 5)) + (xj,)
             dis.append((alias,) + d + ev)
         if ctl_case is None and b.text is not None and gh:
             ctl_case = (b, alias, gh, word, sha1, base, hdr.get("ghidra", ""))
@@ -263,24 +270,26 @@ def main(argv=None):
         ex = " ".join("%s:0x%08x" % (d[0], d[2]) for d in rows[:5])
         print("class %s: %d%s" % (cl, len(rows), ("  e.g. " + ex) if ex else ""))
     print("breakdown: class n | src auto/txn/- | jal_ref>0 | prev_ends_jr | in_data_span | parent"
-          " | g_symsrc D/I/A/U/-/na | g_call>0 | g_jump>0")
+          " | g_symsrc D/I/A/U/-/na | g_call>0 | g_jump>0 | g_seed auto/s1/s2/s3/s4/-/na | xj>0")
     for cl in CLASSES:
         rows = [d for d in dis if d[1] == cl]
         if rows:
             pos = lambda x: x not in ("-", "n/a") and int(x) > 0
-            print("  %s %d | %d/%d/%d | %d | %d | %d | %d | %s | %d | %d" % (
+            print("  %s %d | %d/%d/%d | %d | %d | %d | %d | %s | %d | %d | %s | %d" % (
                 cl, len(rows), sum(d[5] == "auto" for d in rows), sum(d[5] == "txn" for d in rows),
                 sum(d[5] == "-" for d in rows), sum(d[6] > 0 for d in rows), sum(d[7] == "yes" for d in rows),
                 sum(d[8] != "-" for d in rows), sum(d[9] != "-" for d in rows),
                 "/".join(str(sum(d[11] == v for d in rows))
                          for v in ("DEFAULT", "IMPORTED", "ANALYSIS", "USER_DEFINED", "-", "n/a")),
-                sum(pos(d[12]) for d in rows), sum(pos(d[13]) for d in rows)))
+                sum(pos(d[12]) for d in rows), sum(pos(d[13]) for d in rows),
+                "/".join(str(sum(d[14] == v for d in rows)) for v in ("auto", "s1", "s2", "s3", "s4", "-", "n/a")),
+                sum(d[15] > 0 for d in rows)))
     OUT.mkdir(parents=True, exist_ok=True)
     fmt = lambda x: "-" if x is None else "0x%08x" % x
     (OUT / ("plant.tsv" if args.plant_start else "disagreements.tsv")).write_text(
         "# alias\tclass\tstart\tcensus_end\tghidra_end\tsrc\tjal_ref\tprev_ends_jr\tin_data_span\tparent"
-        "\tg_name\tg_symsrc\tg_call\tg_jump\n" +
-        "".join("%s\t%s\t0x%08x\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (a, cl, s, fmt(ce), fmt(ge), *ev)
+        "\tg_name\tg_symsrc\tg_call\tg_jump\tg_seed\txj\n" +
+        "".join("%s\t%s\t0x%08x\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\n" % (a, cl, s, fmt(ce), fmt(ge), *ev)
                 for a, cl, s, ce, ge, *ev in dis))
     if args.plant_start:
         hit = any(d[0] == pa and d[2] == pv for d in dis)
