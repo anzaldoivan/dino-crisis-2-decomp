@@ -662,7 +662,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_8005247C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_8005254C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80052634);
+void func_80052634(void)
+{
+    WORK->x228++;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80052654);
 
