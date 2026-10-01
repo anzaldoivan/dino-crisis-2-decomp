@@ -6,3 +6,4 @@ T3 | done | carve chain with closing cuts, revert on fail | - | tasks/T3.md | lo
 T4 | done | propagation registry, fail-closed dry run, e322 banked | - | tasks/T4.md | logs/T4.md | -
 T5 | done | reconcile ladder banks a standalone match | - | tasks/T5.md | logs/T5.md | -
 T6 | done | draw filter prints every refusal | - | tasks/T6.md | logs/T6.md | -
+T7 | done | wiring, card row, clean fleet and scanners gate | - | tasks/T7.md | logs/T7.md | -
