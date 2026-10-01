@@ -370,7 +370,8 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
 ### Twin band (T1, Phase 1.6)
 
 - **Command:** `bash tools/docker/dc.sh run python3 tools/twins.py --check` (scanner row `twins`); ~20-35 s, 8 cores.
-  Needs `asm/` + `build/*.ld` (`make -j build`; `dc.sh sync` drops both): else `REFUSED` rc 2.
+  Needs `asm/` + `build/*.ld` (`dc.sh sync` drops both): when missing it runs `make -j build` itself (log
+  `.run/twins/build.log`, prints `twins: built split asm (make -j build rc 0)`); build fails: `REFUSED` rc 2.
 - **Inputs:** game rows (kind=game) of `.run/census/functions.tsv` + `.run/census/dup.tsv`; both refreshed by running
   `tools/dup_census.py` when either is missing or older than its inputs (src/*.c, splat yaml, split stamps, asm, tool).
 - **Tokens:** `dup_census.exact_key` per function (relocation-normalised: J targets and hi/lo imm16 masked, trailing zero

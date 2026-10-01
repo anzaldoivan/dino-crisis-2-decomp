@@ -16,8 +16,8 @@ Prints `twins: T fns with >= 1 twin of G game fns`, `exact pairs reproduced: X o
 exact class found at distance 0 in both directions), `random-pair control: h of 10000 (<= 2%): ok|FAIL` (seed 1601,
 game pairs with different exact keys, h = pairs the band keeps), `open with banked twin: k` + one line per open fn.
 --check: rc 1 when X < N or the control FAILs. --fixture drop: the first exact pair's rows are dropped from the band
-output (negative control: --check must rc 1). asm/ or build/*.ld missing (after dc.sh sync, before make build):
-REFUSED rc 2. Notes: docs/ops/decomp-environment.md "Twin band".
+output (negative control: --check must rc 1). asm/ or build/*.ld missing (after dc.sh sync): runs `make -j build`
+(log .run/twins/build.log), then census + dup.tsv refresh as stale; build fails: REFUSED rc 2. Notes: docs/ops/decomp-environment.md "Twin band".
 """
 import argparse
 import multiprocessing
@@ -103,8 +103,14 @@ def main(argv=None):
     ap.add_argument("--fixture", choices=("drop",))
     a = ap.parse_args(argv)
     if not (ROOT / "asm").is_dir() or not any((ROOT / "build").glob("*.ld")):  # dc.sh sync drops both
-        print("REFUSED: asm/ or build/*.ld missing (run `make -j build` first)")
-        return 2
+        log = ROOT / ".run/twins/build.log"  # self-build (T1.c2): flags live in the Makefile only (G69)
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with log.open("w") as fh:
+            rc = subprocess.run(["make", "-j", "build"], cwd=ROOT, stdout=fh, stderr=subprocess.STDOUT).returncode
+        if rc or not (ROOT / "asm").is_dir() or not any((ROOT / "build").glob("*.ld")):
+            print("REFUSED: asm/ or build/*.ld missing; make -j build rc %d (log %s)" % (rc, log.relative_to(ROOT)))
+            return 2
+        print("twins: built split asm (make -j build rc 0)")
     if stale():
         p = subprocess.run([sys.executable, str(ROOT / "tools/dup_census.py")], cwd=ROOT, capture_output=True, text=True)
         if p.returncode or stale():
