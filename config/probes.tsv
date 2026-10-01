@@ -1,0 +1,3 @@
+# config/probes.tsv -- probe rows for tools/probe.py (T3, Phase 1.4); see tools/probes/README.md. end exclusive; alias `self` = target is the probe's own object.
+# name	alias	start	end	c_path	notes
+probe_selftest	self	-	-	tools/probes/selftest.c	harness selftest: our own C, no game data
