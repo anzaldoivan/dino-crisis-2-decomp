@@ -175,3 +175,14 @@ Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 tw
 - BIN/DBMODULE.BIN 8 B = `jr ra; nop`.
 - Verdict: DBMODULE/DM_*/AT_EDIT/TEST* are placeholders, debug modules not shipped (same for MOT, SCR_LIT, AREA_JMP,
   VRAMVIEW). SYS_DEB judged separately ([above](#fam-sys-deb)).
+
+<a id="load-map"></a>
+## Load map
+
+- `config/loadmap.tsv`: generated (never hand-edited) by `tools/loadmap.py` from `extracted/retail/manifest.jsonl` +
+  `config/loadmap.evidence.tsv`; one row per manifest .BIN + SLUS_012.79, `path size sha1 class route base end status`.
+  end = header t_addr + t_size (exe), base + size (others), `-` when base is `-`.
+- Regenerate: `PY tools/loadmap.py`. Check: `PY tools/loadmap.py --check` (stale file, row set, classes, control rows =
+  exe + `status=proven` vs their sections here, built-in negative control).
+- N = rows with class exe or code.
+- N = 83 · rows 106 (tool output `rows=106 N=83`).
