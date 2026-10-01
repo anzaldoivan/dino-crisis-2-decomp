@@ -14,9 +14,14 @@ predicate is false leaves the disagreement counted (`failed`):
                 outside the census function at the start, 0 aligned pointer words equal to it (own file), not an s4
                 cross-program target (.run/ghidra_functions/xprog_targets.tsv, other fleet programs' jal/pointer
                 words), 0 Ghidra references to it (.run/ghidra_functions/<prog>.refs.tsv, DumpFunctions.java), and the
-                previous census function ends at the start with an unconditional transfer (jr, j, b) + delay slot.
+                previous census function ends at the start with an unconditional transfer (jr, j, b) + delay slot;
+  switch-case   (T2.c6) a ghidra-only start, or the ghidra_end of an end-ghidra-shorter row, equal to a target of a
+                config/boundaries.tsv `jtbl` row's table (targets = the table words read from the binary) whose jr
+                lies in the census function containing the start (end-ghidra-shorter: the census function at the
+                start, the target inside it). basis `jtbl <start>-<end>`, instrument `tools/boundaries.py jtbl`.
 --propose-exceptions writes .run/oracle/proposed_exceptions.tsv (`alias start kind predicate basis instrument`) for
-every residual census-only / ghidra-only row; only predicate-true rows may be copied into the config.
+every residual census-only / ghidra-only / end-ghidra-shorter row, one per candidate kind (ghidra-only: data-span
+and switch-case); only predicate-true rows may be copied into the config.
 C0020 line: the txn rows of config/ghidra/SLUS_012.79.switch_tables.tsv (switch functions Ghidra auto-analysis
 missed) whose jr lies inside an exe cache function (`k of 10 … (source txn n)`).
 Disagreement = a start in one list and not the other (class census-only | ghidra-only), or the same start with a
@@ -64,7 +69,10 @@ GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghi
 FILES = ROOT / ".run/extracted/retail/files"
 EVIDENCE = ROOT / ".run/ghidra_functions"
 SWITCHES = ROOT / "config/ghidra/SLUS_012.79.switch_tables.tsv"
-KIND_OF = {"ghidra-only": "data-span", "census-only": "unreferenced"}
+KINDS_OF = {"ghidra-only": ("data-span", "switch-case"), "census-only": ("unreferenced",),
+            "end-ghidra-shorter": ("switch-case",)}
+KINDS = ("data-span", "unreferenced", "switch-case")
+BOUNDARIES = ROOT / "config/boundaries.tsv"
 OUT = ROOT / ".run/oracle"
 CLASSES = ("census-only", "ghidra-only", "end-ghidra-shorter", "end-ghidra-longer")
 JR_RA = 0x03E00008
@@ -187,6 +195,26 @@ def pred_unreferenced(ca, s, word, jal, jmp, br, ptr, xprog, grefs):
         "-" if prev is None else "0x%08x" % prev, tr, *refs[:4], "n/a" if g is None else g)
 
 
+def jtbls(path, word):
+    """-> [(jr, start, end, {targets})] for the config/boundaries.tsv jtbl rows of loadmap path; targets read from the
+    binary's words in [start, end)."""
+    out = []
+    for r in census.rows(BOUNDARIES):
+        if len(r) > 4 and r[0] == path and r[1] == "jtbl":
+            s, e = int(r[2], 16), int(r[3], 16)
+            out.append((int(r[4].split()[0][3:], 16), s, e, {word(v) for v in range(s, e, 4)} - {None}))
+    return out
+
+
+def pred_switch_case(cl, ca, s, ge, tbls):
+    """switch-case: (true?, basis) -- see the module doc."""
+    cs, t = (parent(ca, s), s) if cl == "ghidra-only" else (s, ge)
+    if cs is None or not cs <= t < ca[cs]:
+        return False, None
+    j = next((x for x in tbls if cs <= x[0] < ca[cs] and t in x[3]), None)
+    return j is not None, j and "jtbl 0x%08x-0x%08x" % (j[1], j[2])
+
+
 def parent(fs, s):
     """the function in {start: end} fs strictly containing s (start < s < end), else None."""
     ks = sorted(fs)
@@ -270,7 +298,7 @@ def main(argv=None):
     if EXCEPTIONS.exists():
         for r in census.rows(EXCEPTIONS):
             r += [""] * (5 - len(r))
-            if not r[3].strip() or not r[4].strip() or r[2] not in KIND_OF.values():
+            if not r[3].strip() or not r[4].strip() or r[2] not in KINDS:
                 invalid += 1
             else:
                 exc.add((r[0], int(r[1], 16), r[2]))
@@ -279,7 +307,7 @@ def main(argv=None):
     if (EVIDENCE / "xprog_targets.tsv").exists():
         for r in census.rows(EVIDENCE / "xprog_targets.tsv"):
             xprog.add((r[0], int(r[1], 16)))
-    ek = {kd: {"applied": 0, "failed": 0} for kd in KIND_OF.values()}
+    ek = {kd: {"applied": 0, "failed": 0} for kd in KINDS}
     props, c0020 = [], None
     k, stale, nc, dis, ctl_case, applied, joined = 0, [], 0, [], None, 0, 0
     for alias in sorted(bins):
@@ -302,23 +330,28 @@ def main(argv=None):
         ca = cen.get(alias, {})
         grefs = read_refs(prog_of(alias))
         xp = {t for p, t in xprog if p == prog_of(alias)}
+        tbls = jtbls(b.path, word) if word else []
         if alias == "slus_012_79" and SWITCHES.exists():
             tx = [int(r[0], 16) for r in census.rows(SWITCHES) if len(r) > 4 and r[4] == "txn"]
             fs = [s for s in (j if j in gh else parent(gh, j) for j in tx) if s is not None]
             c0020 = (len(fs), len(tx), sum(gsrc.get(s) == "txn" for s in fs))
         for d in compare(b, ca, gh, word, cnt):
             s = d[1]
-            kind = KIND_OF.get(d[0])
-            if kind:
+            hit = False
+            for kind in KINDS_OF.get(d[0], ()):
                 pq = pred_data_span(dspans.get(alias, []), s) if kind == "data-span" else pred_unreferenced(
-                    ca, s, word, jal, jmp, br, ptr, xp, grefs)
+                    ca, s, word, jal, jmp, br, ptr, xp, grefs) if kind == "unreferenced" else pred_switch_case(
+                    d[0], ca, s, d[3], tbls)
                 if (alias, s, kind) in exc:
                     if pq[0]:
                         applied += 1
                         ek[kind]["applied"] += 1
-                        continue
+                        hit = True
+                        break
                     ek[kind]["failed"] += 1
                 props.append((alias, s, kind, pq[0], pq[1] or "-"))
+            if hit:
+                continue
             par = None
             if d[0] == "census-only":
                 par = parent(gh, s); par = par and "g:0x%08x" % par
@@ -387,7 +420,8 @@ def main(argv=None):
                 for a, cl, s, ce, ge, *ev in dis))
     if args.propose_exceptions:
         inst = {"data-span": "tools/census.py data spans",
-                "unreferenced": "tools/oracle_diff.py:%d" % pred_unreferenced.__code__.co_firstlineno}
+                "unreferenced": "tools/oracle_diff.py:%d" % pred_unreferenced.__code__.co_firstlineno,
+                "switch-case": "tools/boundaries.py jtbl"}
         (OUT / "proposed_exceptions.tsv").write_text("# alias\tstart\tkind\tpredicate\tbasis\tinstrument\n" + "".join(
             "%s\t0x%08x\t%s\t%s\t%s\t%s\n" % (a, s, kd, "true" if ok else "false", bs, inst[kd])
             for a, s, kd, ok, bs in props))

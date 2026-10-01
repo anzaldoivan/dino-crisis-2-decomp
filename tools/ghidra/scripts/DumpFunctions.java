@@ -17,7 +17,8 @@
 // then given a CreateFunctionCmd:
 //   s1  targets of every aligned `jal` word (opcode 000011) in the block that land in the block; repeated to a
 //       fixed point (until a pass creates no function);
-//   s2  then destinations of Ghidra references (any type) that are 4-aligned undefined bytes of the block;
+//   s2  then destinations of Ghidra references (any type) that are 4-aligned block addresses outside defined data
+//       (T2.c6: also when already disassembled, as s3; T2.c2-c5 required undefined bytes);
 //   s3  then values of aligned words outside instructions that are 4-aligned block addresses (T2.c2 required
 //       undefined bytes there; dropped T2.c3).
 //   sw  (T2.c5, after s2, before s4/s3) every function holding a `jr rs` (rs != ra) without computed-jump targets is
@@ -33,9 +34,22 @@
 // (opcode checked: Ghidra retypes a `j` to a function as a call) and none data, with at least one reference (an
 // implicit fall-through counts: instructions at entry-8/-4 in that range, entry-8 no jr/j/b), is
 // merged into the preceding row (size extended; its own row and evidence row dropped); e.g. a psx_ldr object-offset
-// label on a GCC epilogue reached by `j` from inside the previous function. Log: `DC2MERGE <prog> 0x<label> into
-// 0x<fn>`, `DC2MERGEREJ <prog> {reason=n}` (first|none|data|call|outside|self|other), `DC2MERGESELF` rows refused only
-// for refs from their own body; the DC2DUMPFUNCS line gains `sw=resolved/decompiled merged=n`.
+// label on a GCC epilogue reached by `j` from inside the previous function.
+// T2.c6 widening: jump/branch/fall-through/COMPUTED_JUMP refs are accepted from [prev entry, F end) (F = the label's
+// row; covers loop heads reached from its own body), but at least one must come from [prev entry, entry) (or the
+// implicit fall-through); a DATA ref is accepted when it comes from a word outside instructions whose value is the
+// entry and the entry has a COMPUTED_JUMP ref from [prev entry, F end) (a jump-table word of a switch in that range).
+// Runs (T2.c6): F end above is the end of the run: rows L1..Lk following prev merge together when each passes with
+// refs accepted from [prev entry, max end of L1..Lk) (labels jumping into each other, e.g. psx_ldr PDDIRRES_OBJ_*);
+// the largest such k is taken; passes repeat ascending to a fixed point. In a run the >= 1 reference may come from
+// anywhere in [prev entry, run end) outside the label's own row (alone: [prev entry, entry) as above). A row not merged is reported against
+// [prev entry, its own end).
+// Gap rule: acc = union of the Ghidra bodies of prev and the labels already merged into it; no merge when an
+// instruction lies in [acc max address + 1, entry) (code Ghidra disassembled outside prev's flow, e.g. a census
+// function it never made: psx_bin_st7 0x800d7b88 / psx_bin_st8 0x800d7be4 at T2.c5).
+// Log: `DC2MERGE <prog> 0x<label> into 0x<fn>`, `DC2MERGEREJ <prog> {reason=n}` (first|none|data|call|outside|gap|
+// other; T2.c5's `self` / DC2MERGESELF dropped at T2.c6), `DC2MERGEREJROW <prog> 0x<row> after 0x<prev> <reason>
+// <first offending ref from:type | ->` (T2.c6); the DC2DUMPFUNCS line gains `sw=resolved/decompiled merged=n`.
 // Also writes <outdir>/<program>.refs.tsv (T2.c5, untracked): `0x<to>\t<n>` reference destinations in the block with
 // their reference count (end of transaction), for tools/oracle_diff.py's `unreferenced` exception predicate.
 // Run read-only (never saved):
@@ -114,7 +128,8 @@ public class DumpFunctions extends GhidraScript {
             AddressIterator it = p.getReferenceManager().getReferenceDestinationIterator(blk, true);
             while (it.hasNext()) {
                 Address d = it.next();
-                if (d.getOffset() % 4 == 0 && blk.contains(d) && undefined(p, d)) s2.add(d.getOffset());
+                if (d.getOffset() % 4 == 0 && blk.contains(d) && p.getListing().getDefinedDataContaining(d) == null)
+                    s2.add(d.getOffset());                           // T2.c6: disassembled targets too (was undefined(p, d))
             }
             for (long t : s2) recover(p, t, 1, made, tried);
             switchStep(p, sw);
@@ -209,11 +224,6 @@ public class DumpFunctions extends GhidraScript {
         return out;
     }
 
-    private static boolean undefined(Program p, Address a) {
-        Listing l = p.getListing();
-        return l.getInstructionContaining(a) == null && l.getDefinedDataContaining(a) == null;
-    }
-
     private final Map<Long, String> seedOf = new HashMap<>();
 
     /** Seed t (class k): skip if inside a function; else disassemble + CreateFunctionCmd. */
@@ -302,47 +312,112 @@ public class DumpFunctions extends GhidraScript {
         return op == 1 && (((w >>> 16) & 0x1f) >= 16 && ((w >>> 16) & 0x1f) <= 19);
     }
 
+    /** T2.c6: data ref from `from` to a: a word outside instructions holding a, a having a COMPUTED_JUMP ref from [lo, hi). */
+    private static boolean jtblWord(Program p, Address from, Address a, long lo, long hi) throws Exception {
+        if (p.getListing().getInstructionContaining(from) != null || (p.getMemory().getInt(from) & 0xFFFFFFFFL) != a.getOffset())
+            return false;
+        for (Reference r : p.getReferenceManager().getReferencesTo(a)) {
+            long f = r.getFromAddress().getOffset();
+            if (r.getReferenceType().isComputed() && r.getReferenceType().isJump() && f >= lo && f < hi) return true;
+        }
+        return false;
+    }
+
+    private static long rowEnd(TreeMap<Long, String> rows, long e) {
+        return e + Long.parseLong(rows.get(e).split("\t")[1].substring(2), 16);
+    }
+
+    /** n3 test of label row e joining the run headed by lo (bodies acc), refs accepted from [lo, hi); null = ok, else
+     *  the reason (at[0] = first offending ref `from:type`). own = e's own row end. */
+    private String why(Program p, long lo, long e, long own, long hi, AddressSet acc, String[] at) throws Exception {
+        String why = null;
+        at[0] = "-";
+        int n = 0;
+        Address a = p.getAddressFactory().getDefaultAddressSpace().getAddress(e);
+        Listing l = p.getListing();
+        // implicit fall-through: instructions at e-8 and e-4 inside [lo, e), e-8 no unconditional transfer
+        if (e - 8 >= lo && l.getInstructionAt(a.subtract(8)) != null && l.getInstructionAt(a.subtract(4)) != null
+                && !uncondWord(p.getMemory().getInt(a.subtract(8)))) n++;
+        for (Reference r : p.getReferenceManager().getReferencesTo(a)) {
+            RefType t = r.getReferenceType();
+            long from = r.getFromAddress().getOffset();
+            boolean mem = r.getFromAddress().isMemoryAddress();
+            String bad = !mem ? "other"
+                    : t.isData() ? (jtblWord(p, r.getFromAddress(), a, lo, hi) ? null : "data")
+                    : !(t.isJump() || t.isCall() || t.isFallthrough()) ? "other"
+                    : callWord(p.getMemory().getInt(r.getFromAddress())) ? "call"
+                    : from >= lo && from < hi ? null : "outside";       // T2.c6: own body / run up to hi too
+            if (bad == null && !t.isData() && (from < e || from >= own)) n++;   // >= 1 ref from the run outside e's row
+            if (bad != null && why == null) { why = bad; at[0] = String.format("0x%08x:%s", from, t.getName()); }
+        }
+        if (why == null && n == 0) why = "none";
+        long accEnd = acc.getMaxAddress().getOffset() + 1;            // T2.c6 gap rule (see header)
+        if (why == null && accEnd < e
+                && l.getInstructions(new AddressSet(a.getNewAddress(accEnd), a.subtract(1)), true).hasNext())
+            why = "gap";
+        return why;
+    }
+
     /** n3 label merge (see header). */
     private void mergeLabels(Program p, TreeMap<Long, String> rows, int[] merged) throws Exception {
-        Long prev = null;
-        Map<String, Integer> rej = new TreeMap<>();                  // diagnostic: why a row was not merged
-        for (long e : new ArrayList<>(rows.keySet())) {
-            String why = prev == null ? "first" : null;
-            int n = 0;
-            if (why == null) {
-                Address a = p.getAddressFactory().getDefaultAddressSpace().getAddress(e);
-                Function fe = p.getFunctionManager().getFunctionAt(a);
-                Listing l = p.getListing();
-                // implicit fall-through: instructions at e-8 and e-4 inside [prev, e), e-8 no unconditional transfer
-                if (e - 8 >= prev && l.getInstructionAt(a.subtract(8)) != null && l.getInstructionAt(a.subtract(4)) != null
-                        && !uncondWord(p.getMemory().getInt(a.subtract(8)))) n++;
-                for (Reference r : p.getReferenceManager().getReferencesTo(a)) {
-                    n++;
-                    RefType t = r.getReferenceType();
-                    long from = r.getFromAddress().getOffset();
-                    boolean mem = r.getFromAddress().isMemoryAddress();
-                    String bad = !mem ? "other" : t.isData() ? "data"
-                            : !(t.isJump() || t.isCall() || t.isFallthrough()) ? "other"
-                            : callWord(p.getMemory().getInt(r.getFromAddress())) ? "call"
-                            : from >= prev && from < e ? null
-                            : fe != null && fe.getBody().contains(r.getFromAddress()) ? "self" : "outside";
-                    if (bad != null && (why == null || why.equals("self"))) why = bad;
-                }
-                if (why == null && n == 0) why = "none";
-            }
-            if (why != null) {
-                rej.merge(why, 1, Integer::sum);
-                if (why.equals("self")) println(String.format("DC2MERGESELF %s 0x%08x after 0x%08x", p.getName(), e, prev));
-                prev = e;
-                continue;
-            }
-            String[] pr = rows.get(prev).split("\t"), cu = rows.get(e).split("\t");
-            long end = Math.max(prev + Long.parseLong(pr[1].substring(2), 16), e + Long.parseLong(cu[1].substring(2), 16));
-            rows.put(prev, String.format("0x%08x\t0x%x\t%s", prev, end - prev, pr[2]));
-            rows.remove(e);
-            merged[0]++;
-            println(String.format("DC2MERGE %s 0x%08x into 0x%08x", p.getName(), e, prev));
+        Map<Long, AddressSet> acc = new HashMap<>();                // T2.c6: row -> its body + bodies merged into it
+        for (Map.Entry<Long, String> r : rows.entrySet()) {
+            Address a = p.getAddressFactory().getDefaultAddressSpace().getAddress(r.getKey());
+            Function f = p.getFunctionManager().getFunctionAt(a);
+            long z = Long.parseLong(r.getValue().split("\t")[1].substring(2), 16);
+            acc.put(r.getKey(), f != null ? new AddressSet(f.getBody()) : new AddressSet(a, a.add(z - 1)));
         }
+        Map<String, Integer> rej;                                    // diagnostic: why a row was not merged (last pass)
+        List<String> rejRows;
+        String[] at = {"-"};
+        while (true) {                                               // T2.c6: passes to a fixed point
+            int before = merged[0];
+            rej = new TreeMap<>();
+            rejRows = new ArrayList<>();
+            List<Long> ks = new ArrayList<>(rows.keySet());
+            Long prev = null;
+            for (int i = 0; i < ks.size(); ) {
+                long e = ks.get(i);
+                if (prev == null) { rej.merge("first", 1, Integer::sum); prev = e; i++; continue; }
+                // run candidates: rows i.. passing with refs accepted from anywhere above prev
+                AddressSet run = new AddressSet(acc.get(prev));
+                int j = i;
+                while (j < ks.size() && why(p, prev, ks.get(j), rowEnd(rows, ks.get(j)), Long.MAX_VALUE, run, at) == null) run.add(acc.get(ks.get(j++)));
+                int k = j - i;                                       // largest k: rows i..i+k-1 all pass with hi = run end
+                for (; k > 0; k--) {
+                    long hi = 0;
+                    for (int t = i; t < i + k; t++) hi = Math.max(hi, rowEnd(rows, ks.get(t)));
+                    AddressSet r2 = new AddressSet(acc.get(prev));
+                    boolean ok = true;
+                    for (int t = i; t < i + k && ok; t++) {
+                        ok = why(p, prev, ks.get(t), rowEnd(rows, ks.get(t)), hi, r2, at) == null;
+                        r2.add(acc.get(ks.get(t)));
+                    }
+                    if (ok) break;
+                }
+                if (k == 0) {
+                    String w = why(p, prev, e, rowEnd(rows, e), rowEnd(rows, e), acc.get(prev), at);
+                    if (w == null) w = "run";                         // passes alone only inside a longer failing run
+                    rej.merge(w, 1, Integer::sum);
+                    rejRows.add(String.format("DC2MERGEREJROW %s 0x%08x after 0x%08x %s %s", p.getName(), e, prev, w, at[0]));
+                    prev = e;
+                    i++;
+                    continue;
+                }
+                for (int t = i; t < i + k; t++) {
+                    long l = ks.get(t);
+                    long end = Math.max(rowEnd(rows, prev), rowEnd(rows, l));
+                    rows.put(prev, String.format("0x%08x\t0x%x\t%s", prev, end - prev, rows.get(prev).split("\t")[2]));
+                    rows.remove(l);
+                    acc.get(prev).add(acc.remove(l));
+                    merged[0]++;
+                    println(String.format("DC2MERGE %s 0x%08x into 0x%08x", p.getName(), l, prev));
+                }
+                i += k;
+            }
+            if (merged[0] == before) break;
+        }
+        for (String r : rejRows) println(r);
         println("DC2MERGEREJ " + p.getName() + " " + rej);
     }
 }

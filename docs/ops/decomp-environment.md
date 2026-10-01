@@ -214,7 +214,8 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   transaction rolled back (`endTransaction(tx,false)`, C0020; `-readOnly`, nothing persists). Seeds from program bytes +
   Ghidra only (never census/splat/config); block = initialized blocks starting in [0x80000000, 0xA0000000). s1 targets
   of every aligned `jal` word landing in the block, to a fixed point; then s2 destinations of Ghidra references (any
-  type) at 4-aligned undefined bytes; then s3 values of aligned words outside instructions that are 4-aligned block
+  type) at 4-aligned block addresses outside defined data (T2.c6: also when already disassembled; was undefined bytes
+  only; s2 made/tried exe 132/259 -> 515/642, census-only 73 -> 13); then s3 values of aligned words outside instructions that are 4-aligned block
   addresses (T2.c3: s1/s3 targets need only lie outside every function body, disassembled or not); then s4 (T2.c4)
   cross-program targets: `xprog_targets.py` (host, program bytes + loadmap only) lists jal targets / pointer words in
   OTHER fleet programs whose loadmap window `[base, end)` does not overlap this one's, landing in this window
@@ -229,9 +230,20 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   jump/branch/call/fall-through from `[preceding row entry, entry)` (address range; implicit fall-through = instructions
   at entry-8/-4 in that range, entry-8 not `jr`/`j`/`b`), none from a `jal`/`jalr`/`bal`-class word (opcode checked:
   Ghidra types a `j` to a function as a call), none data, ≥ 1 reference, is merged into the preceding row (size
-  extended, row + evidence row dropped). Log: `DC2MERGE <prog> <label> into <fn>`, `DC2MERGEREJ <prog> {reason=n}`,
-  `DC2MERGESELF`; `dump_functions.sh` prints `merged labels: n (fleet)` (447 at T2.c5; exe 287, incl. 0x80071d20
+  extended, row + evidence row dropped). Log: `DC2MERGE <prog> <label> into <fn>`, `DC2MERGEREJ <prog> {reason=n}`;
+  `dump_functions.sh` prints `merged labels: n (fleet)` (447 at T2.c5; 500 at T2.c6, exe 457, incl. 0x80071d20
   `INTR_OBJ_68C` into 0x80071cb8). Headless line gains `sw=resolved/decompiled merged=n`.
+  T2.c6 rule (prev = the preceding remaining row, F = the label's row): jump/branch/fall-through/`COMPUTED_JUMP` refs
+  accepted from `[prev entry, F end)` (own-body loop heads); a DATA ref accepted when it comes from a word outside
+  instructions whose value is the entry and the entry has a `COMPUTED_JUMP` ref from `[prev entry, F end)` (jump-table
+  word); ≥ 1 non-data ref from `[prev entry, entry)` (or the implicit fall-through) still required; no call-class word,
+  no other data / foreign ref. **Runs:** rows L1..Lk after prev merge together when each passes with F end = max end of
+  L1..Lk and its ≥ 1 ref from the run outside its own row (labels jumping into each other, e.g. `PDDIRRES_OBJ_*`,
+  `SYS_OBJ_*`); largest k; ascending passes to a fixed point. **Gap rule:** acc = union of the Ghidra bodies of prev and
+  the labels already merged into it; no merge when any instruction lies in `[acc max address + 1, entry)` (code Ghidra
+  disassembled outside prev's flow; fixed the T2.c5 end-ghidra-longer rows psx_bin_st7 0x800d7b88 / psx_bin_st8
+  0x800d7be4). Reject reasons `first|none|data|call|outside|gap|other` (T2.c5 `self`/`DC2MERGESELF` gone); per row
+  `DC2MERGEREJROW <prog> <row> after <prev> <reason> <from:type|->` (last pass).
 - **refs sidecar (T2.c5):** `.run/ghidra_functions/<prog>.refs.tsv` (`to refs`, reference destinations in the block,
   end of txn) and `xprog_targets.tsv` are copied into the volume with the evidence sidecars.
   Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3= s4=`. Generator hash also
@@ -260,7 +272,11 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `unreferenced` = census-only start with 0 jal (own file), 0 `j`/branch in census text from outside its census
   function, 0 aligned pointer word (own file), not an s4 target (`xprog_targets.tsv`), 0 Ghidra refs (`refs.tsv`),
   previous census function ending at the start with `jr`/`j`/`b` + delay slot (instrument
-  `tools/oracle_diff.py:<pred_unreferenced line>`). `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
+  `tools/oracle_diff.py:<pred_unreferenced line>`); `switch-case` (T2.c6) = a ghidra-only start, or the ghidra_end of
+  an end-ghidra-shorter row, equal to a target of a `config/boundaries.tsv` `jtbl` row's table (words read from the
+  binary) whose jr lies in the census function containing the start (shorter: the census function at the start, target
+  inside it); basis `jtbl <start>-<end>`, instrument `tools/boundaries.py jtbl`. Candidate kinds per class: ghidra-only
+  data-span + switch-case, census-only unreferenced, end-ghidra-shorter switch-case. `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
   (`alias start kind predicate basis instrument`); copy only `predicate=true` rows. Also printed: `C0020: k of 10 exe
   switch functions present (source txn n)` (txn rows of `config/ghidra/SLUS_012.79.switch_tables.tsv` whose jr lies in
   an exe cache function).
