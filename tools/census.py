@@ -811,7 +811,7 @@ def main(argv=None):
             print("fixture libgame: %s 0x%08x lib -> game" % (EXE, r[i][1]))
     cok, nprobe = controls(bins, results)
     if full:
-        cok &= nprobe == 5
+        cok &= nprobe == 6  # was 5; T5.c1 added the func_80052634 probe row
     good = cok and tot["P"] == 0 and tot["T"] == 0 and tails_in == 0
     if a.check:
         good &= unk == 0
