@@ -7,3 +7,4 @@ T3.1 | done | SLUS load proven with fixed libcard SMC exclusions | - | tasks/T3.
 T4 | done | loader routes, fleet classification, ranked bases | - | tasks/T4.md | logs/T4.md | -
 T5 | done | overlay load addresses byte-proven per loader class | - | tasks/T5.md | logs/T5.md | -
 T6 | done | load map generator with control rows | - | tasks/T6.md | logs/T6.md | -
+T7 | done | jump-table spans and forced boundaries | - | tasks/T7.md | logs/T7.md | -
