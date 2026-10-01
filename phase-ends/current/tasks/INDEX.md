@@ -7,3 +7,4 @@ T4 | done | probes run down the ladder; the fingerprint verdict | - | tasks/T4.m
 T5 | done | the pin wired into the build | - | tasks/T5.md | logs/T5.md | -
 T6 | done | c subsegments from a tracked unit list, zero C bodies | - | tasks/T6.md | logs/T6.md | -
 T7 | done | first functions banked in their real units | - | tasks/T7.md | logs/T7.md | -
+T8 | done | no-ROM compile-only job | - | tasks/T8.md | logs/T8.md | -
