@@ -24,6 +24,12 @@ RUN git clone --depth 1 --branch "$MKPSXISO_TAG" --recurse-submodules --shallow-
 RUN python3 -m venv /opt/splat \
     && /opt/splat/bin/pip install --no-cache-dir \
       'splat64[mips]==0.41.0' spimdisasm==1.42.4 rabbitizer==1.16.2
+# Candidate compilers (phase 1.4 T1): old-gcc psx builds, esa PsyQ CC1PSX.EXE, maspsx, wibo → /opt/cc/<name>/.
+# sha256-pinned in config/toolchains.tsv (named build context `cfg`, see dc.sh build). No pin chosen yet.
+COPY --from=cfg toolchains.tsv /usr/local/share/toolchains.tsv
+COPY fetch_toolchain.sh /usr/local/bin/fetch_toolchain.sh
+RUN chmod +x /usr/local/bin/fetch_toolchain.sh \
+    && TOOLCHAINS_TSV=/usr/local/share/toolchains.tsv fetch_toolchain.sh /opt/cc \
+    && TOOLCHAINS_TSV=/usr/local/share/toolchains.tsv fetch_toolchain.sh --verify /opt/cc
 WORKDIR /work
-# Build:  docker build --platform linux/amd64 -t <project>-build .
-# TODO(phase-4): add the pinned compiler's own packages when the pin needs them.
+# Build:  docker build --platform linux/amd64 --build-context cfg=config -t <project>-build .

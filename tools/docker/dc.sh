@@ -24,7 +24,8 @@ usage() { echo "usage: dc.sh build [docker-build args…] | sync | disc <dir> | 
 sub="$1"; shift
 case "$sub" in
   build)
-    exec docker build --platform "$PLAT" -t "$IMG" "$@" -f tools/docker/Dockerfile tools/docker
+    # context stays tools/docker (repo root holds ignored game data); `cfg` = config/ for toolchains.tsv
+    exec docker build --platform "$PLAT" -t "$IMG" --build-context cfg=config "$@" -f tools/docker/Dockerfile tools/docker
     ;;
   sync)
     docker volume inspect "$VOL" >/dev/null 2>&1 || docker volume create "$VOL" >/dev/null

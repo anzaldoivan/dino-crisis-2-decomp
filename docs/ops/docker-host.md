@@ -69,3 +69,31 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 - Odd-size tail: shrink-only trim to the target size when `size(build) > size(target)` and the excess ≤ 3 B (empty input sections under `SUBALIGN(4)` pad the end).
 - Check: `(cd build && sha1sum -c ../config/check.<alias>.sha)`; on mismatch the image is kept as `build/<alias>.bin.bad`, make prints `FAILED sha1: <alias>` and exits non-zero. Also `FAILED split|assemble|link: <alias>`.
 - Layout options are in the generated YAMLs (`tools/splat_gen.py`): `subalign: 4`, `ld_align_section_vram_end: False`, `asset_path: asm/<alias>/assets`, `generated_asm_macros_directory: build/<alias>/include`.
+
+## Candidate toolchains (phase 1.4 T1)
+- Fetched 2026-10-01 into the image at `/opt/cc/<name>/` by `tools/docker/fetch_toolchain.sh` from `config/toolchains.tsv` (url + sha256 per row; mismatch → exit 1, nothing unpacked; stamp `/opt/cc/<name>/.sha256`). No candidate is the pin. binutils stays 2.42.
+- Build context stays `tools/docker`; `dc.sh build` adds named context `--build-context cfg=config` (Dockerfile `COPY --from=cfg toolchains.tsv`). In-image copies: `/usr/local/share/toolchains.tsv`, `/usr/local/bin/fetch_toolchain.sh`.
+- Image id after this layer `sha256:bb40c3916d1df66e70fc3936d5b41c31ad147d3e11b810aee02d5a2f1dbf876c`.
+- Commands:
+  - fetch: `fetch_toolchain.sh [--only <name>…] <dest>` (image build runs it with `TOOLCHAINS_TSV=/usr/local/share/toolchains.tsv … /opt/cc`).
+  - verify: `bash tools/docker/dc.sh sync && bash tools/docker/dc.sh run bash tools/docker/fetch_toolchain.sh --verify /opt/cc` → `loader: 1 ok`, `toolchains: 13 ok`, rc 0.
+  - sha mismatch check: a scratch tsv with the wibo sha zeroed, `TOOLCHAINS_TSV=.run/t1/bad.tsv fetch_toolchain.sh --only wibo .run/t1/badcc` → `sha256 mismatch for wibo`, rc 1, dest empty.
+  - smoke (scratch `/work/.run/t1/smoke`, not tracked), per candidate: `mipsel-linux-gnu-cpp -P -undef -nostdinc -D__GNUC__=2 smoke.c -o smoke.i`; `<cc1> -quiet -O2 -G0 -mips1 -fno-builtin smoke.i -o <n>.s` (old-gcc: `/opt/cc/<n>/cc1`; esa: `/opt/cc/wibo/wibo /opt/cc/<n>/CC1PSX.EXE`); `python3 /opt/cc/maspsx/maspsx.py --aspsx-version=2.79 <n>.s | mipsel-linux-gnu-as -march=r3000 -mabi=32 -G0 -o <n>.o -`. Banner: `<cc1> -version smoke.i -o /dev/null`. smoke.c = 5 lines (`int g;` + `add(a,b)`).
+- Smoke "ok" = `<n>.o` is `ELF 32-bit LSB relocatable, MIPS`. 11 of 12 cc1 builds ok; psyq3.6 DROPPED.
+- old-gcc release 0.17, url `https://github.com/decompals/old-gcc/releases/download/0.17/<name>.tar.gz` (flat tar: cc1 cc1plus cpp g++ gcc). `file` of every cc1: `ELF 32-bit LSB executable, Intel 80386, version 1 (GNU/Linux), statically linked` (runs under the amd64 emulation as is).
+  - gcc-2.7.2-psx · sha256 `500a459b3485e885a8d302cac23c2a4632f3900e03a09153f6190699fd723571` · `GNU C version 2.7.2 [AL 1.1, MM 40] Sony Playstation compiled by GNU C version 9.4.0.` · smoke ok
+  - gcc-2.8.0-psx · `1a3c956fe8aea5ebdb251749d95de2c84f023530584d7bd663744b5ec24050b7` · `GNU C version 2.8.0 (mips-sony-psx) compiled by GNU C version 9.4.0.` · ok
+  - gcc-2.8.1-psx · `f6f6e883942d4d3289d048236c672e71ed410e546aaae8ff655952f1567e1be0` · `GNU C version 2.8.1 (mips-sony-psx) compiled by GNU C version 9.4.0.` · ok
+  - gcc-2.91.66-psx · `f773a0a9659fa4ff74313ac4363d939312e8125675cd09ad9f8c1202f587f1fd` · `GNU C version egcs-2.91.66 19990314 (egcs-1.1.2 release) (mips-sony-psx) compiled by GNU C version 9.4.0.` · ok
+  - gcc-2.95.2-psx · `932ed3669710a82b12570c29c46ff42989b6505b2af10db84d4551d55dfc0b1c` · `GNU C version 2.95.2 19991024 (release) (mips-sony-psx) compiled by GNU C version 9.4.0.` · ok
+- esa, url `https://github.com/mkst/esa/releases/download/psyq-binaries/<name>.tar.gz` (one top dir, stripped). `file` of CC1PSX.EXE: `PE32 executable (console) Intel 80386, for MS Windows, 4|5 sections` except psyq3.6.
+  - psyq3.6 · `9445f4cd871ca85b764b8d2746b6122750af17ecfe2d6e8aae41d15461d8c41d` · `file`: `MS-DOS executable, MZ for MS-DOS, COFF` · no banner (README: `GNU C++ 2.7.2.SN.1 [AL 1.1, MM 40] Sony Playstation`) · **DROPPED**: `Failed to load PE image /opt/cc/psyq3.6/CC1PSX.EXE` (DOS exe; the tarball ships a `dosemurc`, i.e. needs a DOS emulator, not wibo). Fetched + verified anyway.
+  - psyq4.0 · `f25a4f6f044eb1b344bbbd3291aa9a4fc1a1124fc637eae9522c0a117d940e28` · `GNU C version 2.7.2.SN32.3.7.0002 [AL 1.1, MM 40] Sony Playstation compiled by CC.` · ok
+  - psyq4.1 · `2a2650ceb5eaa73fdc581bec4a85ccaa6ff9eeea8a4810be25a638f3cd2ebac4` · `GNU C version cygnus-2.7.2-970404 SN32.3.7.0004 (SonyPSX) compiled by CC.` · ok
+  - psyq4.3 · `577038d66507d3aa5423de0ba3f540e121a4f60f637f4794aa4350135d4f9a46` · `GNU C version 2.8.0 SN32 Build 4.0.0007 (SonyPlayStation) compiled by CC.` · ok
+  - psyq4.4 · `72e73934bab0d51933eb95af514afb14f3d432f01530eac3ddb16dfbb57ab66c` · `GNU C version 2.8.1 SN32 BUILD 4.0.0010 (PSX) compiled by CC.` · ok
+  - psyq4.5 · `75f28034f6844f0f7633e3f17443727865c8955da1cd19147db2c760b40f14f7` · `GNU C version egcs-2.91.66 19990314 (egcs-1.1.2 release) (PSX) compiled by CC.` · ok
+  - psyq4.6 · `635603e09a452c9c2923492fea8b8eb051959dd94f240933b88e94866814b894` · `GNU C version 2.95.2 19991024 BUILD 4.0.0030 (PSX) compiled by CC.` · ok
+- maspsx: `mkst/maspsx` commit `7686f845a181700534c83c0419183e38aeb3e49c` (HEAD 2026-10-01), `https://github.com/mkst/maspsx/archive/<commit>.tar.gz`, sha256 `604f5422662aaa7cebb0d7a183c4fd3152a27e261e168808eba29b1c6ad5cdd2`; run as `python3 /opt/cc/maspsx/maspsx.py` (image python3 3.12, no extra deps).
+- wibo 1.2.0 (latest release 2026-10-01), `https://github.com/decompals/wibo/releases/download/1.2.0/wibo-i686`, sha256 `2575d3b0a2f408b2c2b0850db56f1af5d005a138394a6774eba77b6708ecc304`; `file`: `ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, … with debug_info, not stripped`; `wibo --version` → `wibo 1.2.0 (Linux i686)`.
+  - The `wibo-x86_64` asset of the same release fails under this host's emulation on every CC1PSX.EXE: `rosetta error: invalid gdt selector index 4` + `Trace/breakpoint trap` (also `-debug`). The i686 build runs. Rosetta is thus the emulation backend in use (see Host).
