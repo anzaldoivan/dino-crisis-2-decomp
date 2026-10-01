@@ -40,4 +40,4 @@ allow: extracted/retail/manifest.sha1
 fixture:  config/firewall-fixture.sha1
 required: extracted/retail/manifest.jsonl        # the extraction manifest (T3)
 required: config/medium.sha1                     # the medium's own track/image hash (T3)
-pending:  config/check.*.sha                     # TODO(phase-3): the per-binary contracts (a glob) — promote to required:
+required: config/check.*.sha                     # the per-binary contracts (a glob; rom_hashes expands it, a non-match fails) (T5)
