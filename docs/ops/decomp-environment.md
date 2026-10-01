@@ -317,6 +317,30 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
 - **Hash:** `generator sha256` = sha256(DumpFunctions.java + dump_functions.sh bytes + `<ghidra>\n<loadmap sha1>\n<base>\n`);
   a mismatch → `stale: <prog>`, exit 1. Controls: `planted start detected`, `stale hash detected`.
 
+### Duplication census (T3, Phase 1.5)
+
+- **Command:** `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run python3
+  tools/dup_census.py --check` (runs `tools/census.py` first). `--fixture nomask|nearall` (rc 1 each, no dup.tsv write).
+  Output `.run/census/dup.tsv` `alias start size tier class_id copies reach` (reach = size × copies), census order;
+  two runs byte-equal. Empty functions.tsv → `REFUSED`, rc 2.
+- **Words:** asm `/* off vram word */` lines; C-defined functions (no asm lines; 5, printed `mask source data-flow: n
+  functions`) from the extracted binary via the yaml code-segment offset. Trailing zero words stripped from both keys.
+- **Exact key:** all words, J/JAL targets masked; imm16 masked on asm-annotated lines: `%hi(`/`%lo(` or splat raw-pair
+  forms `(0x… >> 16)` / `(0x… & 0xFFFF)` (kind A). Kind B: an I-type (addiu/ori/load/store, `LO_OPS`) whose rs was last
+  written, in program order within the function, by an annotated hi line, directly or via `addu` propagation, is masked
+  even with a raw operand (splat symbolizes only the first lo of a %hi reg). Masks never keyed on address value or the
+  relocator's pair finder. C-defined functions: data-flow lui/lo pairs with address in [0x80000000, 0x80200000).
+- **Near key:** op/rs/rt/rd/funct kept; imm16, shamt, J target masked; COP0/COP2 non-memory words whole.
+- **Tiers:** `exact` (exact key shared by ≥ 2), else `near` (near key shared by ≥ 2), else `unique`. Class ids `e<n>`,
+  `n<n>` ordered by first member (alias, start).
+- **Control 1 (relocation, known-true):** an independent word relocator moves J targets and data-flow hi/lo pairs inside
+  the binary's loadmap range by delta 0x12340; every function with a moved field must keep its exact key (k = n).
+- **Control 2 (near false positives):** seed 1505, 10000 random pairs from different exact classes; near-key hits ≤ 1%.
+- **Fixtures:** `nomask` (all hi/lo masking off → control 1 FAIL), `nearall` (every near key equal → control 2 FAIL).
+- **Fleet (T3.c2, 2026-10-01):** 3911 functions, 1228852 bytes. Exact 364 classes, 1561 functions, 306844 bytes; near
+  95 classes, 256 functions, 50808 bytes; unique tail 2094 functions, 871200 bytes. Control 1 `3032 of 3032` (22903
+  fields moved); control 2 6 of 10000 (0.06%). Fixtures: nomask 1191 of 3032; nearall 10000 of 10000.
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything

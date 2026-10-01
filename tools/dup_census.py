@@ -30,6 +30,8 @@ SEED, PAIRS = 1505, 10000
 RAM = (0x80000000, 0x80200000)  # data-flow mask range for C-defined functions (KSEG0 main RAM)
 LO_OPS = {0x08, 0x09, 0x0D} | set(range(0x20, 0x27)) | {0x28, 0x29, 0x2A, 0x2B, 0x2E, 0x32, 0x3A}
 NOWRITE_FUNCTS = {0x08, 0x0C, 0x0D, 0x11, 0x13, 0x18, 0x19, 0x1A, 0x1B}  # jr syscall break mthi mtlo mult div
+HI_ANN = re.compile(r"%hi\(|\(0x[0-9A-Fa-f]+ >> 16\)")  # asm-annotated hi: `%hi(sym)` or splat raw `(0x… >> 16)`
+LO_ANN = re.compile(r"%lo\(|\(0x[0-9A-Fa-f]+ & 0xFFFF\)")  # asm-annotated lo: `%lo(sym)` or raw `(0x… & 0xFFFF)`
 
 
 def writes(w):
@@ -74,6 +76,31 @@ def pairs(words):
         d = writes(w)
         if d is not None:
             hi.pop(d, None)
+    return out
+
+
+def hi_reuse(words, his):
+    """Exact-key mask rule kind B (asm-annotation driven, independent of pairs()/the relocator): an I-type in LO_OPS
+    whose rs was last written, in program order within the function, by an asm-annotated hi line (his[i]), directly
+    or through `addu` propagation as in pairs(), has its imm16 masked even when its own asm operand is raw
+    (splat symbolizes only the first lo of a %hi register). -> set of word indices."""
+    hi, out = set(), set()
+    for i, w in enumerate(words):
+        op, rs, rt = w >> 26, (w >> 21) & 31, (w >> 16) & 31
+        if op == 0x0F:
+            if rt:
+                (hi.add if his[i] else hi.discard)(rt)
+            continue
+        if op == 0 and (w & 63) == 0x21:
+            rd = (w >> 11) & 31
+            if (rs in hi or rt in hi) and rd:
+                hi.add(rd)
+                continue
+        if op in LO_OPS and rs in hi:
+            out.add(i)
+        d = writes(w)
+        if d is not None:
+            hi.discard(d)
     return out
 
 
@@ -128,7 +155,8 @@ def near_key(words, fixture):
 
 
 def read_asm(alias):
-    """-> {vram: (word, has %hi/%lo)} from every `/* off vram word */` line."""
+    """-> {vram: (word, annotated hi/lo, annotated hi)} from every `/* off vram word */` line; annotated = `%hi(`/
+    `%lo(` or the raw-pair forms `(0x… >> 16)` / `(0x… & 0xFFFF)` (exact-key mask kind A)."""
     m_ = {}
     d = ROOT / "asm" / alias
     for f in sorted(d.rglob("*.s")):
@@ -138,10 +166,12 @@ def read_asm(alias):
                 continue
             v = int(m.group(1), 16)
             w = int.from_bytes(bytes.fromhex(m.group(2)), "little")
-            hl = "%hi(" in m.group(4) or "%lo(" in m.group(4)
+            hi = bool(HI_ANN.search(m.group(4)))
+            hl = hi or bool(LO_ANN.search(m.group(4)))
             if v in m_ and m_[v][0] != w:
                 sys.exit("dup_census: %s 0x%x: conflicting words in asm" % (alias, v))
-            m_[v] = (w, m_.get(v, (0, False))[1] or hl)
+            o = m_.get(v, (0, False, False))
+            m_[v] = (w, o[1] or hl, o[2] or hi)
     return m_
 
 
@@ -176,6 +206,8 @@ def load(fixture):
         if all(v in a for v in vs):
             words = [a[v][0] for v in vs]
             masks = [a[v][1] for v in vs]
+            for i in hi_reuse(words, [a[v][2] for v in vs]):  # kind B
+                masks[i] = True
         elif not any(v in a for v in vs):
             words = binary_words(alias, b.path, s, e)
             masks = [False] * len(words)
