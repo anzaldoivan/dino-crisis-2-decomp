@@ -168,6 +168,38 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   exit 2. All proven rows: `for p in $(PY tools/loadmap_evidence.py --proven-paths); do bash tools/emu/prove_load.sh
   "$p" || exit 1; done` (~6 min; run via `tools/run.sh --bg`). Per overlay: `docs/memory-map.md#ovl-<name>`.
 
+### Function census (T1, Phase 1.5, 2026-10-01)
+
+- **Command:** `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run python3
+  tools/census.py --check` (~9 s; re-splits itself, `sync` wipes `/work/asm`). `--only ALIAS…` (empty → `REFUSED`, rc 2),
+  `--fixture phantom|gap|datahead` (rc 1 each). Output `.run/census/functions.tsv` `alias start end size kind family`,
+  end exclusive, sorted; two runs byte-equal.
+- **Records:** one per `glabel` in `.section .text` + `asm/<alias>/nonmatchings/**`, one per C `func_<ADDR>` in a `c`
+  subsegment gap. Text region `[first asm|c subsegment, boundaries text-end)`. Function end = last insn line before the
+  next glabel/section: alignment `nop`s after `endlabel` belong to the preceding function.
+- **Phantom (DK-27):** no insn, outside text, inside a jtbl/data-island row, or a start no criterion confirms:
+  (a) `func_<ADDR>` referenced by a non-label asm line (exe: fleet-wide); (b) previous function ends in
+  `jr|j|b|beq $zero,$zero|beqz $zero` + delay slot; (b') start = text start or = end of an evidenced data-in-text span;
+  (c) lib-object row start; (d) C-defined; (e) start = a raw `.word 0x…` literal anywhere in the fleet. `phantom detail`
+  counts each criterion independently plus `sole` (starts confirmed by that criterion alone).
+- **Truncation:** text bytes not covered by exactly one function, or a function crossing a boundary edge.
+- **Data in text:** an uncovered span is data (leaves the denominator, printed per span) iff every word is a spimdisasm
+  `.word` (or flagged invalid instruction), no control-flow target lands in it (jal/j/branch operands, jlabels,
+  `.word .L…` jtbl entries; exe: fleet-wide, else same binary), and it holds an invalid instruction or a line outside it
+  references it as data (%hi/%lo, la, `.word`; exe: fleet-wide). Kind `dlabel-head` = data-referenced, `invalid-insn` =
+  invalid-instruction evidence only. Otherwise the span stays a truncation, labelled `not-data|cf-target|no-evidence`.
+- **Fleet (2026-10-01):** `functions: 3885` · `text bytes covered: 1228888 of 1228888` · `data in text: 4792 B (14
+  spans: 5 dlabel-head, 9 invalid-insn)` · `binaries: 83 of 83` · `phantoms: 0` · `truncations: 0`. Confirmations:
+  a 3580, b 3796, b' 85, c 170, d 5, e 179; sole a 6, b 135, b' 6. Kinds: lib 480, game 5, unknown 3400.
+  Data spans: 11 overlay heads at text start (bin_e30 0x800d0000+880, bin_kof_p70p 0x80128000+568, bin_m_title
+  0x800d5800+1628, bin_title2 0x800d5830+204, bin_wep04 0x8017e500+152, bin_wep0e 0x80120000+480, bin_wep_s01
+  0x80180d00+284, bin_wep_s02/s08/s09 0x80180d00+152, bin_wep_s03 0x80180d00+116); 3 exe 8-byte islands 0x80078d84,
+  0x80081244, 0x80081bf4.
+- **Controls:** 5 probes exact start/end; `jr 0x8003500c` in function 0x80034f08; fixtures (synthetic encodings):
+  `phantom` (planted mid-body glabel → phantoms 1), `gap` (a function's insn words without a glabel → `not-data` gap),
+  `datahead` (invalid-insn data head that a `jal` targets → `cf-target` gap); empty `--only` → rc 2. Odd tails: 17
+  binaries, all after text-end.
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything
