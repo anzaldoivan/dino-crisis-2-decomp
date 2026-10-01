@@ -6,7 +6,10 @@
 #      (auto-analysis on); SLUS_012.79 is never re-imported or overwritten;
 #   3. dumps every program read-only (DumpFunctions.java, -noanalysis -readOnly) and writes
 #      config/ghidra/<prog>.functions.tsv (`start size source`, source=auto|txn; txn = recovered in a rolled-back
-#      transaction from jal targets / reference targets / pointer words, see DumpFunctions.java) for all 83 binaries.
+#      transaction from jal targets / reference targets / pointer words, see DumpFunctions.java) for all 83 binaries;
+#   4. (T2.c3) copies the untracked evidence sidecars .run/ghidra_functions/<prog>.evidence.tsv into the build volume's
+#      /work/.run/ghidra_functions/ (dc.sh sync keeps /work/.run; ignored files are never synced) for oracle_diff.py;
+#      skipped with a note when docker or the volume is absent (oracle_diff then prints n/a evidence).
 #
 # Fleet = config/splat/*.yaml (alias = yaml stem, blob = its target_path, loadmap row = that path, class exe|code).
 # Program name mapping (deterministic): alias slus_012_79 -> SLUS_012.79 (the exe keeps its name); every overlay
@@ -91,4 +94,14 @@ for f in "${FLEET[@]}"; do
     mv "$dst.tmp" "$dst"; written=$((written + 1))
 done
 echo "dump_functions: wrote $written of ${#FLEET[@]} caches, missing $missing"
+
+VOL="${DC2_VOLUME:-dc2-work}"
+if command -v docker >/dev/null 2>&1 && docker volume inspect "$VOL" >/dev/null 2>&1; then
+    (cd "$RAW" && COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -cf - *.evidence.tsv) \
+      | docker run -i --rm --platform linux/amd64 -v "$VOL":/work dc2-build \
+          sh -c 'rm -rf /work/.run/ghidra_functions && mkdir -p /work/.run/ghidra_functions && tar -xf - -C /work/.run/ghidra_functions' \
+      && echo "dump_functions: evidence sidecars copied to volume $VOL:/work/.run/ghidra_functions ($(ls "$RAW"/*.evidence.tsv | wc -l | tr -d ' '))"
+else
+    echo "dump_functions: evidence sidecars NOT copied (no docker or no volume $VOL)"
+fi
 [ $rc -eq 0 ] && [ $failed -eq 0 ] && [ $missing -eq 0 ]

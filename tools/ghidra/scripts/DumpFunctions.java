@@ -5,13 +5,20 @@
 //   0x%08x<TAB>0x%x<TAB>txn             (T2.c2: recovered in a ROLLED-BACK transaction, C0020)
 // Rows sorted by entry; external functions skipped. tools/ghidra/dump_functions.sh adds the generator header and
 // moves the file to config/ghidra/<program>.functions.tsv.
+// T2.c3 evidence sidecar <outdir>/<program>.evidence.tsv (untracked; addresses/names/counts only, G12), one row per
+// cache row, taken at the end of the transaction (before rollback):
+//   start size source name symbol_source(DEFAULT|IMPORTED|ANALYSIS|USER_DEFINED) call_refs jump_refs data_refs seed
+//   call/data_refs = references to the entry whose type isCall / isData; jump_refs = isJump references to the entry
+//   from outside the function's own body; seed = auto | s1 | s2 | s3 (the seed class whose CreateFunctionCmd made it).
 // txn seeding (program bytes + Ghidra only; never census/splat/config). Block = initialized memory blocks starting
-// in [0x80000000, 0xA0000000). Ascending, a seed already inside a function body is skipped; each seed is
-// disassembled (flow-following) and given a CreateFunctionCmd:
+// in [0x80000000, 0xA0000000). Ascending, a seed already inside a function body is skipped (T2.c3: s1/s3 seed it
+// whether or not Ghidra already disassembled it); each seed not yet an instruction is disassembled (flow-following),
+// then given a CreateFunctionCmd:
 //   s1  targets of every aligned `jal` word (opcode 000011) in the block that land in the block; repeated to a
 //       fixed point (until a pass creates no function);
 //   s2  then destinations of Ghidra references (any type) that are 4-aligned undefined bytes of the block;
-//   s3  then values of aligned words outside instructions that are 4-aligned block addresses of undefined bytes.
+//   s3  then values of aligned words outside instructions that are 4-aligned block addresses (T2.c2 required
+//       undefined bytes there; dropped T2.c3).
 // Run read-only (never saved):
 //   analyzeHeadless ghidra dc2 -process -noanalysis -readOnly -scriptPath tools/ghidra/scripts
 //     -postScript DumpFunctions.java <outdir>
@@ -28,12 +35,16 @@ import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.Reference;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -55,6 +66,7 @@ public class DumpFunctions extends GhidraScript {
             if (b.isInitialized() && o >= 0x80000000L && o < 0xA0000000L) blk.add(b.getStart(), b.getEnd());
         }
         int[] made = new int[3], tried = new int[3];
+        TreeMap<Long, String> ev = new TreeMap<>();
         int tx = p.startTransaction("recover missed functions");
         try {
             Set<Long> seen = new HashSet<>();
@@ -84,17 +96,28 @@ public class DumpFunctions extends GhidraScript {
                 long v = p.getMemory().getInt(a) & 0xFFFFFFFFL;
                 if (v % 4 != 0) continue;
                 Address va = a.getNewAddress(v);
-                if (blk.contains(va) && undefined(p, va)) s3.add(v);
+                if (blk.contains(va)) s3.add(v);
             }
             for (long t : s3) recover(p, t, 2, made, tried);
             for (Function f : p.getFunctionManager().getFunctions(true))
                 if (!rows.containsKey(f.getEntryPoint().getOffset())) addRow(rows, f, "txn", nonContig);
+            for (Function f : p.getFunctionManager().getFunctions(true)) {
+                long e = f.getEntryPoint().getOffset();
+                if (f.isExternal() || !rows.containsKey(e)) continue;
+                ev.put(e, rows.get(e) + "\t" + evidence(p, f) + "\t"
+                        + (rows.get(e).endsWith("\tauto") ? "auto" : seedOf.getOrDefault(e, "-")));
+            }
         } finally {
             p.endTransaction(tx, false);   // roll back: read-only dump
         }
         try (PrintWriter w = new PrintWriter(out, StandardCharsets.UTF_8)) {
             w.print("# non-contiguous bodies: " + nonContig[0] + "\n");
             for (String r : rows.values()) w.print(r + "\n");
+        }
+        File evOut = new File(args[0], p.getName() + ".evidence.tsv");
+        try (PrintWriter w = new PrintWriter(evOut, StandardCharsets.UTF_8)) {
+            w.print("# start\tsize\tsource\tname\tsymbol_source\tcall_refs\tjump_refs\tdata_refs\tseed\n");
+            for (String r : ev.values()) w.print(r + "\n");
         }
         println(String.format("DC2DUMPFUNCS %s rows=%d auto=%d txn=%d noncontig=%d s1=%d/%d s2=%d/%d s3=%d/%d",
                 p.getName(), rows.size(), nAuto, rows.size() - nAuto, nonContig[0],
@@ -108,6 +131,19 @@ public class DumpFunctions extends GhidraScript {
         if (body.getNumAddressRanges() > 1) nonContig[0]++;
         long size = body.getMaxAddress().getOffset() + 1 - entry.getOffset();
         rows.put(entry.getOffset(), String.format("0x%08x\t0x%x\t%s", entry.getOffset(), size, src));
+    }
+
+    /** name, symbol source, call refs, jump refs from outside the body, data refs -- to the entry. */
+    private static String evidence(Program p, Function f) {
+        Address e = f.getEntryPoint();
+        int call = 0, jump = 0, data = 0;
+        for (Reference r : p.getReferenceManager().getReferencesTo(e)) {
+            RefType t = r.getReferenceType();
+            if (t.isCall()) call++;
+            else if (t.isJump() && !f.getBody().contains(r.getFromAddress())) jump++;
+            else if (t.isData()) data++;
+        }
+        return f.getName() + "\t" + f.getSymbol().getSource().name() + "\t" + call + "\t" + jump + "\t" + data;
     }
 
     private static List<Address> words(AddressSet blk) {
@@ -129,6 +165,8 @@ public class DumpFunctions extends GhidraScript {
         return l.getInstructionContaining(a) == null && l.getDefinedDataContaining(a) == null;
     }
 
+    private final Map<Long, String> seedOf = new HashMap<>();
+
     /** Seed t (class k): skip if inside a function; else disassemble + CreateFunctionCmd. */
     private void recover(Program p, long t, int k, int[] made, int[] tried) {
         FunctionManager fm = p.getFunctionManager();
@@ -138,6 +176,6 @@ public class DumpFunctions extends GhidraScript {
         if (p.getListing().getInstructionAt(a) == null) new DisassembleCommand(a, null, true).applyTo(p, monitor);
         if (p.getListing().getInstructionAt(a) == null) return;
         new CreateFunctionCmd(a).applyTo(p, monitor);
-        if (fm.getFunctionAt(a) != null) made[k]++;
+        if (fm.getFunctionAt(a) != null) { made[k]++; seedOf.put(t, "s" + (k + 1)); }
     }
 }

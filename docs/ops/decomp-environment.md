@@ -212,12 +212,22 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   Ghidra only (never census/splat/config); block = initialized blocks starting in [0x80000000, 0xA0000000). s1 targets
   of every aligned `jal` word landing in the block, to a fixed point; then s2 destinations of Ghidra references (any
   type) at 4-aligned undefined bytes; then s3 values of aligned words outside instructions that are 4-aligned block
-  addresses of undefined bytes. Each ascending; a seed inside a function body is skipped; else disassemble (flow) +
-  `CreateFunctionCmd`. Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3=`.
+  addresses (T2.c3: s1/s3 targets need only lie outside every function body, disassembled or not). Each ascending; a
+  seed inside a function body is skipped; else disassemble (flow) if not an instruction + `CreateFunctionCmd`.
+  Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3=`. Pcode `Program does not contain
+  referenced instruction` ERROR lines in `.run/logs/dump_functions_headless.log` come from seeds disassembled into
+  data (missing delay slot); harmless, rolled back. The project also holds `OPTION_BIN` (not in the fleet): dumped to
+  `.run/ghidra_functions/` but never written to `config/ghidra/`.
+- **Evidence sidecar (T2.c3):** `DumpFunctions.java` also writes untracked `.run/ghidra_functions/<prog>.evidence.tsv`
+  (`start size source name symbol_source call_refs jump_refs data_refs seed`; jump refs from outside the body; seed
+  `auto|s1|s2|s3`); `dump_functions.sh` copies them into the volume's `/work/.run/ghidra_functions/` (kept by `dc.sh
+  sync`). `oracle_diff.py` joins them as `g_name g_symsrc g_call g_jump` (`-` no Ghidra function at the start; `n/a`
+  sidecar absent or its starts differ from the cache), prints `evidence: n of k sidecars joined` (82 of 83:
+  `bin_wep_s00` is no-text).
 - **Diff:** `bash tools/docker/dc.sh sync && bash tools/docker/dc.sh run python3 tools/oracle_diff.py [--plant-start
   ALIAS:ADDR]` → classes `census-only|ghidra-only|end-ghidra-shorter|end-ghidra-longer` (5 examples each), full list
   `.run/oracle/disagreements.tsv` (`--plant-start` writes `.run/oracle/plant.tsv` instead) with evidence columns
-  `src jal_ref prev_ends_jr in_data_span parent` and a printed `breakdown:` (class × evidence counts; runs `make split`
+  `src jal_ref prev_ends_jr in_data_span parent g_name g_symsrc g_call g_jump` and a printed `breakdown:` (class × evidence counts; runs `make split`
   when asm dirs are missing, for census data spans), `oracle: k of 83 binaries compared, d disagreements`; exit 0 iff 83/83, d = 0, no
   stale, controls ok; REFUSED rc 2 on empty census / 0 caches. Runs census.py first if functions.tsv is missing/older.
 - **Normalisations (only these):** n1 judge only starts in the census text region (others `not judged: n`); n2 ends

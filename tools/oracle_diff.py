@@ -20,8 +20,12 @@ hash input must read stale. Full disagreement list: .run/oracle/disagreements.ts
 .run/oracle/plant.tsv instead), each row with evidence columns: src (ghidra source auto|txn, - if none), jal_ref
 (jal words in the binary's own bytes targeting the start), prev_ends_jr (word at start-8 is `jr ra`), in_data_span
 (census data-in-text span kind containing the start, else -), parent (c:<start> census function / g:<start> Ghidra
-function strictly containing the start, from the list lacking it; - for end-* rows). A per-class x evidence
-breakdown is printed.
+function strictly containing the start, from the list lacking it; - for end-* rows), and from the Ghidra evidence
+sidecar .run/ghidra_functions/<prog>.evidence.tsv (T2.c3; written by DumpFunctions.java, copied into the volume by
+dump_functions.sh): g_name, g_symsrc (DEFAULT|IMPORTED|ANALYSIS|USER_DEFINED), g_call (call refs to the start),
+g_jump (jump refs from outside the function) of the Ghidra function at the start, - when Ghidra has none there; n/a
+when the sidecar is absent or its starts differ from the cache's (`evidence: n of 83 sidecars joined`). A per-class
+x evidence breakdown is printed.
 Exit: 0 iff 83 of 83 compared, 0 disagreements, no stale cache, controls ok; 1 otherwise; 2 REFUSED (empty census or
 0 caches).
 """
@@ -44,6 +48,7 @@ GHIDRA_DIR = ROOT / "config/ghidra"
 EXCEPTIONS = ROOT / "config/oracle_exceptions.tsv"
 GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghidra/dump_functions.sh")
 FILES = ROOT / ".run/extracted/retail/files"
+EVIDENCE = ROOT / ".run/ghidra_functions"
 OUT = ROOT / ".run/oracle"
 CLASSES = ("census-only", "ghidra-only", "end-ghidra-shorter", "end-ghidra-longer")
 JR_RA = 0x03E00008
@@ -76,6 +81,19 @@ def read_cache(path):
             funcs[int(s, 16)] = int(s, 16) + int(z, 16)
             src[int(s, 16)] = so
     return hdr, funcs, nc, notext, src
+
+
+def read_evidence(prog, starts):
+    """-> {start: (name, symsrc, call, jump)} from the sidecar, or None when absent / not matching the cache starts."""
+    path = EVIDENCE / (prog + ".evidence.tsv")
+    if not path.exists():
+        return None
+    ev = {}
+    for line in path.read_text().splitlines():
+        if line and not line.startswith("#"):
+            r = line.split("\t")
+            ev[int(r[0], 16)] = (r[3], r[4], r[5], r[6])
+    return ev if set(ev) == set(starts) else None
 
 
 def code_reader(b):
@@ -183,7 +201,7 @@ def main(argv=None):
             else:
                 exc.add((r[0], int(r[1], 16), r[2]))
     cnt = {"nj_c": 0, "nj_g": 0, "n2": 0}
-    k, stale, nc, dis, ctl_case, applied = 0, [], 0, [], None, 0
+    k, stale, nc, dis, ctl_case, applied, joined = 0, [], 0, [], None, 0, 0
     for alias in sorted(bins):
         b = bins[alias]
         cache = GHIDRA_DIR / (prog_of(alias) + ".functions.tsv")
@@ -198,6 +216,8 @@ def main(argv=None):
             continue
         k += 1
         nc += n
+        gev = read_evidence(prog_of(alias), gh)
+        joined += gev is not None
         word, jal = code_reader(b) if b.text is not None else (None, {})
         ca = cen.get(alias, {})
         for d in compare(b, ca, gh, word, cnt):
@@ -211,7 +231,8 @@ def main(argv=None):
             elif d[0] == "ghidra-only":
                 par = parent(ca, s); par = par and "c:0x%08x" % par
             ev = (gsrc.get(s, "-"), jal.get(s, 0), "yes" if word(s - 8) == JR_RA else "no",
-                  next((k for x, e, k in dspans.get(alias, []) if x <= s < e), "-"), par or "-")
+                  next((k for x, e, k in dspans.get(alias, []) if x <= s < e), "-"), par or "-") + (
+                  ("n/a",) * 4 if gev is None else gev.get(s, ("-",) * 4))
             dis.append((alias,) + d + ev)
         if ctl_case is None and b.text is not None and gh:
             ctl_case = (b, alias, gh, word, sha1, base, hdr.get("ghidra", ""))
@@ -236,23 +257,30 @@ def main(argv=None):
     print("ghidra non-contiguous bodies: %d" % nc)
     print("exceptions valid: %d, applied: %d" % (len(exc), applied))
     print("exceptions invalid: %d" % invalid)
+    print("evidence: %d of %d sidecars joined" % (joined, k))
     for cl in CLASSES:
         rows = [d for d in dis if d[1] == cl]
         ex = " ".join("%s:0x%08x" % (d[0], d[2]) for d in rows[:5])
         print("class %s: %d%s" % (cl, len(rows), ("  e.g. " + ex) if ex else ""))
-    print("breakdown: class n | src auto/txn/- | jal_ref>0 | prev_ends_jr | in_data_span | parent")
+    print("breakdown: class n | src auto/txn/- | jal_ref>0 | prev_ends_jr | in_data_span | parent"
+          " | g_symsrc D/I/A/U/-/na | g_call>0 | g_jump>0")
     for cl in CLASSES:
         rows = [d for d in dis if d[1] == cl]
         if rows:
-            print("  %s %d | %d/%d/%d | %d | %d | %d | %d" % (
+            pos = lambda x: x not in ("-", "n/a") and int(x) > 0
+            print("  %s %d | %d/%d/%d | %d | %d | %d | %d | %s | %d | %d" % (
                 cl, len(rows), sum(d[5] == "auto" for d in rows), sum(d[5] == "txn" for d in rows),
                 sum(d[5] == "-" for d in rows), sum(d[6] > 0 for d in rows), sum(d[7] == "yes" for d in rows),
-                sum(d[8] != "-" for d in rows), sum(d[9] != "-" for d in rows)))
+                sum(d[8] != "-" for d in rows), sum(d[9] != "-" for d in rows),
+                "/".join(str(sum(d[11] == v for d in rows))
+                         for v in ("DEFAULT", "IMPORTED", "ANALYSIS", "USER_DEFINED", "-", "n/a")),
+                sum(pos(d[12]) for d in rows), sum(pos(d[13]) for d in rows)))
     OUT.mkdir(parents=True, exist_ok=True)
     fmt = lambda x: "-" if x is None else "0x%08x" % x
     (OUT / ("plant.tsv" if args.plant_start else "disagreements.tsv")).write_text(
-        "# alias\tclass\tstart\tcensus_end\tghidra_end\tsrc\tjal_ref\tprev_ends_jr\tin_data_span\tparent\n" +
-        "".join("%s\t%s\t0x%08x\t%s\t%s\t%s\t%d\t%s\t%s\t%s\n" % (a, cl, s, fmt(ce), fmt(ge), *ev)
+        "# alias\tclass\tstart\tcensus_end\tghidra_end\tsrc\tjal_ref\tprev_ends_jr\tin_data_span\tparent"
+        "\tg_name\tg_symsrc\tg_call\tg_jump\n" +
+        "".join("%s\t%s\t0x%08x\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (a, cl, s, fmt(ce), fmt(ge), *ev)
                 for a, cl, s, ce, ge, *ev in dis))
     if args.plant_start:
         hit = any(d[0] == pa and d[2] == pv for d in dis)
