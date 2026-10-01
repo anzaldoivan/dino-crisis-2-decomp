@@ -68,7 +68,7 @@ Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
 ## Environment <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - OS / shells: Darwin / bash, zsh
 - Python: /opt/homebrew/opt/python@3.14/bin/python3.14 (3.14.7)
-- Pins: compiler triple `TODO(phase-4)`; candidates `/opt/cc` per `config/toolchains.tsv` (`fetch_toolchain.sh --verify`); image digest-pinned amd64 — `docs/ops/docker-host.md`
+- Pins: triple psyq4.6/a2.86/G0/O2; candidates `/opt/cc` per `config/toolchains.tsv` (`fetch_toolchain.sh --verify`); image digest-pinned amd64 — `docs/ops/docker-host.md`
 - Harness gotchas that bite here: arm64 Mac, so every build runs in the amd64 container (source in a named volume, not a bind mount)
 
 ## Docs map <!-- roles: expert coder router planner review critic discuss auditor curator -->

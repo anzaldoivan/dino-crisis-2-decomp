@@ -25,7 +25,7 @@ RUN python3 -m venv /opt/splat \
     && /opt/splat/bin/pip install --no-cache-dir \
       'splat64[mips]==0.41.0' spimdisasm==1.42.4 rabbitizer==1.16.2
 # Candidate compilers (phase 1.4 T1): old-gcc psx builds, esa PsyQ CC1PSX.EXE, maspsx, wibo → /opt/cc/<name>/.
-# sha256-pinned in config/toolchains.tsv (named build context `cfg`, see dc.sh build). No pin chosen yet.
+# sha256-pinned in config/toolchains.tsv (named build context `cfg`, see dc.sh build). Pin: toolchains.tsv col 7 (psyq4.6 a2.86/G0/O2).
 COPY --from=cfg toolchains.tsv /usr/local/share/toolchains.tsv
 COPY fetch_toolchain.sh /usr/local/bin/fetch_toolchain.sh
 RUN chmod +x /usr/local/bin/fetch_toolchain.sh \
