@@ -4,6 +4,8 @@
 # make clean → make extract OUT=.run/extracted/retail (from /disc) → make -j$(nproc) -k build (BASEDIR default)
 # → prints `<k> of <N> byte-identical`; exit 0 iff k == N. N = config/loadmap.tsv rows with class exe|code;
 # exit 1 also if the count of config/check.*.sha != N or any build/<alias>.bin is missing.
+# T6: then writes .run/harness/clean_run.tsv (alias sha1) and runs `python3 tools/harness.py ${HARNESS_ARGS:-}`;
+# exit non-zero also when the harness rc != 0.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 t0=$(date +%s)
@@ -21,5 +23,15 @@ for s in "${shas[@]}"; do
   (cd build && sha1sum --status -c "../$s") && k=$((k + 1))
 done
 echo "$k of $n byte-identical"
-echo "elapsed $(( $(date +%s) - t0 )) s (check.*.sha ${#shas[@]}, missing bin $missing)"
-[ "${#shas[@]}" -eq "$n" ] && [ "$missing" -eq 0 ] && [ "$k" -eq "$n" ]
+# T6: the clean run's hashes (harness fleet pair, side A), then the differential harness (tools/harness.py)
+mkdir -p .run/harness
+for s in "${shas[@]}"; do
+  a=${s#config/check.}; a=${a%.sha}
+  [ -f "build/$a.bin" ] && printf '%s\t%s\n' "$a" "$(sha1sum "build/$a.bin" | cut -d' ' -f1)"
+done > .run/harness/clean_run.tsv
+th=$(date +%s)
+# shellcheck disable=SC2086  # HARNESS_ARGS is a flag list
+python3 tools/harness.py ${HARNESS_ARGS:-}
+hrc=$?
+echo "elapsed $(( $(date +%s) - t0 )) s (check.*.sha ${#shas[@]}, missing bin $missing), harness $(( $(date +%s) - th )) s"
+[ "${#shas[@]}" -eq "$n" ] && [ "$missing" -eq 0 ] && [ "$k" -eq "$n" ] && [ "$hrc" -eq 0 ]
