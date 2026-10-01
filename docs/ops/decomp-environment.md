@@ -27,8 +27,12 @@ the rules behind them are the G group in `rules/`.*
 
 ```
 # reference extract of the medium (dumpsxiso 2.30 in the build image; disc volume dc2-disc at /disc, see docker-host.md)
-bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin"'
-# TODO(phase-1): our own `make extract` verified against the reference and the committed manifest (T2-T3)
+bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin" && mv /work/.run/ref/files/license_data.dat /work/.run/ref/files/ZNULL.WAV /work/.run/ref/'
+# our own extract (tools/extract_disc.py; host python3 >= 3.12, disc in disks/ or $DC2_CUE; see docs/formats.md)
+make extract                       # → extracted/retail/files + manifest.jsonl + manifest.sha1
+(cd extracted/retail && sha1sum -c --quiet manifest.sha1)   # verify the files against the manifest
+# against the reference: dc.sh sync, then in the container
+#   python3 tools/extract_disc.py --cue "/disc/Dino Crisis 2 (USA).cue" --out /work/.run/ours && diff -rq /work/.run/ref/files /work/.run/ours/files
 # the clean fleet verification — every binary from clean → extract → build, exit code read
 TODO(phase-3)
 ```
@@ -81,7 +85,7 @@ Breadth — the same analysis over many independent items — is fan-out, not de
 | `tools/audit_public.py` | `tools/` | the ROM audit (purge paths, the derived hash set, the size cap, the pasted-disassembly check); the first-push gate and the CI job; its sources are `config/firewall.txt` |
 | `tools/firewall_control.sh` | `tools/` | the firewall negative control: plants the `config/firewall-fixture.sha1` blob under `.run/firewall-control/`, asserts the audit FAILs naming it, removes it, asserts the tree PASSes; exit 0 iff both (the Phase 1.0 milestone check) |
 | `make format` | `Makefile` | clang-format over `src/` with the tracked `.clang-format` (the community style) |
-| TODO(phase-1): the extractor, the manifest | `tools/` | — |
+| `make extract [OUT=…]` | `tools/extract_disc.py` | our own disc extractor: medium check vs `config/medium.sha1`, ISO9660 walk of Track 1 → `<OUT>/files/` + `manifest.jsonl` + `manifest.sha1` (Form 2 as 2336 B/sector, CD-DA skipped); see `docs/formats.md` |
 
 ## The three dictionaries (the kit master copy — consulted, never copied into this repository)
 

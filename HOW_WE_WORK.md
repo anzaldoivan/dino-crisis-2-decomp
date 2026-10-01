@@ -39,6 +39,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | commit_task | `bash tools/commit_task.sh` | the only commit path; explicit paths, no trailers, never pushes |
 | run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
 | dc | `bash tools/docker/dc.sh` | amd64 build host: `build`, `sync` (tree → volume `dc2-work`), `run <cmd>` in `/work` |
+| extract | `make extract [OUT=…]` | own disc extractor → files/ + manifest |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->

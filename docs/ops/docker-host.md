@@ -35,7 +35,7 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 - Named volume `dc2-disc` (override `DC2_DISC_VOLUME`); `dc.sh run` mounts it read-only at `/disc`.
 - Loaded with `bash tools/docker/dc.sh disc /Users/Shared/GameInputs/dino-crisis-2/usa`: top-level `*.cue` + `*.bin` of the dir (no `.DS_Store`), `COPYFILE_DISABLE=1 tar` over stdin into a container that wipes then fills the volume. No bind mount. Reload only when the dump changes.
 - Reference extract (T1.c1; output in `/work/.run/ref`, kept across syncs, never in git):
-  `bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin"'`
+  `bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin" && mv /work/.run/ref/files/license_data.dat /work/.run/ref/files/ZNULL.WAV /work/.run/ref/'`
 - harness: macOS tar still emits `LIBARCHIVE.xattr.com.apple.provenance` headers; GNU tar in the container prints "Ignoring unknown extended header keyword" per file. Harmless noise.
 
 ## Use

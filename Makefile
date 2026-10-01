@@ -3,10 +3,16 @@
 # is the same run in dry mode with warnings as errors (a CI-able check, no game bytes needed). Dotfiles under src/
 # are excluded so a tool's live probe file is never formatted into the tree.
 
-.PHONY: format format-check
+.PHONY: format format-check extract
 
 format:
 	find src -type f \( -name '*.c' -o -name '*.h' \) -not -name '.*' -print0 | xargs -0 -r clang-format -i --style=file
 
 format-check:
 	find src -type f \( -name '*.c' -o -name '*.h' \) -not -name '.*' -print0 | xargs -0 -r clang-format --dry-run --Werror --style=file
+
+# make extract [OUT=dir] — our own disc extractor (tools/extract_disc.py) → $(OUT)/files + manifest; see docs/formats.md.
+OUT ?= extracted/retail
+
+extract:
+	python3 tools/extract_disc.py --out $(OUT)
