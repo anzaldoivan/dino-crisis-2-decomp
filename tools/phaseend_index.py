@@ -831,6 +831,7 @@ def milestone_clauses(milestone):
 _CMD_HEAD = re.compile(r"^(?:PY|python3?|py|bash|sh|grep|test|git|ls|diff|cat|pytest|make|npm|node|cargo"
                        r"|dotnet|wsl(?:\.exe)?|powershell|find|wc|sort|head|tail|\./|[A-Za-z]:/|/|~/)", re.I)
 _EXPECT_RE = re.compile(r"(?:with|prints?|shows?|contains?|outputs?|→|->)\s+(?:[a-z]+\s+)?`([^`]+)`", re.I)
+_AND_EXPECT_RE = re.compile(r"\band\s+`([^`]+)`", re.I)
 
 
 def _fill(cmd, py):
@@ -853,8 +854,88 @@ def clause_command(clause, py):
         return _fill(clause, py), []
     cmd_i = next((i for i, p in enumerate(parts) if _CMD_HEAD.match(p.strip())), 0)
     cmd = _fill(parts[cmd_i], py)
-    expects = [e for e in _EXPECT_RE.findall(clause) if e != parts[cmd_i]]
+    found = [(m.start(), m.group(1)) for m in _EXPECT_RE.finditer(clause)]
+    if found:  # T10: `and `x`` continues an expectation list, never a bare `cmd1` and `cmd2`
+        first_end = min(m.end() for m in _EXPECT_RE.finditer(clause))
+        found += [(m.start(), m.group(1)) for m in _AND_EXPECT_RE.finditer(clause)
+                  if m.start() >= first_end]
+    expects = [e for _, e in sorted(found) if e != parts[cmd_i]]
     return cmd, expects
+
+
+_PLACEHOLDER_RE = re.compile(r"(?<![\w./-])([B-HJ-Zb-z])(?![\w./-])")
+_OPS = {"≤": "<=", "<=": "<=", "<": "<", "≥": ">=", ">=": ">=", ">": ">", "=": "==", "==": "=="}
+_OP = r"(<=|>=|==|≤|≥|<|>|=)"
+_LETTER = r"(?<![\w./-])([A-Za-z])(?![\w./-])"
+_NUM = r"(?<![\w.])(\d+)(?![\w.])"
+_FLIP = {"<=": ">=", "<": ">", ">=": "<=", ">": "<", "==": "=="}
+
+
+def _bounds(clause):
+    """``[(letter, op, n)]`` from a clause's prose (backtick spans removed): ``3 ≤ K ≤ 5``,
+    ``n ≥ 3``, ``3 ≤ n``."""
+    prose = re.sub(r"`[^`]*`", " ", clause)
+    out = []
+    for m in re.finditer(_NUM + r"\s*" + _OP + r"\s*" + _LETTER + r"\s*" + _OP + r"\s*" + _NUM, prose):
+        out.append((m.group(3), _FLIP[_OPS[m.group(2)]], int(m.group(1))))
+        out.append((m.group(3), _OPS[m.group(4)], int(m.group(5))))
+    prose = re.sub(_NUM + r"\s*" + _OP + r"\s*" + _LETTER + r"\s*" + _OP + r"\s*" + _NUM, " ", prose)
+    for m in re.finditer(_LETTER + r"\s*" + _OP + r"\s*" + _NUM, prose):
+        out.append((m.group(1), _OPS[m.group(2)], int(m.group(3))))
+    for m in re.finditer(_NUM + r"\s*" + _OP + r"\s*" + _LETTER, prose):
+        out.append((m.group(3), _FLIP[_OPS[m.group(2)]], int(m.group(1))))
+    return out
+
+
+def _holds(v, op, n):
+    return {"<=": v <= n, "<": v < n, ">=": v >= n, ">": v > n, "==": v == n}[op]
+
+
+def match_expects(clause, expects, text):
+    """T10: expectation strings not satisfied by ``text`` ([] = ok). A standalone single letter
+    (not ``a``/``A``/``I``) is a placeholder for ``\\d+``; one letter binds one value across every
+    expectation of the clause; bounds from the clause prose (``3 ≤ K ≤ 5``) apply to placeholders.
+    Everything else matches literally."""
+    pats, letters = [], set()
+    for e in expects:
+        parts, seen, last = [], set(), 0
+        for m in _PLACEHOLDER_RE.finditer(e):
+            parts.append(re.escape(e[last:m.start()]))
+            L = m.group(1)
+            parts.append("(?P=%s)" % L if L in seen else r"(?<!\d)(?P<%s>\d+)(?!\d)" % L)
+            seen.add(L)
+            last = m.end()
+        parts.append(re.escape(e[last:]))
+        letters |= seen
+        pats.append(re.compile("".join(parts)))
+    bounds = [b for b in _bounds(clause) if b[0] in letters]
+
+    def ok_bind(bind):
+        return all(_holds(bind[L], op, n) for L, op, n in bounds if L in bind)
+
+    cands = []
+    for p in pats:
+        c = []
+        for m in p.finditer(text):
+            bind = {k: int(v) for k, v in m.groupdict().items()}
+            if ok_bind(bind) and bind not in c:
+                c.append(bind)
+        cands.append(c)
+    missing = [e for e, c in zip(expects, cands) if not c]
+    if missing:
+        return missing
+
+    def search(i, bind):
+        if i == len(cands):
+            return True
+        for b in cands[i]:
+            if all(bind.get(k, v) == v for k, v in b.items()) and search(i + 1, {**bind, **b}):
+                return True
+        return False
+
+    if search(0, {}):
+        return []
+    return [e for e in expects if _PLACEHOLDER_RE.search(e)]
 
 
 def cmd_verify(a, root, conf):
@@ -886,7 +967,7 @@ def cmd_verify(a, root, conf):
                 log_text = fh.read()
         except OSError:
             pass
-        missing = [e for e in expects if e not in log_text]
+        missing = match_expects(clause, expects, log_text)
         # 3.8 T8: a clause that names an output (`prints`/`shows`/…) is judged on the output; the exit
         # code counts only when the clause says `exits 0` or names no output (`grep -c` exits 1 on 0)
         needs_exit0 = not expects or bool(re.search(r"\bexits?\s+0\b", clause, re.I))
@@ -1356,7 +1437,19 @@ def main(argv=None):
                        help="git mv current/ -> phase-<N>/ and extend the indexes")
     s.add_argument("phase", nargs="?")
     sub.add_parser("legacy-index", help="index pre-PA3 PhaseEnd files")
-    s = sub.add_parser("verify", help="run the Milestone's verified-by clauses; GREEN/RED each")
+    s = sub.add_parser(
+        "verify", help="run the Milestone's verified-by clauses; GREEN/RED each",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Run each verified-by clause (split at ';' outside backticks); GREEN/RED each.\n"
+        "Expectations: a backticked string after with/prints/shows/contains/outputs/->, or after\n"
+        "'and' when an earlier expectation exists in the clause (`cmd1` and `cmd2` stays prose).\n"
+        "Matching is literal, except placeholders: a standalone single ASCII letter (not a/A/I,\n"
+        "not next to [\\w./-]) matches \\d+. One letter binds one value across all expectations\n"
+        "of the clause ('K of K' ... 'all K' must agree); every occurrence in the log is tried.\n"
+        "Bounds in the clause prose (backtick spans removed) apply to placeholders:\n"
+        "'lo OP X OP hi', 'X OP n', 'n OP X' with OP in <= < >= > = == (or the Unicode forms).\n"
+        "A placeholder with no bound only needs to bind. Exit code counts when the clause says\n"
+        "'exits 0' or names no output.")
     s.add_argument("phase", nargs="?")
     s.add_argument("--verbose", action="store_true",
                    help="print every clause, not just the red ones")
