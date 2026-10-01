@@ -37,3 +37,9 @@ C0034 | A prologue after an unconditional transfer is a function start splat mer
 C0035 | Relocation-masked dedup keys must mask raw hi/lo pairs and lo-reuses | dedup,splat,relocation,mips | 2026-10-01 | 1.5/T3 | phase-ends/current/tasks/T3.md
 C0036 | Propagating a label through duplicate classes needs a purity rule | dedup,lib,census | 2026-10-01 | 1.5/T4 | phase-ends/current/tasks/T4.md
 C0037 | census.py --check prints fixture totals after the real block | census,parsing,harness | 2026-10-01 | 1.5/T6 | phase-ends/current/tasks/T6.md
+C0038 | Near-band edit distance fast in stdlib via bit-parallel Myers | twins,dedup,performance | 2026-10-01 | 1.6/T1 | phase-ends/current/tasks/T1.md
+C0039 | Field proofs for banked fns come from objdump of the built object | types,headers,objdump | 2026-10-01 | 1.6/T2 | phase-ends/current/tasks/T2.md
+C0040 | Exclude shared *.inc.c bodies from every per-unit scanner | propagation,harness,build | 2026-10-01 | 1.6/T4 | phase-ends/current/tasks/T4.md
+C0041 | Boundary analysis treats a C-defined predecessor as a complete fn | census,boundaries,banking | 2026-10-01 | 1.6/T5 | phase-ends/current/tasks/T5.md
+C0042 | Derive check counts from the config, never hard-code them | harness,census,config | 2026-10-01 | 1.6/T5 | phase-ends/current/tasks/T5.md
+C0043 | Overlapping refusal reasons need a fixed first-match order | draw,filter,counts | 2026-10-01 | 1.6/T6 | phase-ends/current/tasks/T6.md

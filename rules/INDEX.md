@@ -173,3 +173,5 @@ G68 | Oracle comparisons are symmetric, unseeded and fixed in advance | decomp,o
 G69 | The compiler triple and its flags are defined once, in the Makefile | decomp,build,toolchain | active | phase 1.4 T5/T8
 
 G70 | A scanner's control must be able to fail | decomp,instruments,scanners | active | phase 1.5 T6
+
+G71 | Source units change only through their gated tool (carve, propagate, reconcile) | decomp,carve,propagation,reconcile | active | phase 1.6 T3/T4/T5
