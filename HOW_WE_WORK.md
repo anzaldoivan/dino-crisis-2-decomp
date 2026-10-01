@@ -34,7 +34,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | rules_add | `PY tools/rules_add.py` | add, supersede, promote, retire a rule |
 | skill_add | `PY tools/skill_add.py` | turn a `workflow:` gotcha into `.claude/skills/<name>/SKILL.md` |
 | cookbook_add | `bash tools/cookbook_add.sh` | add a cookbook entry and its index line |
-| phaseend_index | `PY tools/phaseend_index.py` | assemble, lint and archive a PhaseEnd |
+| phaseend_index | `PY tools/phaseend_index.py` | assemble, lint, verify, archive a PhaseEnd; verify binds `K of K` letters + bounds |
 | genend_index | `PY tools/genend_index.py` | assemble and lint a GenerationEnd |
 | commit_task | `bash tools/commit_task.sh` | the only commit path; explicit paths, no trailers, never pushes |
 | run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
