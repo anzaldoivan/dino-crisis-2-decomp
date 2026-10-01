@@ -46,7 +46,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - docker-vm-no-privileged — Never probe the Docker VM with --privileged or --pid=host; the classifier treats it as containment escape
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Oracles (X3): the byte gate (whole-binary hash); disassembler DB + MCP; scriptable emulator — `TODO(phase-2)`
+- Oracles (X3): the byte gate (whole-binary hash); disassembler DB = Ghidra 12.1.3 project `ghidra/dc2` (ignored) via `tools/ghidra/import.sh <exe>` / `--info <prog>`; MCP `TODO(T2)`; scriptable emulator `TODO(phase-2)`
 - Data: the dump, machine-local (`docs/ops/decomp-environment.md`), never in git; extraction gitignored
 - Generated (never hand-edited, H1): `asm/`, `assets/`, linker scripts, progress reports
 - Hand-edited: `src/`, `include/`, `config/`, `tools/`, `docs/`

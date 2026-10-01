@@ -11,7 +11,7 @@ the rules behind them are the G group in `rules/`.*
 | Candidate compiler family (from the SDK evidence) | PsyQ-era GCC 2.7.2 cc1 builds (candidate set; pinned in Phase 4) | the candidate set the pin phase runs down; never a sibling project's triple |
 | The splitter / disassembler and its config | TODO(phase-3) | version pinned in the bootstrap script |
 | The build host | x86-64 Linux, Ubuntu 24.04, ext4 | On another host, use the container `tools/docker/Dockerfile` (`--platform linux/amd64`). Keep the tree in a named volume. The vintage 32-bit compiler runs under the container's emulation. Entry point `tools/docker/dc.sh`; host facts `docs/ops/docker-host.md`. |
-| The disassembler database and its agent server | TODO(phase-2) | the static oracle; the database is tracked as a TEXT export with a rebuild script |
+| The disassembler database and its agent server | Ghidra 12.1.3 (`ghidra_12.1.3_PUBLIC_20260817.zip`, https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.3_build/ghidra_12.1.3_PUBLIC_20260817.zip, sha256 `93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54`; JDK Temurin 21) + psx_ldr 2026.09.03 (https://github.com/lab313ru/ghidra_psx_ldr/releases/download/2026.09.03/ghidra_12.1.3_PUBLIC_20260903_ghidra_psx_ldr.zip, sha256 `04ddface00dd141f41924effa93a5dadb5630a24cdde36400bc703d25fcdec27`) in `$GHIDRA_INSTALL_DIR/Ghidra/Extensions`; agent server TODO(T2) | the static oracle; project `ghidra/dc2` (ignored), built by `tools/ghidra/import.sh`; the database is tracked as a TEXT export with a rebuild script. The release zip has no `mac_arm_64` decompiler natives: on Apple silicon build them once from `Ghidra/Features/Decompiler/src/decompile/cpp` (`make ghidra_opt "ARCH_TYPE=-arch arm64"`, then `make sleigh_opt …`, one goal per call) and copy to `os/mac_arm_64/{decompile,sleigh}` — psx_ldr's analyzer needs the decompiler (LibgpuMacroDetector) |
 | The emulator and its scripting bridge | TODO(phase-2) | the runtime oracle |
 
 ## The game and the medium
@@ -47,6 +47,17 @@ TODO(phase-3)
 - **Disassembler MCP:** TODO(phase-2) — verify with one cheap call before any reverse-engineering task; after a
   restart or a program switch, pause and ask the developer to reconnect the client (rule G2). Every configured MCP server
   adds its instructions to every session, so the entry is enabled only once the server exists (Phase 2).
+- **PsyQ SDK version (T1, Phase 1.2):** SLUS_012.79 → **4.7.0**. psx_ldr's `DetectPsyQ` (the `Ps` lib-version stamp)
+  returns `470` on the loaded image (not the analyzer's "if not found" fallback, which is also 4.7.0). Cross-check
+  `tools/ghidra/scripts/ScorePsyqVersions.java` (each version's lib JSONs applied via `psyq.SigApplier` in a rolled-back
+  transaction, read-only run; objs = matched OBJs/total, funcs = function labels of matched non-low-entropy OBJs):
+  `400 objs=103/1238 funcs=111 libs=11/26` · `410 159/1339 379 14/25` · `420 165/1471 403 14/21` ·
+  `430 169/1672 421 16/26` · `440 174/1766 441 16/28` · `450 176/1771 451 16/29` · `460 237/2187 736 18/30` ·
+  `470 244/2190 892 18/31`. Verdict: 4.7.0 scores highest on every axis; the detector agrees. Sig sets: psx_ldr's
+  bundled `data/psyq/` is identical to lab313ru/psx_psyq_signatures @ e9e46e7e (`diff -rq`, excluding `.git`).
+  `import.sh --info SLUS_012.79`: `PSX:LE:32:default`, 1501 functions, 874 sig-hit functions. psx_ldr sets the
+  image base to the RAM base `80000000` (by design), not the header t_addr `80018000`; the gate checks instead that the
+  initialized block at t_addr starts exactly at t_addr (`BASE_CHECK`).
 - **Emulator bridge:** TODO(phase-2) — a live-memory finding is verified only with three or more consistent datapoints
   or a controlled before/after diff.
 
