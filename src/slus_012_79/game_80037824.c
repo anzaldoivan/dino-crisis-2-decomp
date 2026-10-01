@@ -1,6 +1,40 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037824);
+/* func_80037824 */
+typedef struct {
+    short a;
+    short b;
+} Pair;
+
+extern Pair D_800893D0;
+extern unsigned char D_800ABA96;
+
+/* func_80037E18 */
+typedef struct {
+    char pad0[0x50];
+    int flags;
+    char pad54[0xFD - 0x54];
+    unsigned char side;
+    char padfe[0x260 - 0xFE];
+} Unit;
+
+typedef struct {
+    char pad0[0x4E0];
+    Unit *units;
+} Work;
+
+#define WORK (*(Work **)0x1F800000)
+
+extern int D_800AF11C;
+
+void func_80037824(int a0, int a1)
+{
+    D_800893D0.a = a0;
+    if (D_800ABA96 == 0) {
+        a1 += 0x100;
+    }
+    D_800893D0.b = a1;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_8003784C);
 
@@ -18,7 +52,20 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037C5C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037C9C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037E18);
+void func_80037E18(Unit *self)
+{
+    unsigned int cnt[2];
+    Unit *u;
+
+    cnt[1] = 0;
+    cnt[0] = 0;
+    for (u = WORK->units; u < WORK->units + D_800AF11C; u++) {
+        if (u->flags & 1) {
+            cnt[u->side]++;
+        }
+    }
+    self->side = cnt[0] >= cnt[1];
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037ED8);
 

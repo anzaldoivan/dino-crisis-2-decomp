@@ -1,6 +1,29 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DB960);
+/* func_800DB960 */
+typedef struct {
+    char pad0[0x368];
+    short a;
+    short b;
+    char pad36c[0x5C8 - 0x36C];
+    short c;
+    short d;
+} Stage;
+
+extern Stage *D_800AE560;
+
+int func_800DB960(void)
+{
+    Stage *s = D_800AE560;
+    int x = s->a * 6000 / s->b;
+    int y = s->c * 6000 / s->d;
+    int r = y >= x;
+
+    if (x == y) {
+        r = -1;
+    }
+    return r;
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DB9F4);
 
