@@ -229,6 +229,17 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   U ≠ 0. 2026-10-01: objects 171 (10 groups), lib 666 of 3911 (exe 485, overlays 181 in 53 binaries, 1 exact class,
   smallest 8 B: all 181 overlay lib functions are 8-byte, one stub class), lib bytes 96792 of 1228852, game 3245,
   unknown 0, exe non-lib exact-equal 40, 0-function objects 0; control lib 480 of 480.
+- **Lib-pure rule (T4.c2, H7):** an exact class marks its overlay members `lib` only if it is lib-pure in the exe:
+  ≥ 1 exe `lib` member and 0 exe non-lib members; a mixed class's overlay members are `game`. No size threshold.
+  Evidence: the only class reaching overlays (8 B stub, 181 overlay members) also holds exe game functions, so its
+  body is not library-specific (DK-10 under-matching). New lines: `lib exact classes: c (lib-pure p, mixed m: S B,
+  x exe lib + y exe game + z overlay members each; …)` (c = classes with an exe lib member; one entry per mixed
+  class, by size) before `lib functions:` (its `c exact classes` now counts lib-pure classes with overlay members);
+  after `control lib:`, `exe lib beyond cc_fingerprint: k (0x…, …) — 0x… src asm|c, criteria <census criteria>; …`
+  (exe lib starts cc_fingerprint does not count, reason = the record's source and confirming criteria a–g).
+  2026-10-01: classes 25 (lib-pure 15, mixed 10; the 8 B one 1 exe lib + 23 exe game + 181 overlay), lib 485 of
+  3911 (exe 485, overlays 0), lib bytes 95344, game 3426, unknown 0; beyond cc 5: 0x8001b458 (a ref + f jal-split),
+  0x80078f44, 0x80078f74, 0x8007e48c, 0x80081ae8 (b fallthrough + g transfer-split).
 
 ### Ghidra oracle (T2)
 

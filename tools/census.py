@@ -8,7 +8,8 @@ One record per `glabel` in text (`.section .text` + asm/<alias>/nonmatchings/**)
 known-true (config/probes.tsv, jr 0x8003500c) and negative controls (fixtures, empty --only).
 Uncovered text spans that are evidenced data (data_spans) leave the denominator and are listed as `data in text`.
 Kind (T4.c1): exe lib iff inside a boundaries.tsv lib-object extent, else game; overlay lib iff in a
-tools/dup_census.py exact class with an exe lib member, else game (unknown when the exe is not in the run).
+tools/dup_census.py exact class that is lib-pure in the exe (T4.c2: >=1 exe lib, 0 exe non-lib members), else
+game (unknown when the exe is not in the run).
 Controls: cc_fingerprint.py lib-band functions are kind lib; probe rows are kind game (--fixture libgame flips one).
 Definitions: phase 1.5 PHASE_PLAN `## Interfaces`; notes: docs/ops/decomp-environment.md "Function census".
 Exit: 0 clean; 1 phantom/truncation/control failure, --check with unknown kinds (and every fixture run);
@@ -336,7 +337,7 @@ def analyze(b, glob, scan):
     res = {"recs": [], "covered": 0, "B": 0, "P": 0, "T": 0, "pd": dict.fromkeys(("no-insn", "outside-text",
            "in-jtbl/data", "unconfirmed"), 0), "cf": dict.fromkeys(CRIT, 0), "sole": dict.fromkeys(CRIT, 0),
            "gaps": [], "data": [], "ovl": [], "cross": [], "pex": [], "split_g": split_g, "nm_g": nm_g, "cdefs": 0,
-           "insns": {}, "jsplit": 0, "gsplit": 0}
+           "insns": {}, "jsplit": 0, "gsplit": 0, "why": {}}
     if b.text is None:
         return res
     ts, te = b.text
@@ -433,6 +434,7 @@ def analyze(b, glob, scan):
             st in jstarts,
             st in gstarts)))
         hit = [k for k in CRIT if conf[k]]
+        res["why"][st] = (srck, hit)  # T4.c2: source and confirming criteria, for the exe-lib-beyond-cc line
         for k in hit:
             res["cf"][k] += 1
         if len(hit) == 1:
@@ -546,8 +548,10 @@ def run(bins, only_full, write=True):
 
 def lib_pass(bins, results, tot):
     """T4.c1: exe lib objects = distinct lib-object extents (same-start rows collapse to one, named A=B…); overlay
-    functions in a dup_census exact class with an exe lib member -> lib, other overlay functions -> game (needs the
-    exe in the run, else they stay unknown); rewrites functions.tsv; prints the fleet lib block. -> unknown count."""
+    functions in a lib-pure dup_census exact class -> lib, other overlay functions -> game (needs the exe in the run,
+    else they stay unknown); rewrites functions.tsv; prints the fleet lib block. -> unknown count.
+    T4.c2: lib-pure = >=1 exe kind-lib member and 0 exe non-lib members; a mixed class (exe game members share the
+    body, so it is not library-specific, DK-10) leaves its overlay members game."""
     objs = {}  # start -> (ends, names)
     if EXE in bins:
         for r in rows(BOUNDARIES):
@@ -559,7 +563,7 @@ def lib_pass(bins, results, tot):
         if bad:
             sys.exit("census: lib-object rows with one start, different ends: %s" % " ".join("0x%08x" % s for s in bad))
     nrows = sum(len(o[1]) for o in objs.values())
-    ncls, eqk = 0, 0
+    ncls, eqk, cline = 0, 0, "lib exact classes: 0 (lib-pure 0, mixed 0)"
     if EXE in results and len(results) > 1:
         import dup_census  # lazy: dup_census imports census
         funcs, _ = dup_census.load(None)
@@ -570,8 +574,16 @@ def lib_pass(bins, results, tot):
             if f["tier"] == "exact":
                 cls.setdefault(f["cls"], []).append(f)
         libcls = [m for m in cls.values() if any(f["alias"] == EXE and kind[(EXE, f["start"])] == "lib" for f in m)]
-        olib = {(f["alias"], f["start"]) for m in libcls for f in m if f["alias"] != EXE}
-        ncls = sum(1 for m in libcls if any(f["alias"] != EXE for f in m))
+        cnt = lambda m: (sum(1 for f in m if f["alias"] == EXE and kind[(EXE, f["start"])] == "lib"),
+                         sum(1 for f in m if f["alias"] == EXE and kind[(EXE, f["start"])] != "lib"),
+                         sum(1 for f in m if f["alias"] != EXE))
+        pure = [m for m in libcls if cnt(m)[1] == 0]
+        mixed = sorted((m for m in libcls if cnt(m)[1]), key=lambda m: (m[0]["size"], cnt(m)))
+        olib = {(f["alias"], f["start"]) for m in pure for f in m if f["alias"] != EXE}
+        ncls = sum(1 for m in pure if any(f["alias"] != EXE for f in m))
+        cline = "lib exact classes: %d (lib-pure %d, mixed %d%s)" % (len(libcls), len(pure), len(mixed), "".join(
+            "%s%d B, %d exe lib + %d exe game + %d overlay members each" % (
+                (": " if i == 0 else "; "), m[0]["size"], *cnt(m)) for i, m in enumerate(mixed)))
         eqk = sum(1 for m in libcls for f in m if f["alias"] == EXE and kind[(EXE, f["start"])] != "lib")
         for a, r in results.items():
             if a != EXE:
@@ -588,6 +600,7 @@ def lib_pass(bins, results, tot):
     for s in groups:
         e = min(objs[s][0])
         print("lib same-start 0x%08x %s: %d functions" % (s, "=".join(objs[s][1]), nin(s, e)))
+    print(cline)
     print("lib functions: %d of %d (exe %d, overlays %d in %d binaries, %d exact classes, smallest %s B)" % (
         len(lib), F, len(lib) - len(olibr), len(olibr), len({x[0] for x in olibr}), ncls,
         min((x[2] - x[1] for x in olibr), default="-")))
@@ -683,6 +696,11 @@ def controls(bins, results):
         good = k == len(cl) >= 1
         ok &= good
         print("control lib: %d of %d cc_fingerprint lib functions kind lib: %s" % (k, len(cl), "ok" if good else "FAIL"))
+        why = results[EXE]["why"]  # T4.c2: census exe lib starts cc_fingerprint does not count, with their record reason
+        bey = sorted(x[1] for x in results[EXE]["recs"] if x[3] == "lib" and (EXE, x[1]) not in cl)
+        print("exe lib beyond cc_fingerprint: %d%s" % (len(bey), "" if not bey else " (" + ", ".join(
+            "0x%08x" % s for s in bey) + ") — " + "; ".join(
+            "0x%08x src %s, criteria %s" % (s, why[s][0], "+".join(why[s][1]) or "none") for s in bey)))
     if "slus_012_79" in results:
         ins = results["slus_012_79"]["insns"]
         hit = [(st, en, i) for st, (en, i) in ins.items() if st <= JR_CONTROL < en]
