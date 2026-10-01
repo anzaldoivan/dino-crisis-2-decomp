@@ -64,13 +64,21 @@ TODO(phase-3)
   `GET /api/v1/gpu/vram/raw` (200). No built-in frame/vsync route: `tools/emu/lua/vsync.lua` (`-dofile`) counts
   `GPU::Vsync` events and serves `GET /api/v1/lua/vsync` (text count); `PCSX.WebServer` exists only after the first
   `/api/v1/lua/` request (404), so `emu.sh start` pokes it once. `DC2_BREAK=<addr>` adds `-debugger` and a pausing
-  Exec breakpoint. Other routes in the binary (unprobed): `/api/v1/assembly/symbols`, `cd/`, `cpu/cache`, `screen/`,
+  Exec breakpoint (empty = unset). `DC2_LUA="<file> ..."` (absolute or repo-relative) runs extra Lua after vsync.lua
+  and adds `-debugger`; `tools/emu/lua/loadtrace.lua` (loader trace), `tools/emu/lua/pad.lua` (scripted pad).
+  Pad API (H7, build 279): `PCSX.SIO0.slots[1].pads[1].setOverride(PCSX.CONSTS.PAD.BUTTON.<NAME>)` /
+  `.clearOverride(btn)`; pad.lua takes `DC2_PAD="<vsync>:<BUTTON>[:<hold>] ..."` (hold default 6), logs
+  `.run/emu/pad.log`. Screenshot (scratch use): Lua `PCSX.GPU.takeScreenShot()` → 320x240 16-bpp `data`. Other routes in the binary (unprobed): `/api/v1/assembly/symbols`, `cd/`, `cpu/cache`, `screen/`,
   `state/`. A live-memory finding is verified only with three or more consistent datapoints or a controlled
   before/after diff.
 - **Load proof:** `tools/emu/prove_load.sh <exe>` boots fresh with `DC2_BREAK=pc0`, compares the full
   `[t_addr,t_addr+t_size)` at pc0, then only `[t_addr,.text end)` at +300/+600 vsyncs with two hard-coded libcard
   self-modifying exclusions (`_patch_card_info`, `_patch_card2`); stops the emulator at the end. Ranges, offsets and
-  datapoints: `docs/memory-map.md#slus_01279`.
+  datapoints: `docs/memory-map.md#slus_01279`. `prove_load.sh <path>` (path as in `config/loadmap.evidence.tsv`)
+  also proves a fixed overlay table (ST1, WEP01: 3 fixed attract-demo vsyncs, full file compare; OPTION: pad script
+  to the title OPTION entry, full compare at the entry breakpoint, `[base,text_end)` at +300/+600); unknown path →
+  exit 2. All proven rows: `for p in $(PY tools/loadmap_evidence.py --proven-paths); do bash tools/emu/prove_load.sh
+  "$p" || exit 1; done` (~6 min; run via `tools/run.sh --bg`). Per overlay: `docs/memory-map.md#ovl-<name>`.
 
 ## Models and effort (decomp, on PA3)
 

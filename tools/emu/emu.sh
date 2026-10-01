@@ -2,6 +2,8 @@
 # tools/emu/emu.sh start|stop|status — detached headless PCSX-Redux with the web API on 127.0.0.1:$DC2_EMU_PORT (8081).
 # BIOS: the bundled OpenBIOS by default; set DC2_BIOS=<path> to pass `-bios` (machine-local, never in git).
 # Optional DC2_BREAK=<addr>: start with -debugger and pause at that PC (see lua/vsync.lua).
+# Optional DC2_LUA="<file> ...": extra Lua run by lua/vsync.lua after it loads (e.g. tools/emu/lua/pad.lua with DC2_PAD);
+# adds -debugger so those files may arm breakpoints.
 # CPU: -interpreter (build f7b388cc dynarec dies with SIGILL ~25 s into this game on arm64).
 # State: pid .run/emu/redux.pid, log .run/emu/redux.log. Kills by pid only.
 set -euo pipefail
@@ -21,7 +23,7 @@ case "${1:-}" in
     [[ -x "$APP" ]] || { echo "emu: PCSX-Redux not found at $APP" >&2; exit 2; }
     args=(-no-ui -interpreter -iso "${cue[0]}" -webserver -webserver-port "$PORT" -dofile "$ROOT/tools/emu/lua/vsync.lua" -run -stdout)
     [[ -n "${DC2_BIOS:-}" ]] && args+=(-bios "$DC2_BIOS")
-    [[ -n "${DC2_BREAK:-}" ]] && args+=(-debugger)  # lua/vsync.lua arms a pausing Exec breakpoint at $DC2_BREAK
+    [[ -n "${DC2_BREAK:-}${DC2_LUA:-}" ]] && args+=(-debugger)  # lua/vsync.lua arms a pausing Exec bp at $DC2_BREAK
     # new session so the emulator outlives the calling shell
     /usr/bin/env python3 -c 'import os,subprocess,sys; p=subprocess.Popen(sys.argv[2:],stdout=open(sys.argv[1],"w"),stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,start_new_session=True); print(p.pid)' \
       "$LOG" "$APP" "${args[@]}" > "$PID"

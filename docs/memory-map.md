@@ -1,7 +1,7 @@
 # Memory map
 
 Where each executable sits in PS1 RAM, how that was proven, and what the proof excludes. Addresses and offsets only;
-no game bytes (G12). Proof tool: `tools/emu/prove_load.sh <exe>`.
+no game bytes (G12). Proof tool: `tools/emu/prove_load.sh <path>` (exe + [proven overlays](#proven-overlays)).
 
 <a id="slus_01279"></a>
 ## SLUS_012.79
@@ -22,6 +22,42 @@ no game bytes (G12). Proof tool: `tools/emu/prove_load.sh <exe>`.
   - moment 1: vsync 462 · EQUAL (both runs)
   - moment 2: vsync 773 / 772 · EQUAL with the 8 excluded words above
   - moment 3: vsync 1064 / 1081 · EQUAL with the 8 excluded words above
+
+## Proven overlays
+
+Proof: `tools/emu/prove_load.sh <path>` (fixed per-overlay table; compares file `[0,size)` to RAM `[base,base+size)`).
+Runs: OpenBIOS, `-interpreter`, fresh boot each; datapoints from 2026-10-01 runs `t5c2-loop1` / `t5c2-loop2`
+(`bash tools/run.sh --bg t5c2-loopN -- <loop over loadmap_evidence.py --proven-paths>`, exit 0 both). No exclusions.
+
+<a id="ovl-st1"></a>
+### PSX/BIN/ST1.BIN
+- route R1 · base `0x800d5800` · size `0x3ec8` · end `0x800d96c8` · status **proven**
+- State: no pad input, attract demo; ST1 resident vsync 5240-10717 in T5.c1 run A (R1 `ecbc(4,0x800d5800)` at 5201).
+- Compared: 3 moments at fixed target vsyncs 6000 / 8000 / 10000, each FULL `[0x800d5800,0x800d96c8)`, no masking.
+- Datapoints (vsync loop1 / loop2): 6003 / 6003 · 8019 / 8015 · 10020 / 10003 · all EQUAL.
+
+<a id="ovl-wep01"></a>
+### BIN/WEP01.BIN
+- route R3 · base `0x8017e500` · size `0x2260` · end `0x80180760` · status **proven**
+- State: no pad input, attract demo, ST1 span. T5.c1's 5399-19950 is first/last seen, not contiguous: WEP07 holds
+  `0x8017e500` ~10951-16639 (a moment at vsync 12010 gave 2171 differing words, T5.c2), so targets sit in 5399-10717.
+- Compared: 3 moments at fixed target vsyncs 6000 / 8000 / 10000, each FULL `[0x8017e500,0x80180760)`, no masking.
+- Datapoints (vsync loop1 / loop2): 6005 / 6019 · 8019 / 8015 · 10005 / 10018 · all EQUAL.
+
+<a id="ovl-option"></a>
+### BIN/OPTION.BIN
+- route R2 (`FUN_8004262c(0)`, archive idx 0xf0) · base `0x801c1500` · size `0x3538` · end `0x801c4a38` · entry
+  `0x801c15f4` · status **proven**
+- text_end `0x801c4858` (`+0x3358`). Rule: `TextExtent.java` MAX_FUNC_END on a raw import
+  (`tools/ghidra/import_raw.sh BIN/OPTION.BIN 0x801c1500 OPTION_BIN`); MAX_INSN_END agrees (158 functions).
+- State: title menu (NEW GAME / LOAD GAME / OPTION) is up by vsync 1800 with no input; `tools/emu/lua/pad.lua`
+  `DC2_PAD="1900:DOWN 1920:DOWN 1950:CROSS"` (6-vsync holds) → r2 k=0 at 1962, exec `0x801c15f4` at 1988-1989
+  (T5.c1 reached it in-game at 19156).
+- Compared: moment 1 = pausing Exec breakpoint at the entry (load moment), FULL `[0x801c1500,0x801c4a38)`;
+  moments 2-3 = entry hit +300 / +600 vsyncs, `[0x801c1500,0x801c4858)` word-wise. No exclusions.
+- Data past text_end mutates after entry: moment-3 full compare differs from `+0x3380` (165 bytes, run t5c2-opt1),
+  matching T5.c1's tail `+0x3380..+0x3538`.
+- Datapoints (vsync loop1 / loop2): 1989 / 1989 EQUAL full · 2301 / 2303 EQUAL .text · 2594 / 2599 EQUAL .text.
 
 ## Loader routes
 
@@ -57,7 +93,12 @@ Static RE of SLUS_012.79 (T4). Route ids are the `route` column of `config/loadm
 - Other DATs requested with `ec10` (index tables `0x80089b14` (+2), `0x80089ce4`, `0x80089d50`, `0x8008a02c`; E*, WEP_P*,
   KOF_*, ST* DATs) carry type-7 RAM segments.
 - Loose /BIN copies (E*, WEP*, WEP_S*, KOF_*, RES*, M_*, TITLE2, OPENING, ENDING) are loaded by no route by file index
-  (no `ec10`/`ecbc` with idx 587..675). Shipped form believed to be a DAT type-7 segment: **unverified**.
+  (no `ec10`/`ecbc` with idx 587..675). Shipped form believed to be a DAT type-7 segment.
+- RAM evidence (T5.c1 residency scans, OpenBIOS, attract demo run A / pad run B): E00 @`0x800d0000`, E20, E90,
+  WEP01 @`0x8017e500`, WEP07 each fully equal to the loose copy at the ranked base at some snapshot; WEP01 proven
+  ([below](#ovl-wep01)). KOF_*, RES*, M_TITLE, TITLE2 never seen resident; OPENING best 0.9975 @`0x800d5800`, never
+  fully equal. Loose copy = RAM image holds for the E*/WEP* rows seen; the DAT decompression path stays unverified.
+- R2 `k=0x10` (`FUN_8004262c`) runs at vsync 2026, before the OPENING exec (`0x800d5c64`, vsync 2044) (T5.c1 run B).
 - 46 distinct type-0/7 dests in RAM over all PSX/DATA/*.DAT headers (tool candidate set).
 - Unreferenced: `0x8001cf84`, `0x8001d028` (module helpers indexing `0x800181f0`, no callers).
 
@@ -86,7 +127,8 @@ Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 tw
 <a id="fam-e"></a>
 ### E00..EA0 (R3, 13 files)
 - 13/13 rank `0x800d0000`; every same-stem DAT has a type-7 segment at `0x800d0000` (agrees 13/13).
-  Score 1178..9933; j 2..60, p 19..98, l 9..80. Shipped form: DAT type-7 segment, unverified.
+  Score 1178..9933; j 2..60, p 19..98, l 9..80. Shipped form: DAT type-7 segment; RAM: E00, E20, E90 fully equal
+  to the loose copy at `0x800d0000` (T5.c1 run A; [route-r3](#route-r3)); others not seen.
 
 <a id="fam-kof"></a>
 ### KOF_Pxyz (R3, 14 files)
@@ -98,12 +140,15 @@ Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 tw
 ### WEP00..WEP13 (R3, 20 files)
 - WEP00..WEP0C (13) rank `0x8017e500`; WEP0D..WEP13 (7) rank `0x80120000`. No same-stem DAT; both bases are type-7
   dests of WEP_P*.DAT archives (`0x8017e500` x15; `0x80120000` incl. WEP_PA0F/PC12/PI13). Score 564..5481; j 0..6,
-  p 11..98, l 3..97. Shipped form: DAT type-7 segment, unverified.
+  p 11..98, l 3..97. Shipped form: DAT type-7 segment; RAM: WEP01, WEP07 fully equal to the loose copy at
+  `0x8017e500` (T5.c1 run A); WEP01 proven ([ovl-wep01](#ovl-wep01)); others not seen.
 
 <a id="fam-wep-s"></a>
 ### WEP_S00..WEP_S09 (R3, 10 files)
 - WEP_S02..06, S08, S09 (7) rank `0x80180d00` (score 104: p 2, l 2); S01, S07 rank `0x8017c500` on lui pairs only
   (score 6..7, p 0): weak. Both bases are WEP_SUB*.DAT type-7 dests. No same-stem DAT.
+- WEP_S01: T5.c1 found its head at `0x80180d00` (A 5479-19950, B 13921-19962) and the whole 1432 B equal there in the
+  final run-B snapshot (one datapoint): TSV base `0x80180d00`, status ranked (basis tasks/T5.md).
 - WEP_S00 (28 B; u32 + three empty functions): ranked none, no self-reference at any of 46 candidates; base `-`.
 
 <a id="fam-res"></a>
@@ -115,6 +160,7 @@ Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 tw
 - 5/5 rank `0x800d5800`; agrees with a type-7 dest of each same-stem DAT (5/5). Score -793..3726; j 0..33, p 4..18,
   l 3..25.
 - OPENING (1592 B): only self-referencing candidate, score -793 (1 jal into range misses every start; p 4, l 3): weak.
+  RAM (T5.c1 run B): exec `0x800d5c64` at vsync 2044, just after R2 `k=0x10` (2026); best 0.9975, never fully equal.
 
 <a id="fam-sys-deb"></a>
 ### BIN/SYS_DEB.BIN (debug)

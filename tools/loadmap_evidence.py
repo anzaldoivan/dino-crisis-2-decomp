@@ -210,7 +210,16 @@ def main():
     ap.add_argument("payloads", nargs="*", help="paths relative to extracted/retail/files (default: all .BIN + exe)")
     ap.add_argument("--controls", action="store_true", help="exe body must rank its t_addr first, else exit 2")
     ap.add_argument("--json", default=None)
+    ap.add_argument("--proven-paths", action="store_true",
+                    help="print config/loadmap.evidence.tsv paths with status proven, one per line (prove_load.sh args)")
     a = ap.parse_args()
+    if a.proven_paths:
+        with open(os.path.join(REPO, "config/loadmap.evidence.tsv")) as f:
+            for ln in f:
+                c = ln.rstrip("\n").split("\t")
+                if not ln.startswith("#") and len(c) == 6 and c[4] == "proven":
+                    print(c[0])
+        return
     by_dest, by_stem = dat_dests()
     dests = sorted(d for d in by_dest if RAM[0] <= d < RAM[1])
     out = []

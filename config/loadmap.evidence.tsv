@@ -42,7 +42,7 @@ BIN/M_RESULT.BIN	code	R3	0x800d5800	ranked	docs/memory-map.md#fam-title
 BIN/M_TITLE.BIN	code	R3	0x800d5800	ranked	docs/memory-map.md#fam-title
 BIN/OPENING.BIN	code	R3	0x800d5800	ranked	docs/memory-map.md#fam-title
 # rows 41..
-BIN/OPTION.BIN	code	R2	0x801c1500	ranked	docs/memory-map.md#fam-r2-modules
+BIN/OPTION.BIN	code	R2	0x801c1500	proven	docs/memory-map.md#ovl-option
 BIN/RES00.BIN	code	R3	0x80150000	ranked	docs/memory-map.md#fam-res
 BIN/RES01.BIN	code	R3	0x80150000	ranked	docs/memory-map.md#fam-res
 BIN/RES02.BIN	code	R3	0x80150000	ranked	docs/memory-map.md#fam-res
@@ -62,7 +62,7 @@ BIN/TEST_OBJ.BIN	stub	-	-	n/a	docs/memory-map.md#fam-stubs
 BIN/TEST_PRI.BIN	stub	-	-	n/a	docs/memory-map.md#fam-stubs
 BIN/TITLE2.BIN	code	R3	0x800d5800	ranked	docs/memory-map.md#fam-title
 BIN/WEP00.BIN	code	R3	0x8017e500	ranked	docs/memory-map.md#fam-wep
-BIN/WEP01.BIN	code	R3	0x8017e500	ranked	docs/memory-map.md#fam-wep
+BIN/WEP01.BIN	code	R3	0x8017e500	proven	docs/memory-map.md#ovl-wep01
 BIN/WEP02.BIN	code	R3	0x8017e500	ranked	docs/memory-map.md#fam-wep
 BIN/WEP03.BIN	code	R3	0x8017e500	ranked	docs/memory-map.md#fam-wep
 BIN/WEP04.BIN	code	R3	0x8017e500	ranked	docs/memory-map.md#fam-wep
@@ -83,7 +83,7 @@ BIN/WEP12.BIN	code	R3	0x80120000	ranked	docs/memory-map.md#fam-wep
 BIN/WEP13.BIN	code	R3	0x80120000	ranked	docs/memory-map.md#fam-wep
 BIN/WEP_S00.BIN	code	R3	-	n/a	docs/memory-map.md#fam-wep-s
 # rows 81..
-BIN/WEP_S01.BIN	code	R3	0x8017c500	ranked	docs/memory-map.md#fam-wep-s
+BIN/WEP_S01.BIN	code	R3	0x80180d00	ranked	tasks/T5.md
 BIN/WEP_S02.BIN	code	R3	0x80180d00	ranked	docs/memory-map.md#fam-wep-s
 BIN/WEP_S03.BIN	code	R3	0x80180d00	ranked	docs/memory-map.md#fam-wep-s
 BIN/WEP_S04.BIN	code	R3	0x80180d00	ranked	docs/memory-map.md#fam-wep-s
@@ -96,7 +96,7 @@ PSX/BIN/AREA_JMP.BIN	stub	-	-	n/a	docs/memory-map.md#fam-stubs
 PSX/BIN/DM_MES.BIN	stub	-	-	n/a	docs/memory-map.md#fam-stubs
 PSX/BIN/LOGO.BIN	code	R1	0x800d5800	ranked	docs/memory-map.md#fam-logo-st
 PSX/BIN/ST0.BIN	code	R1	0x800d5800	ranked	docs/memory-map.md#fam-logo-st
-PSX/BIN/ST1.BIN	code	R1	0x800d5800	ranked	docs/memory-map.md#fam-logo-st
+PSX/BIN/ST1.BIN	code	R1	0x800d5800	proven	docs/memory-map.md#ovl-st1
 PSX/BIN/ST2.BIN	code	R1	0x800d5800	ranked	docs/memory-map.md#fam-logo-st
 PSX/BIN/ST3.BIN	code	R1	0x800d5800	ranked	docs/memory-map.md#fam-logo-st
 PSX/BIN/ST4.BIN	code	R1	0x800d5800	ranked	docs/memory-map.md#fam-logo-st
