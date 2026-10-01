@@ -426,7 +426,10 @@ def analyze(b, glob, scan):
         key = h.group(1).upper() if h else name
         conf = dict(zip(CRIT, (
             key in (glob["refs"] if b.family == "exe" else refs),
-            bool(i > 0 and recs[i - 1][3] and ends_flow(recs[i - 1][3])),
+            # T5, Phase 1.6: a C-defined predecessor has no insns here but is a complete compiled
+            # function (gcc emits its epilogue), so the next start is a boundary by construction.
+            bool(i > 0 and (recs[i - 1][4] == "c"
+                            or (recs[i - 1][3] and ends_flow(recs[i - 1][3])))),
             st == ts or st in dends,
             st in lib_starts,
             srck == "c" and st in cdef_starts,
