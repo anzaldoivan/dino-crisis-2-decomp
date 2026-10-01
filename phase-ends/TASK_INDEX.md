@@ -28,3 +28,9 @@
 1.4 | T8 | done | no-ROM compile-only job | - | phase-1.4/tasks/T8.md | phase-1.4/logs/T8.md | -
 1.4 | T9 | done | probe --pinned self-sufficient; ladder line in milestone wording | - | phase-1.4/tasks/T9.md | phase-1.4/logs/T9.md | -
 1.4 | T10 | done | verify binds milestone placeholders and checks their bounds | - | phase-1.4/tasks/T10.md | phase-1.4/logs/T10.md | -
+1.5 | T1 | done | function census with phantoms, truncations and control | - | phase-1.5/tasks/T1.md | phase-1.5/logs/T1.md | R1.5-001
+1.5 | T2 | done | Ghidra function list as the second oracle, 0 disagreements | - | phase-1.5/tasks/T2.md | phase-1.5/logs/T2.md | -
+1.5 | T3 | done | duplication census: tiers, families, reach, unique tail | - | phase-1.5/tasks/T3.md | phase-1.5/logs/T3.md | -
+1.5 | T4 | done | Sony library objects census across the fleet | - | phase-1.5/tasks/T4.md | phase-1.5/logs/T4.md | -
+1.5 | T5 | done | progress denominators read from the build; banked.py honest | - | phase-1.5/tasks/T5.md | phase-1.5/logs/T5.md | -
+1.5 | T6 | done | differential harness, ≥ 5 pairs on a schedule, scanner registry | - | phase-1.5/tasks/T6.md | phase-1.5/logs/T6.md | -
