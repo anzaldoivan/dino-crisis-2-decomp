@@ -39,7 +39,12 @@
     ".claude/agents/expert-opus55.md": {
       "base": "3.14.2.7",
       "sha": "e2ad594d39628b899f16d9f33a12b6b854d08043f5fe235b7664984a96cdded5",
-      "user": null
+      "user": {
+        "at": "2026-10-01T15:07:14Z",
+        "mark": "+u1",
+        "sha": "61add9f9e176dae435e39a3b4c5ae8d1b728d67f924012832aedf5f8e8581ff8",
+        "state": "stamped"
+      }
     },
     ".claude/agents/memory-curator.md": {
       "base": "3.14.5",
