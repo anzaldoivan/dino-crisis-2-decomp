@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/PSX/BIN/ST2.BIN
   asm_path: asm/psx_bin_st2
+  nonmatchings_path: nonmatchings
   asset_path: asm/psx_bin_st2/assets
   src_path: src/psx_bin_st2
   build_path: build/psx_bin_st2
@@ -27,5 +28,6 @@ segments:
     subsegments:
       - [0x0, rodata, psx_bin_st2_0]  # text-end scan: last jr ra + delay slot
       - [0x74, asm, psx_bin_st2_74]
+      - [0x22e4, c, game_800D7AE4]
       - [0x2410, data, psx_bin_st2_2410]  # data-island text-end..loadmap end
   - [0x2890]

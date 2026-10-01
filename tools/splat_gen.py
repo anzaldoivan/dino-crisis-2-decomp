@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """tools/splat_gen.py -- generate / check the per-binary splat configs (T2, Phase 1.3).
 
-Inputs: config/loadmap.tsv (fleet = class exe|code) + config/boundaries.tsv. Outputs, per
+Inputs: config/loadmap.tsv (fleet = class exe|code) + config/boundaries.tsv + config/c_units.tsv. Outputs, per
 fleet row: config/splat/<alias>.yaml and config/check.<alias>.sha (`<loadmap sha1>  <alias>.bin`).
 Only sha1 hex, addresses and boundaries.tsv basis text are written (G12); the exe is read only
 for its header pc0 and the startup $gp immediates.
@@ -10,6 +10,7 @@ for its header pc0 and the startup $gp immediates.
   splat_gen.py --check [--only <alias>] [--out-dir <dir>]     assert the written files, exit 0 iff OK
 
 Cuts: edges = {0, size} + every boundaries start/end as file offset (+ 0x800 for the exe header).
+C units (c_units.tsv): each start is a further cut; [start, next cut) -> `c` named <unit> (T6).
 Types: jtbl -> rodata; [text_start, text_end) -> asm; [base, text_start) -> rodata; after -> data.
 text_start: exe = pc0; overlay = max jtbl end (base if none), moved to the first `addiu $sp,$sp,-N` when the
 words before it hold a MIPS II+ encoding (data head, head_end).
@@ -23,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LOADMAP = ROOT / "config/loadmap.tsv"
 BOUNDARIES = ROOT / "config/boundaries.tsv"
+C_UNITS = ROOT / "config/c_units.tsv"
 FILES = ROOT / "extracted/retail/files"
 EXE_PATH = "SLUS_012.79"
 EXE_BASE = 0x80018000
@@ -72,6 +74,14 @@ def boundaries():
         by.setdefault(r["binary"], []).append(r)
     for v in by.values():
         v.sort(key=lambda r: (r["start"], r["kind"], r["end"], r["basis"]))
+    return by
+
+
+def c_units():
+    by = {}
+    for r in read_tsv(C_UNITS, ("alias", "start", "unit", "notes")):
+        r["start"] = int(r["start"], 16)
+        by.setdefault(r["alias"], []).append(r)
     return by
 
 
@@ -135,7 +145,7 @@ def head_end(row, text_start, text_end):
     return text_start
 
 
-def plan(row, rows_b, errs):
+def plan(row, rows_b, errs, units=()):
     """Return (segments, end) where segments = [(start, kind, vram|None, [(start, type, name, comment)])]."""
     a, size = row["alias"], row["size"]
     if row["base"] is None:
@@ -163,6 +173,13 @@ def plan(row, rows_b, errs):
         edges.add(off_of(row, r["start"]))
         edges.add(off_of(row, r["end"]))
     edges.add(off_of(row, text_start))
+    cu = {}
+    for u in units:
+        if not text_start <= u["start"] < text_end or any(
+                r["kind"] == "lib-object" and r["start"] <= u["start"] < r["end"] for r in rows_b):
+            errs.append(f"{row['path']}: c unit {u['unit']} 0x{u['start']:08x} not in game text")
+        cu[off_of(row, u["start"])] = u["unit"]
+        edges.add(off_of(row, u["start"]))
     tail = size & ~3
     if size % 4:
         if any(tail < e < size for e in edges):
@@ -180,6 +197,9 @@ def plan(row, rows_b, errs):
         notes = "; ".join(f"{r['kind']} {r['basis']}" for r in rows_b if off_of(row, r["start"]) == s)
         if size % 4 and s == tail:
             subs.append((s, "bin", f"{a}_trailing", f"final {size - tail} B (size not 4-aligned)"))
+            continue
+        if s in cu:
+            subs.append((s, "c", cu[s], notes))
             continue
         if any(r["start"] <= addr and addr + (e - s) <= r["end"] for r in jt):
             t = "rodata"
@@ -199,6 +219,7 @@ def plan(row, rows_b, errs):
 
 def render(row, segs, end, gp):
     a = row["alias"]
+    has_c = any(t == "c" for _, _, _, subs in segs for _, t, _, _ in subs)
     o = [HEAD.format(a=a), f"name: {a}\n", f"sha1: {row['sha1']}\n", "options:\n"]
     opts = [
         ("basename", a), ("platform", "psx"), ("compiler", "GCC"), ("base_path", "../.."),
@@ -213,6 +234,8 @@ def render(row, segs, end, gp):
         # file layout is contiguous: no 16-byte SUBALIGN/section-end padding (T3; else ld pads between sections)
         ("subalign", "4"), ("ld_align_section_vram_end", "False"),
     ]
+    if has_c:
+        opts.insert(6, ("nonmatchings_path", "nonmatchings"))  # splat: relative to asm_path -> asm/<a>/nonmatchings
     if gp is not None:
         opts.append(("gp_value", f"0x{gp:08x}"))
     o += [f"  {k}: {v}\n" for k, v in opts]
@@ -238,7 +261,7 @@ def write(args):
         rows = [r for r in rows if r["alias"] == args.only]
         if not rows:
             sys.exit(f"FAIL unknown alias {args.only}")
-    by = boundaries()
+    by, cu = boundaries(), c_units()
     gp, ev = exe_gp()
     if gp is None:
         print(f"gp: not found ({ev})")
@@ -247,7 +270,7 @@ def write(args):
     out = Path(args.out_dir)
     files, errs = {}, []
     for row in rows:
-        segs, end = plan(row, by.get(row["path"], []), errs)
+        segs, end = plan(row, by.get(row["path"], []), errs, cu.get(row["alias"], []))
         if segs is None:
             continue
         a = row["alias"]
@@ -308,7 +331,7 @@ def parse(text):
 
 def check(args):
     rows, n = fleet()
-    by = boundaries()
+    by, cu = boundaries(), c_units()
     out = Path(args.out_dir)
     fails = []
     if args.only:
@@ -320,7 +343,9 @@ def check(args):
             fails.append(f"count: loadmap N={n} fleet={len(rows)} yaml={ny} sha={ns}")
         if len({r["alias"] for r in rows}) != len(rows):
             fails.append("aliases not unique")
-    bad = {k: [] for k in ("edge", "tile", "vram", "tail", "wep_s00", "sha", "paths", "missing")}
+    bad = {k: [] for k in ("edge", "tile", "vram", "tail", "wep_s00", "sha", "paths", "missing", "c_unit")}
+    known = {r["alias"] for r in fleet()[0]}
+    bad["c_unit"] += [f"{a}:unknown alias" for a in cu if a not in known]
     for row in rows:
         a, size = row["alias"], row["size"]
         y, sh = out / f"config/splat/{a}.yaml", out / f"config/check.{a}.sha"
@@ -331,7 +356,10 @@ def check(args):
             bad["sha"].append(a)
         pieces, end, segs, opts = parse(y.read_text())
         for k, v in opts.items():
-            if k.endswith("_path") and k not in ("base_path", "target_path") and not v.startswith(PATH_ROOTS):
+            if k == "nonmatchings_path":
+                if v != "nonmatchings":
+                    bad["paths"].append(f"{a}:{k}")
+            elif k.endswith("_path") and k not in ("base_path", "target_path") and not v.startswith(PATH_ROOTS):
                 bad["paths"].append(f"{a}:{k}")
         starts = [p[0] for p in pieces]
         if not pieces or starts[0] != 0 or end != size or starts != sorted(set(starts)) or starts[-1] >= size:
@@ -346,6 +374,14 @@ def check(args):
             if not (len(pieces) == 1 and pieces[0][1] == "bin" and pieces[0][3] == 0 and end == size):
                 bad["wep_s00"].append(a)
             continue
+        units = cu.get(a, [])
+        for u in units:
+            hit = [p for p in pieces if p[1] == "c" and p[0] == off_of(row, u["start"]) and p[2] == u["unit"]]
+            if len(hit) != 1:
+                bad["c_unit"].append(f"{a}:{u['unit']}")
+        for p in pieces:
+            if p[1] == "c" and not any(p[0] == off_of(row, u["start"]) and p[2] == u["unit"] for u in units):
+                bad["c_unit"].append(f"{a}:{p[2]} no row")
         cuts = set(starts) | {end}
         for r in by.get(row["path"], []):
             for x in (r["start"], r["end"]):

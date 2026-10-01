@@ -1,0 +1,6 @@
+# config/c_units.tsv -- C units cut by tools/splat_gen.py (T6): one splat `c` subsegment per row, [start, next existing cut); start = a game-code function start (outside every lib-object of config/boundaries.tsv). src/<alias>/<unit>.c.
+# alias	start	unit	notes
+slus_012_79	0x80037824	game_80037824	T6 probes func_80037824 + func_80037E18
+psx_bin_st2	0x800d7ae4	game_800D7AE4	T6 probe func_800D7AE4
+psx_bin_st6	0x800d5c40	game_800D5C40	T6 probe func_800D5C40
+psx_bin_st9	0x800db960	game_800DB960	T6 probe func_800DB960

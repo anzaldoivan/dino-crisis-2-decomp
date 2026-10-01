@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/SLUS_012.79
   asm_path: asm/slus_012_79
+  nonmatchings_path: nonmatchings
   asset_path: asm/slus_012_79/assets
   src_path: src/slus_012_79
   build_path: build/slus_012_79
@@ -121,6 +122,7 @@ segments:
       - [0x3b64, rodata, slus_012_79_3b64]
       - [0x3bb8, asm, slus_012_79_3bb8]  # lib-object psyq470 NOHEAP.OBJ/NOHEAP.OBJ
       - [0x3d30, asm, slus_012_79_3d30]
+      - [0x20024, c, game_80037824]
       - [0x56d14, asm, slus_012_79_56d14]  # lib-object psyq470 LIBSND.LIB/UT_ROFF.OBJ; lib-object psyq470 LIBSPU.LIB/S_I.OBJ
       - [0x56d34, asm, slus_012_79_56d34]  # lib-object psyq470 LIBSPU.LIB/S_INI.OBJ
       - [0x56e94, asm, slus_012_79_56e94]  # lib-object psyq470 LIBSPU.LIB/SPU.OBJ

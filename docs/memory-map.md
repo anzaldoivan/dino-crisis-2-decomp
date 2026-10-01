@@ -227,6 +227,8 @@ Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 tw
   + 2 `bin` (exe PS-X EXE header; WEP_S00).
 - Subsegments 653: asm 275 · rodata 281 (data heads, jtbls, `[base, text_start)`) · data 80 (after text-end) · bin 17
   (odd tails). Counts: scratch scan of config/splat/*.yaml (T5.c1).
+- C cuts: `config/c_units.tsv` (`alias start unit notes`) is the source; splat_gen cuts at each start, emits `c <unit>`
+  over [start, next cut) → `src/<alias>/<unit>.c` (INCLUDE_ASM of `asm/<alias>/nonmatchings/<unit>/`) (T6.c1).
 - By family (binaries: asm / rodata / data / bin): exe 1: 194/92/1/0 · E 13: 13/59/13/0 · KOF 14: 14/19/14/10 ·
   WEP 20: 20/36/20/7 · WEP_S 10: 9/4/7/0 (+ WEP_S00 raw) · LOGO+ST 11: 11/36/11/0 · MAP 1: 1/1/1/0 · R2 5 (OPTION,
   SAVE, LOAD, SUBSCR3, SUBSCR6): 5/25/5/0 · RES 3: 3/2/3/0 · M_RESULT, M_TITLE, TITLE2, OPENING, ENDING 5: 5/7/5/0.

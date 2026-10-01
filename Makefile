@@ -24,7 +24,8 @@ extract:
 # (container). expected: all N aliases green, then build/<alias>.bin -> expected/<alias>.bin (else rc!=0, untouched).
 # Per alias (config/splat/<alias>.yaml, never edited): splat split with a generated build/<alias>.override.yaml
 # (target_path under $(BASEDIR); splat merges later configs) → asm/<alias>/; assemble every object the splat .ld
-# names (.s, .bin; a C unit: cpp → cc1 → maspsx → as, the pinned triple below, .i/.s beside its .o); link; objcopy (odd-size tail: shrink-only trim ≤ 3 B, only when size(build) > size(target): SUBALIGN(4)
+# names (.s, .bin; a C unit: cpp → cc1 → maspsx → as, the pinned triple below, .i/.s beside its .o; .m.s gets
+# `.include "macro.inc"` first so INCLUDE_ASM'd asm/<alias>/nonmatchings/*.s see glabel/jlabel); link; objcopy (odd-size tail: shrink-only trim ≤ 3 B, only when size(build) > size(target): SUBALIGN(4)
 # pads the end); `sha1sum -c config/check.<alias>.sha`. build/overlays.mk is generated from the YAML list.
 # SPIMDISASM_SYMBOL_ALIGNMENT_REQUIRES_ALIGNED_SECTION: no `.align 3` on a jtbl in a non-8-aligned file.
 .PHONY: split build expected clean FORCE
@@ -80,9 +81,9 @@ build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev
 	  s=$$$${o#build/$(1)/}; s=$$$${s%.o}; mkdir -p $$$$(dirname $$$$o); \
 	  case $$$$s in \
 	    *.s) $(CROSS)as $(ASFLAGS) -I build/$(1)/include -o $$$$o $$$$s ;; \
-	    *.c) $(CPP) $(CPPFLAGS) $(CPPFLAGS_$(1)) $$$$s -o $$$${o%.o}.i \
+	    *.c) echo "cc $$$$o" && $(CPP) $(CPPFLAGS) $(CPPFLAGS_$(1)) $$$$s -o $$$${o%.o}.i \
       && $(CC1) $(CFLAGS) $(CFLAGS_$(1)) $$$${o%.o}.i -o $$$${o%.o}.s \
-      && $(MASPSX) $(MASPSXFLAGS) $(MASPSXFLAGS_$(1)) $$$${o%.o}.s > $$$${o%.o}.m.s \
+      && { echo '.include "macro.inc"'; $(MASPSX) $(MASPSXFLAGS) $(MASPSXFLAGS_$(1)) $$$${o%.o}.s; } > $$$${o%.o}.m.s \
       && $(CROSS)as $(ASFLAGS) -I build/$(1)/include -o $$$$o $$$${o%.o}.m.s ;; \
     *.bin) printf '.section .data\n.incbin "%s"\n' $$$$s | $(CROSS)as $(ASFLAGS) -o $$$$o - ;; \
 	    *) false ;; \
