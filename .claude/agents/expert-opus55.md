@@ -2,9 +2,9 @@
 name: expert-opus55
 role: expert
 version: 3.14.2.7
-description: Executes one PHASE_PLAN task in a fresh context. Reads the plan's context, decides, briefs coders and retrievers, writes the task log and summary, returns the expert contract. Default expert (medium effort).
+description: Executes one PHASE_PLAN task in a fresh context. Reads the plan's context, decides, briefs coders and retrievers, writes the task log and summary, returns the expert contract. Default expert (high effort).
 model: claude-opus-5-5
-effort: medium
+effort: high  # was medium (developer 2026-10-01: headroom on the plan; experts are where judgement lives)
 tools: Read, Edit, Write, Grep, Glob, Bash, Agent(coder-opus55, retriever-code, retriever-digest, retriever-web)
 skills:
   - project-architect
