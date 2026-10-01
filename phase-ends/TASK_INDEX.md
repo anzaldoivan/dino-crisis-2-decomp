@@ -13,3 +13,8 @@
 1.2 | T5 | done | overlay load addresses byte-proven per loader class | - | phase-1.2/tasks/T5.md | phase-1.2/logs/T5.md | -
 1.2 | T6 | done | load map generator with control rows | - | phase-1.2/tasks/T6.md | phase-1.2/logs/T6.md | -
 1.2 | T7 | done | jump-table spans and forced boundaries | - | phase-1.2/tasks/T7.md | phase-1.2/logs/T7.md | -
+1.3 | T1 | done | splat pinned in the build image | - | phase-1.3/tasks/T1.md | phase-1.3/logs/T1.md | -
+1.3 | T2 | done | splat config generator from the load map | - | phase-1.3/tasks/T2.md | phase-1.3/logs/T2.md | -
+1.3 | T3 | done | Makefile pipeline green on four pilots | - | phase-1.3/tasks/T3.md | phase-1.3/logs/T3.md | -
+1.3 | T4 | done | whole fleet green, make expected, clean fleet check | - | phase-1.3/tasks/T4.md | phase-1.3/logs/T4.md | -
+1.3 | T5 | done | contracts required, ops docs | - | phase-1.3/tasks/T5.md | phase-1.3/logs/T5.md | -
