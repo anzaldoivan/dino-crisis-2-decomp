@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/M_RESULT.BIN
   asm_path: asm/bin_m_result
-  asset_path: assets/bin_m_result
+  asset_path: asm/bin_m_result/assets
   src_path: src/bin_m_result
   build_path: build/bin_m_result
   ld_script_path: build/bin_m_result.ld
   undefined_funcs_auto_path: build/bin_m_result/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_m_result/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_m_result/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_m_result
     type: code

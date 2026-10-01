@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/ENDING.BIN
   asm_path: asm/bin_ending
-  asset_path: assets/bin_ending
+  asset_path: asm/bin_ending/assets
   src_path: src/bin_ending
   build_path: build/bin_ending
   ld_script_path: build/bin_ending.ld
   undefined_funcs_auto_path: build/bin_ending/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_ending/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_ending/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_ending
     type: code

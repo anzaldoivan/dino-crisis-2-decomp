@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/RES01.BIN
   asm_path: asm/bin_res01
-  asset_path: assets/bin_res01
+  asset_path: asm/bin_res01/assets
   src_path: src/bin_res01
   build_path: build/bin_res01
   ld_script_path: build/bin_res01.ld
   undefined_funcs_auto_path: build/bin_res01/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_res01/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_res01/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_res01
     type: code

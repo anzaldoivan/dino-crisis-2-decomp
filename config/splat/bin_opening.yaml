@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/OPENING.BIN
   asm_path: asm/bin_opening
-  asset_path: assets/bin_opening
+  asset_path: asm/bin_opening/assets
   src_path: src/bin_opening
   build_path: build/bin_opening
   ld_script_path: build/bin_opening.ld
   undefined_funcs_auto_path: build/bin_opening/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_opening/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_opening/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_opening
     type: code

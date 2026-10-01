@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/KOF_P11P.BIN
   asm_path: asm/bin_kof_p11p
-  asset_path: assets/bin_kof_p11p
+  asset_path: asm/bin_kof_p11p/assets
   src_path: src/bin_kof_p11p
   build_path: build/bin_kof_p11p
   ld_script_path: build/bin_kof_p11p.ld
   undefined_funcs_auto_path: build/bin_kof_p11p/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_kof_p11p/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_kof_p11p/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_kof_p11p
     type: code

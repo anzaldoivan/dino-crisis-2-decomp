@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP0F.BIN
   asm_path: asm/bin_wep0f
-  asset_path: assets/bin_wep0f
+  asset_path: asm/bin_wep0f/assets
   src_path: src/bin_wep0f
   build_path: build/bin_wep0f
   ld_script_path: build/bin_wep0f.ld
   undefined_funcs_auto_path: build/bin_wep0f/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_wep0f/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_wep0f/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_wep0f
     type: code

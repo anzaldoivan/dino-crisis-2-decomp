@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/PSX/BIN/ST5.BIN
   asm_path: asm/psx_bin_st5
-  asset_path: assets/psx_bin_st5
+  asset_path: asm/psx_bin_st5/assets
   src_path: src/psx_bin_st5
   build_path: build/psx_bin_st5
   ld_script_path: build/psx_bin_st5.ld
   undefined_funcs_auto_path: build/psx_bin_st5/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/psx_bin_st5/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/psx_bin_st5/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: psx_bin_st5
     type: code

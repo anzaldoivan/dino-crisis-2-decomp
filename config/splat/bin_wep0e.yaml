@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP0E.BIN
   asm_path: asm/bin_wep0e
-  asset_path: assets/bin_wep0e
+  asset_path: asm/bin_wep0e/assets
   src_path: src/bin_wep0e
   build_path: build/bin_wep0e
   ld_script_path: build/bin_wep0e.ld
   undefined_funcs_auto_path: build/bin_wep0e/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_wep0e/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_wep0e/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_wep0e
     type: code

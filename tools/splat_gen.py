@@ -177,12 +177,15 @@ def render(row, segs, end, gp):
     opts = [
         ("basename", a), ("platform", "psx"), ("compiler", "GCC"), ("base_path", "../.."),
         ("target_path", f"extracted/retail/files/{row['path']}"),
-        ("asm_path", f"asm/{a}"), ("asset_path", f"assets/{a}"), ("src_path", f"src/{a}"),
+        ("asm_path", f"asm/{a}"), ("asset_path", f"asm/{a}/assets"), ("src_path", f"src/{a}"),
         ("build_path", f"build/{a}"), ("ld_script_path", f"build/{a}.ld"),
         ("undefined_funcs_auto_path", f"build/{a}/undefined_funcs_auto.txt"),
         ("undefined_syms_auto_path", f"build/{a}/undefined_syms_auto.txt"),
+        ("generated_asm_macros_directory", f"build/{a}/include"),
         ("find_file_boundaries", "False"),
         ("section_order", '[".rodata", ".text", ".data", ".bss"]'),
+        # file layout is contiguous: no 16-byte SUBALIGN/section-end padding (T3; else ld pads between sections)
+        ("subalign", "4"), ("ld_align_section_vram_end", "False"),
     ]
     if gp is not None:
         opts.append(("gp_value", f"0x{gp:08x}"))

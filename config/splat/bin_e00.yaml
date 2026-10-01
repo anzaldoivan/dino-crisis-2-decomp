@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/E00.BIN
   asm_path: asm/bin_e00
-  asset_path: assets/bin_e00
+  asset_path: asm/bin_e00/assets
   src_path: src/bin_e00
   build_path: build/bin_e00
   ld_script_path: build/bin_e00.ld
   undefined_funcs_auto_path: build/bin_e00/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/bin_e00/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/bin_e00/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: bin_e00
     type: code

@@ -16,3 +16,75 @@ OUT ?= extracted/retail
 
 extract:
 	python3 tools/extract_disc.py --out $(OUT)
+
+# ---- Byte-identical rebuild of the fleet (docs/ops/docker-host.md "Build"). Container only (splat, mipsel binutils).
+# make [-j] split|build|expected [BASEDIR=dir] [ONLY="alias …"] · make clean (removes build/ asm/ only).
+# Per alias (config/splat/<alias>.yaml, never edited): splat split with a generated build/<alias>.override.yaml
+# (target_path under $(BASEDIR); splat merges later configs) → asm/<alias>/; assemble every object the splat .ld
+# names; link; objcopy (odd-size tail: shrink-only trim ≤ 3 B, only when size(build) > size(target): SUBALIGN(4)
+# pads the end); `sha1sum -c config/check.<alias>.sha`. build/overlays.mk is generated from the YAML list.
+# SPIMDISASM_SYMBOL_ALIGNMENT_REQUIRES_ALIGNED_SECTION: no `.align 3` on a jtbl in a non-8-aligned file.
+.PHONY: split build expected clean FORCE
+
+BASEDIR ?= extracted/retail/files
+YAMLS   := $(sort $(wildcard config/splat/*.yaml))
+ALIASES := $(patsubst config/splat/%.yaml,%,$(YAMLS))
+ONLY    ?= $(ALIASES)
+ifneq ($(filter-out $(ALIASES),$(ONLY)),)
+$(error unknown alias in ONLY: $(filter-out $(ALIASES),$(ONLY)))
+endif
+
+SPLAT   := SPIMDISASM_SYMBOL_ALIGNMENT_REQUIRES_ALIGNED_SECTION=True /opt/splat/bin/python -m splat
+CROSS   := mipsel-linux-gnu-
+ASFLAGS := -march=r3000 -mabi=32 -G0 -no-pad-sections
+
+split: $(foreach a,$(ONLY),build/$(a)/split.stamp)
+build: $(foreach a,$(ONLY),build/$(a).bin)
+expected: build
+	mkdir -p expected && rm -rf expected/build && cp -r build expected/build
+clean:
+	rm -rf build asm
+FORCE:
+
+# $(1) alias, $(2) path under BASEDIR
+define alias_rules
+build/$(1).override.yaml: FORCE
+	@mkdir -p build
+	@printf 'options:\n  target_path: %s\n' '$(BASEDIR)/$(2)' > $$@.tmp
+	@if cmp -s $$@.tmp $$@; then rm -f $$@.tmp; else mv $$@.tmp $$@; fi
+
+build/$(1)/split.stamp: config/splat/$(1).yaml build/$(1).override.yaml
+	@rm -rf asm/$(1) build/$(1) && mkdir -p build/$(1)
+	@$(SPLAT) split $$^ > build/$(1)/split.log 2>&1 || { tail -5 build/$(1)/split.log; echo "FAILED split: $(1)"; exit 1; }
+	@touch $$@
+
+build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev/null)
+	@for o in $$$$(grep -o 'build/$(1)/[^ ]*\.o' build/$(1).ld | sort -u); do \
+	  s=$$$${o#build/$(1)/}; s=$$$${s%.o}; mkdir -p $$$$(dirname $$$$o); \
+	  case $$$$s in \
+	    *.s) $(CROSS)as $(ASFLAGS) -I build/$(1)/include -o $$$$o $$$$s ;; \
+	    *.bin) printf '.section .data\n.incbin "%s"\n' $$$$s | $(CROSS)as $(ASFLAGS) -o $$$$o - ;; \
+	    *) false ;; \
+	  esac || { echo "FAILED assemble: $(1): $$$$s"; exit 1; }; \
+	done
+	@$(CROSS)ld -nostdlib --no-check-sections -Map build/$(1).map -T build/$(1).ld \
+	  -T build/$(1)/undefined_syms_auto.txt -T build/$(1)/undefined_funcs_auto.txt -o build/$(1).elf \
+	  || { echo "FAILED link: $(1)"; exit 1; }
+	@$(CROSS)objcopy -O binary build/$(1).elf $$@.tmp
+	@t=$$$$(stat -c %s '$(BASEDIR)/$(2)'); b=$$$$(stat -c %s $$@.tmp); \
+	  if [ $$$$b -gt $$$$t ] && [ $$$$((b - t)) -le 3 ]; then truncate -s $$$$t $$@.tmp; fi
+	@mv $$@.tmp $$@; (cd build && sha1sum -c ../config/check.$(1).sha) \
+	  || { mv $$@ $$@.bad; echo "FAILED sha1: $(1) (build/$(1).bin.bad)"; exit 1; }
+endef
+
+ifeq ($(filter-out clean format format-check extract,$(or $(MAKECMDGOALS),all)),)
+else
+include build/overlays.mk
+endif
+
+build/overlays.mk: $(YAMLS)
+	@mkdir -p build
+	@for y in $(YAMLS); do a=$$(basename $$y .yaml); \
+	  p=$$(sed -n 's|^  target_path: extracted/retail/files/||p' $$y); \
+	  [ -n "$$p" ] || { echo "FAILED: no target_path in $$y" >&2; exit 1; }; \
+	  printf '$$(eval $$(call alias_rules,%s,%s))\n' $$a $$p; done > $@.tmp && mv $@.tmp $@

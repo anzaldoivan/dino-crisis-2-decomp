@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/PSX/DATA/MAP.BIN
   asm_path: asm/psx_data_map
-  asset_path: assets/psx_data_map
+  asset_path: asm/psx_data_map/assets
   src_path: src/psx_data_map
   build_path: build/psx_data_map
   ld_script_path: build/psx_data_map.ld
   undefined_funcs_auto_path: build/psx_data_map/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/psx_data_map/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/psx_data_map/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
 segments:
   - name: psx_data_map
     type: code

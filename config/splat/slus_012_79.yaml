@@ -8,14 +8,17 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/SLUS_012.79
   asm_path: asm/slus_012_79
-  asset_path: assets/slus_012_79
+  asset_path: asm/slus_012_79/assets
   src_path: src/slus_012_79
   build_path: build/slus_012_79
   ld_script_path: build/slus_012_79.ld
   undefined_funcs_auto_path: build/slus_012_79/undefined_funcs_auto.txt
   undefined_syms_auto_path: build/slus_012_79/undefined_syms_auto.txt
+  generated_asm_macros_directory: build/slus_012_79/include
   find_file_boundaries: False
   section_order: [".rodata", ".text", ".data", ".bss"]
+  subalign: 4
+  ld_align_section_vram_end: False
   gp_value: 0x800a79b0
 segments:
   - [0x0, bin, slus_012_79_0]  # PS-X EXE header
