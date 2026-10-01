@@ -87,7 +87,7 @@ class Probe:
         return s
 
     def obj(self, t):
-        """Compile triple t; return (words, masks) of the function, or raise RuntimeError."""
+        """Compile triple t; return (words, masks, relocs) of the function, or raise RuntimeError."""
         if t in self.cache:
             return self.cache[t]
         cc, a, g, o = t
@@ -111,7 +111,7 @@ def extract(o, fn):
     run([CROSS + "objcopy", "-O", "binary", "-j", ".text", str(o), str(binf)], o.parent)
     data = binf.read_bytes()[val:val + size]
     words = [int.from_bytes(data[i:i + 4], "little") for i in range(0, len(data) - len(data) % 4, 4)]
-    masks = {}
+    masks, relocs = {}, []
     sect = False
     for line in run([CROSS + "objdump", "-r", "-j", ".text", str(o)], o.parent).decode().splitlines():
         f = line.split()
@@ -121,12 +121,13 @@ def extract(o, fn):
             off = int(f[0], 16) - val
             if 0 <= off < size:
                 masks[off // 4] = masks.get(off // 4, 0) | MASKS.get(f[1], 0xFFFFFFFF)
-    return words, masks
+                relocs.append((off, f[1], f[2] if len(f) > 2 else ""))
+    return words, masks, tuple(relocs)
 
 
 def compare(a, b):
     """Return None on match, else first-diff word index (length mismatch = no match)."""
-    (wa, ma), (wb, mb) = a, b
+    (wa, ma), (wb, mb) = a[:2], b[:2]
     for i in range(min(len(wa), len(wb))):
         keep = ~(ma.get(i, 0) | mb.get(i, 0)) & 0xFFFFFFFF
         if wa[i] & keep != wb[i] & keep:
@@ -145,6 +146,22 @@ def target_of(row, fleet_by_alias):
     off = splat_gen.off_of(r, start)
     data = f.read_bytes()[off:off + end - start]
     return [int.from_bytes(data[i:i + 4], "little") for i in range(0, len(data) - len(data) % 4, 4)], {}
+
+
+def classes(probes, res, triples):
+    """Group triples into output equivalence classes: key = per probe the raw (unmasked) words + reloc list."""
+    out = {}
+    for t in triples:
+        out.setdefault(tuple((tuple(res[(p.name, t)][0]), res[(p.name, t)][2]) for p in probes), []).append(t)
+    return list(out.values())
+
+
+def ladder(probes, res, matches_all, triples):
+    """Print `ladder: exactly <m> triple(s) match all K` (m = classes) and one line per class."""
+    cls = classes(probes, res, [t for t in triples if t in matches_all])
+    print(f"ladder: exactly {len(cls)} triple(s) match all {len(probes)}")
+    for i, c in enumerate(cls, 1):
+        print(f"  class {i}: {len(c)} triple(s): {' '.join(tname(t) for t in c)}")
 
 
 def build(probes, triples, pool):
@@ -256,6 +273,7 @@ def main():
             probes = [Probe(r, kind) for r in rows]
             res = build(probes, triples + ([pinned] if pinned and pinned not in triples else []), pool)
             matches_all = set(triples)
+            game = [p for p in probes if p.row["alias"] != "self"]
             for p in probes:
                 tgt = res[(p.name, ctl)] if p.row["alias"] == "self" else target_of(p.row, fleet)
                 print(f"probe {p.name} ({p.row['alias']} {p.row['start']}..{p.row['end']}, "
@@ -267,15 +285,17 @@ def main():
                     if d is None:
                         hits.append(t)
                     print(f"  {tname(t):32} {'match' if d is None else d if d == 'error' else f'diff@{d}'}")
-                matches_all &= set(hits)
+                if p in game:
+                    matches_all &= set(hits)
                 print(f"  matching: {len(hits)} of {len(triples)}: {' '.join(tname(t) for t in hits) or '-'}")
             if pinned:
                 k = sum(1 for p in probes if not isinstance(res[(p.name, pinned)], RuntimeError)
                         and compare(res[(p.name, pinned)], target_of(p.row, fleet)) is None)
                 print(f"pinned {tname(pinned)}")
                 print(f"probes identical: {k} of {len(probes)} under the pinned triple")
-                print(f"ladder: exactly {len(matches_all)} triple(s) match all {len(probes)}")
                 rc = 0 if k == len(probes) else 1
+            if game:
+                ladder(game, res, matches_all, triples)
         print(f"controls: true {'ok' if t_ok else 'FAIL'}, false {'ok' if f_ok else 'FAIL'}")
         if not (t_ok and f_ok):
             rc = 1

@@ -4,7 +4,7 @@
 
 ## Usage
 - `probe.py [names…] [--cc C,…] [--aspsx V,…] [-G N,…] [-O N,…] [-j N]` — match table per probe; options repeatable or comma lists.
-- `probe.py --pinned [names…]` — game probes (alias ≠ `self`) under the pinned triple + ladder count over the (narrowed) matrix.
+- `probe.py --pinned [names…]` — game probes (alias ≠ `self`) under the pinned triple + ladder class count over the (narrowed) matrix.
 - `probe.py --selftest` — controls only on the `self` row, matrix `gcc-2.8.1-psx,psyq4.4 × 2.79 × G0 × O1,O2` (narrowable); prints `controls: true ok, false ok`.
 - Exit: 0 ok · 1 a control misbehaved or a pinned probe differs · 2 usage/config error (no pinned value, no rows, unknown cc).
 
@@ -27,4 +27,4 @@ Function bytes = `.text[value, value+size)` from `readelf -s` FUNC symbol. Reloc
 Control triple = first matrix triple (`--selftest`: every matrix triple). Known-true: the `self` probe recompiled vs its own object (must match). Known-false: the same probe with the other `-O` vs that object (must differ). Either failing → `control failed: …` and exit 1.
 
 ## Outputs
-Per probe: one line per triple (`match` | `diff@<word>` | `error`), then `matching: n of N: <triples>`. `--pinned`: `probes identical: K of K under the pinned triple`, `ladder: exactly <m> triple(s) match all K`. Last line `controls: true ok|FAIL, false ok|FAIL`. Scratch (`.i/.s/.o`) under `.run/probe/<name>/`.
+Per probe: one line per triple (`match` | `diff@<word>` | `error`), then `matching: n of N: <triples>`. `--pinned`: `probes identical: K of K under the pinned triple`. Every run with game probes (alias ≠ `self`; K = their count): `ladder: exactly <m> triple(s) match all K`, m = output equivalence classes among the triples matching all K (key = per probe the raw unmasked function words + reloc list `(offset, type, symbol)`), then one line per class `class <i>: <n> triple(s): <triples>`. Last line `controls: true ok|FAIL, false ok|FAIL`. Scratch (`.i/.s/.o`) under `.run/probe/<name>/`.

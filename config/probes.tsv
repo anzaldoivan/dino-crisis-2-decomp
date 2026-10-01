@@ -1,3 +1,8 @@
 # config/probes.tsv -- probe rows for tools/probe.py (T3, Phase 1.4); see tools/probes/README.md. end exclusive; alias `self` = target is the probe's own object.
 # name	alias	start	end	c_path	notes
 probe_selftest	self	-	-	tools/probes/selftest.c	harness selftest: our own C, no game data
+func_80037824	slus_012_79	0x80037824	0x8003784c	tools/probes/func_80037824.c	T4 (b) global scalar read/write, absolute
+func_800D5C40	psx_bin_st6	0x800d5c40	0x800d5ca0	tools/probes/func_800D5C40.c	T4 (c) loop + call, overlay
+func_80037E18	slus_012_79	0x80037e18	0x80037ed8	tools/probes/func_80037E18.c	T4 (d) leaf with stack frame + global read
+func_800D7AE4	psx_bin_st2	0x800d7ae4	0x800d7b38	tools/probes/func_800D7AE4.c	T4 (a) signed int division, overlay
+func_800DB960	psx_bin_st9	0x800db960	0x800db9f4	tools/probes/func_800DB960.c	T4 (e) two divides + global pointer, tie-breaker, overlay
