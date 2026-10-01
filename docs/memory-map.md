@@ -9,6 +9,8 @@ no game bytes (G12). Proof tool: `tools/emu/prove_load.sh <path>` (exe + [proven
 - path `extracted/retail/files/SLUS_012.79` · class exe · base (t_addr) `0x80018000` · t_size `0x90000` ·
   end `0x800a8000` · pc0 `0x8001b3b8` · status **proven**
 - .text end `0x80085f74` (binding, T3; `tools/ghidra` TextExtent.java). Data from `+0x6df74` mutates once `main` runs.
+- gp `0x800a79b0` (T2 Phase 1.3, `tools/splat_gen.py` scan of 64 insns from pc0): file `+0x3c34` `lui $gp,0x800a`,
+  `+0x3c38` `addiu $gp,$gp,0x79b0`; set as `gp_value` in `config/splat/slus_012_79.yaml`.
 - Compared ranges: moment 1 (pc0 breakpoint, load-complete) full `[0x80018000,0x800a8000)` vs file `[0x800..)`,
   no masking; moments 2-3 (two later distinct vsyncs, pc0 +~300 / +~600) `[0x80018000,0x80085f74)` word-wise.
 - Exclusions (moments 2-3 only; self-modifying libcard code, names from the T1 PsyQ 4.7 signature hits on the Ghidra
