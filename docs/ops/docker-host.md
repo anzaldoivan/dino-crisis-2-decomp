@@ -31,6 +31,7 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
   - image id after this layer `sha256:52431507e7454e60c623a653eba651ae908fcb983c4851c319644000a8937312`
 - `mipsel-linux-gnu-as --version`: `GNU assembler (GNU Binutils for Ubuntu) 2.42`.
 - splat invocation: `bash tools/docker/dc.sh run /opt/splat/bin/python -m splat <split|create_config|capy> …` (`--help` exits 0).
+- Configs: `PY tools/splat_gen.py [--force] [--only <alias>] [--out-dir <d>] [--check]` (host) writes `config/splat/<alias>.yaml` + `config/check.<alias>.sha` from loadmap/boundaries; YAML `target_path` is host-canonical `extracted/retail/files/…`, so a container split needs an override YAML or symlink to `.run/extracted/retail/files`.
 - Container extract needs the cue: `bash tools/docker/dc.sh run sh -c 'DC2_CUE="/disc/Dino Crisis 2 (USA).cue" make extract OUT=.run/extracted/retail'`; its `manifest.sha1` equals the host's (T1.c1).
 
 ## Volume and sync
