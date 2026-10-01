@@ -2,7 +2,7 @@
   "mcpServers": {
     "disassembler": {
       "type": "sse",
-      "url": "TODO(phase-2)"
+      "url": "http://127.0.0.1:8080/sse"
     }
   }
 }
