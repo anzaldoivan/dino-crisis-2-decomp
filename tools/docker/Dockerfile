@@ -20,6 +20,10 @@ RUN git clone --depth 1 --branch "$MKPSXISO_TAG" --recurse-submodules --shallow-
     && cmake --build /tmp/mkpsxiso/build -j"$(nproc)" \
     && install -m 0755 /tmp/mkpsxiso/build/dumpsxiso /usr/local/bin/dumpsxiso \
     && rm -rf /tmp/mkpsxiso
+# splat64 (splitter/disassembler) in its own venv; deps pinned to the versions it resolved.
+RUN python3 -m venv /opt/splat \
+    && /opt/splat/bin/pip install --no-cache-dir \
+      'splat64[mips]==0.41.0' spimdisasm==1.42.4 rabbitizer==1.16.2
 WORKDIR /work
 # Build:  docker build --platform linux/amd64 -t <project>-build .
 # TODO(phase-4): add the pinned compiler's own packages when the pin needs them.

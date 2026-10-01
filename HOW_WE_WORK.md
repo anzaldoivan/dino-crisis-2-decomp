@@ -55,7 +55,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - Scratch: `.run/` (gitignored; never the system temp); cap 25 GB, warn at 20 GB; pruning is the developer's call
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Build: `bash tools/docker/dc.sh build|sync|run <cmd>` (amd64, volume `dc2-work`; `docs/ops/docker-host.md`); `make build` — `TODO(phase-3)`
+- Build: `bash tools/docker/dc.sh build|sync|run <cmd>` (amd64, volume `dc2-work`; `docs/ops/docker-host.md`; pins: ubuntu digest, binutils 2.42, splat64[mips] 0.41.0 venv `/opt/splat`, `bin/python -m splat`); `make build` — `TODO(phase-3)`
 - Run: `bash tools/emu/emu.sh start|stop|status` (headless PCSX-Redux, OpenBIOS, `-interpreter`, pid/log `.run/emu/`); `DC2_BREAK=<addr>` pauses at a PC; `bash tools/emu/prove_load.sh <exe>` checks an EXE image in RAM
 - Test / the gate: the clean fleet check — `TODO(phase-3)` — green means N of N byte-identical from a clean rebuild
 - Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump

@@ -23,6 +23,15 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
   tag `v2.30` (ARG `MKPSXISO_TAG`), commit `54fb1644ed8741223583e2dcda358b75a205e214` (ARG `MKPSXISO_SHA`, from
   `git ls-remote … refs/tags/v2.30^{}`; build fails if `git rev-parse HEAD` differs); installed `/usr/local/bin/dumpsxiso`, source removed.
   The image id above predates this layer.
+- Phase 1.3 T1.c1 (2026-10-01) adds venv `/opt/splat` (`python3 -m venv`), pip pins (`Dockerfile`):
+  - splat64 0.41.0 with extra `[mips]` (plain `splat64` pulls no spimdisasm/rabbitizer; they are `mips`/`dev` extras)
+  - spimdisasm 1.42.4
+  - rabbitizer 1.16.2
+  - also resolved (unpinned, splat64 pins them itself or via extra): colorama 0.4.6, intervaltree 3.1.0, pylibyaml 0.1.0, PyYAML 6.0.3, tqdm 4.67.1, crunch64 0.6.2, n64img 0.3.3, pygfxd 1.0.5, pypng 0.20220715.0, sortedcontainers 2.4.0
+  - image id after this layer `sha256:52431507e7454e60c623a653eba651ae908fcb983c4851c319644000a8937312`
+- `mipsel-linux-gnu-as --version`: `GNU assembler (GNU Binutils for Ubuntu) 2.42`.
+- splat invocation: `bash tools/docker/dc.sh run /opt/splat/bin/python -m splat <split|create_config|capy> …` (`--help` exits 0).
+- Container extract needs the cue: `bash tools/docker/dc.sh run sh -c 'DC2_CUE="/disc/Dino Crisis 2 (USA).cue" make extract OUT=.run/extracted/retail'`; its `manifest.sha1` equals the host's (T1.c1).
 
 ## Volume and sync
 - Named volume `dc2-work` (override `DC2_VOLUME`), mounted at `/work`. dc.sh touches no other volume.
