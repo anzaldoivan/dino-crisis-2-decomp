@@ -43,12 +43,21 @@ CROSS   := mipsel-linux-gnu-
 ASFLAGS := -march=r3000 -mabi=32 -G0 -no-pad-sections
 # Pinned C triple (docs/ops/decomp-environment.md, T4): psyq4.6 cc1 via wibo → maspsx (aspsx version explicit) → as.
 # Per-alias override hook: CPPFLAGS_<alias>, CFLAGS_<alias>, MASPSXFLAGS_<alias> (default empty, appended).
+CCDIR       ?= /opt/cc
 CPP         := $(CROSS)cpp
-CC1         := /opt/cc/wibo/wibo /opt/cc/psyq4.6/CC1PSX.EXE
-MASPSX      := python3 /opt/cc/maspsx/maspsx.py
+CC1         := $(CCDIR)/wibo/wibo $(CCDIR)/psyq4.6/CC1PSX.EXE
+MASPSX      := python3 $(CCDIR)/maspsx/maspsx.py
 CPPFLAGS    := -P -undef -nostdinc -D__GNUC__=2 -Iinclude
 CFLAGS      := -quiet -O2 -G0 -mips1 -fno-builtin
 MASPSXFLAGS := --aspsx-version=2.86 -G0
+
+# make print-c A=<alias> [CCDIR=dir] — the C triple and flags for one alias as shell-assignable lines (base flags +
+# the per-alias hooks); tools/compile_only.sh evals these, so no flag is re-typed outside this Makefile.
+.PHONY: print-c
+print-c:
+	@printf "%s='%s'\n" CPP '$(CPP)' CC1 '$(CC1)' MASPSX '$(MASPSX)' \
+	  CPPFLAGS '$(strip $(CPPFLAGS) $(CPPFLAGS_$(A)))' CFLAGS '$(strip $(CFLAGS) $(CFLAGS_$(A)))' \
+	  MASPSXFLAGS '$(strip $(MASPSXFLAGS) $(MASPSXFLAGS_$(A)))'
 
 split: $(foreach a,$(ONLY),build/$(a)/split.stamp)
 build: $(foreach a,$(ONLY),build/$(a).bin)
@@ -105,7 +114,7 @@ build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev
 	  || { mv $$@ $$@.bad; echo "FAILED sha1: $(1) (build/$(1).bin.bad)"; exit 1; }
 endef
 
-ifeq ($(filter-out clean format format-check extract,$(or $(MAKECMDGOALS),all)),)
+ifeq ($(filter-out clean format format-check extract print-c,$(or $(MAKECMDGOALS),all)),)
 else
 include build/overlays.mk
 endif

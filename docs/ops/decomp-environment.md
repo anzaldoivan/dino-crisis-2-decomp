@@ -65,6 +65,16 @@ C units (T6, Phase 1.4): cuts come from `config/c_units.tsv` via `tools/splat_ge
 branch prints `cc <obj>` per unit (grep `c\.o` in `.run/fleet_build.log`) and prepends `.include "macro.inc"` to each
 `.m.s` so nonmatchings `glabel`/`jlabel` assemble.
 
+### Compile-only (no ROM) (T8, Phase 1.4)
+
+`bash tools/compile_only.sh` (container or any Linux host with `mipsel-linux-gnu-cpp` and python3): every
+`src/**/*.c` (alias = first dir under `src/`) goes cpp → cc1 → maspsx with the flags from
+`make print-c A=<alias> CCDIR=<dir>` (the Makefile's vars + per-alias hooks; `CCDIR ?= /opt/cc`). No `as`, no
+`asm/`, no extract, no disc. CCDIR: `$COMPILE_ONLY_CCDIR` if set, else `/opt/cc` if `fetch_toolchain.sh --verify`-clean
+for psyq4.6, maspsx, wibo, else `.run/cc`; a dir that is not clean is filled by `fetch_toolchain.sh --only …`
+(sha256 mismatch → exit 1, nothing compiled). Outputs `.run/compile_only/src/<alias>/…/<f>.{i,s,m.s}`; prints
+`compiled: K of U units`, exit 0 iff K == U ≥ 1. CI: job `compile-only` in `.github/workflows/no-rom.yml`.
+
 ## The game and the medium
 
 - **Title / platform / serial:** Dino Crisis 2 · Sony PlayStation (MIPS R3000A) · USA, SLUS-01279
