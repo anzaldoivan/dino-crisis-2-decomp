@@ -35,8 +35,35 @@ make extract                       # → extracted/retail/files + manifest.jsonl
 # against the reference: dc.sh sync, then in the container
 #   python3 tools/extract_disc.py --cue "/disc/Dino Crisis 2 (USA).cue" --out /work/.run/ours && diff -rq /work/.run/ref/files /work/.run/ours/files
 # the clean fleet verification — every binary from clean → extract → build, exit code read
-TODO(phase-3)
+bash tools/docker/dc.sh sync                       # working tree → /work on dc2-work (/work/.run kept)
+bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte-identical`, rc 0
 ```
+
+### Pipeline: extract → split → build → hash (container; `dc.sh run` = /work, disc read-only at /disc)
+
+```
+bash tools/docker/dc.sh sync
+# 1 extract: disks/ is ignored, so never synced → name the cue (extract_disc.py --cue default = $DC2_CUE)
+bash tools/docker/dc.sh run env DC2_CUE="/disc/Dino Crisis 2 (USA).cue" make extract OUT=.run/extracted/retail
+# 2 split (optional; build depends on it): splat → asm/<alias>/, build/<alias>/split.stamp
+bash tools/docker/dc.sh run make -j split [ONLY="alias …"]
+# 3+4 build + hash: assemble, link, objcopy, odd-tail trim, `sha1sum -c config/check.<alias>.sha`
+bash tools/docker/dc.sh run make -j build [ONLY="alias …"]   # fail → build/<alias>.bin.bad + `FAILED sha1: <alias>`
+# all 83 green → copy build/<alias>.bin to expected/ (ignored); any missing/bad → `REFUSED expected`, rc != 0
+bash tools/docker/dc.sh run make expected
+# whole gate from clean (make clean → extract OUT=.run/extracted/retail → make -j$(nproc) -k build → count)
+bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte-identical`, rc 0
+```
+
+- Aliases: one per `config/splat/<alias>.yaml` (83; = `config/check.*.sha` count = loadmap N, class exe|code).
+  `ONLY` names unknown to that list → make error. Regenerate configs/hashes: `PY tools/splat_gen.py [--force]`;
+  assert: `PY tools/splat_gen.py --check` → `OK splat_gen --check: 83 binaries`.
+- `BASEDIR` (input tree read by splat and the odd-tail size check): default = first existing of
+  `extracted/retail/files` (host extract), `.run/extracted/retail/files` (container extract); override `BASEDIR=dir`.
+- `make clean` scope: `asm/`, `build/overlays.mk`, per alias `build/<alias>/` + `build/<alias>.{bin,bin.bad,bin.tmp,
+  elf,map,ld,override.yaml,override.yaml.tmp}`; any other `build/` entry, `expected/` and extracts survive.
+- fleet_check.sh logs: `.run/fleet_extract.log`, `.run/fleet_build.log` (in the volume); rc 1 also when the
+  `check.*.sha` count != N or any `build/<alias>.bin` is missing.
 
 - **The gate:** a binary is green only when its hash check inside `make build` passes; a match is verified from a CLEAN
   rebuild, never incremental; the executable is gated only by a clean rebuild; a build is verified by its exit code. The
