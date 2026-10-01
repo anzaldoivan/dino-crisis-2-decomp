@@ -389,6 +389,41 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   banked n counts every body in `src/**/*.c`; progress C only linked, census-mapped ones (equal while every src unit
   is linked).
 
+### Differential harness (T6, Phase 1.5)
+
+- **Command:** `bash tools/docker/dc.sh run bash tools/fleet_check.sh` runs `python3 tools/harness.py ${HARNESS_ARGS:-}`
+  after the byte count (rc ≠ 0 fails the fleet check); standalone `dc.sh run python3 tools/harness.py [--no-game]
+  [--plant PAIR | --selftest | --scanners]`. stdlib only; writes only under `.run/harness/`.
+- **Pairs** (side B never calls side A's tool): `fleet` A `.run/harness/clean_run.tsv` (fleet_check's clean-run sha1) vs
+  B touch `src/**/*.c` + `make -j build` + sha1 and `config/check.*.sha`; `compiles` A `tools/compile_only.sh` units vs
+  B C-unit objects in `build/<alias>.ld`; `coverage` A `tools/census.py --check` rows + data spans vs B every text word
+  covered exactly once (splat yaml first asm|c vram .. boundaries text-end); `matched` A `banked.py` C bodies vs B
+  cc1-emitted functions whose reloc-masked object bytes equal retail at the census extent; `oracle`
+  `tools/oracle_diff.py` rc 0, 0 disagreements, its own `control:` lines; `denominators` A `progress.py` per-alias
+  G/b + `banked.py` G vs B census `game` rows per `make -s print-aliases` alias.
+- **Lines:** `pair <name>: agree|DISAGREE (<A> vs <B>) control: planted caught|FAIL` + ≤ 20 details, then
+  `harness: A of P pairs agree, D disagreements`; rc 0 iff all agree and every control caught, 1 otherwise, 2
+  `REFUSED:` on empty/missing input (G28).
+- **Controls:** every run feeds each comparator a planted disagreement in memory. `--plant PAIR` plants one in the
+  pair's real input (rc 1, DISAGREE); `--selftest` runs `--plant` per pair in a subprocess, `selftest: k of P planted
+  disagreements caught`.
+- **Scanners (`--scanners`):** registry `config/scanners.tsv` (`name command denominator_regex control_regex game`);
+  each command via `bash -c` at the repo root (output `.run/harness/scanner_<name>.txt`); ok iff rc 0, denominator
+  regex matches with last group an integer ≥ 1 (G27/G28), control regex matches a control that ran (the tool's own
+  verdict line, or a chained planted negative `cmd && ! <cmd on planted input>`). `scanner <name>: ok|FAIL (<denominator>
+  ; <control>)`, `scanners: S of S denominator+control ok`; missing/empty registry → `REFUSED`, rc 2. loadmap,
+  boundaries (hard-coded `extracted/retail/files`) and the cc_fingerprint / compile_only plants run on tool copies +
+  symlinks under `.run/harness/{mirror,plant_fp,plant_co}` (`extracted` → `.run/extracted`, fleet_check's extract).
+- **No game (`--no-game`):** only the `compiles` pair (B = `src/<alias>/<unit>.c` of `config/c_units.tsv`) and
+  `game=no` scanner rows (`compile_only`); combines with the default run, `--scanners`, `--selftest`. Proven on a tar
+  copy of /work without `.run asm build extracted/retail/files`, `DC2_CUE=/nonexistent`: all three rc 0, the full
+  `--scanners` there 1 of 10 (every `game=yes` row FAILs). CI (`.github/workflows/no-rom.yml`, compile-only job, also
+  the weekly cron) runs the three `--no-game` invocations.
+- **History:** every invocation appends `utc head mode agree total disagreements elapsed_s rc` to
+  `.run/harness/history.tsv`; mode `full|plant:<pair>|selftest|scanners`, `+no-game` suffix (head `-` in the container:
+  no `.git`).
+- **Cost:** fleet_check elapsed 55 s before T6 → 120 s with the harness (harness 60 s); `--scanners` 76 s (2026-10-01).
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything

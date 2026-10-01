@@ -1,0 +1,19 @@
+# config/scanners.tsv -- scanner registry for `tools/harness.py --scanners` (T6, Phase 1.5). One row per scanner, TAB-separated.
+# command: run with `bash -c` at the repo root (stdout+stderr captured to .run/harness/scanner_<name>.txt). A row is ok iff rc 0,
+# denominator_regex matches (re.M, first match) with its last group an integer >= 1 (G27/G28), and control_regex matches
+# (re.M) a line of a control that actually ran: the tool's own every-run control verdict, or a chained planted negative
+# (`cmd && ! <cmd on a planted input>`) whose failure line it names. game: yes = needs the game data (asm/, build/,
+# extracted retail); `--no-game` runs only game=no rows (decided by a dry run on a tree without game data, T6.c2 log).
+# Mirrors (loadmap, boundaries, cc_fingerprint, compile_only plant) are tool copies + symlinks under .run/harness/: the tools
+# hard-code repo-root paths and are not edited; .run/extracted is fleet_check's extract.
+# name	command	denominator_regex	control_regex	game
+census	python3 tools/census.py --check	^binaries: (\d+) of (\d+)$	^control: ok$	yes
+oracle_diff	python3 tools/oracle_diff.py	^oracle: (\d+) of (\d+) binaries compared	^control: planted start detected ok$[\s\S]*^control: stale hash detected ok$	yes
+dup_census	python3 tools/dup_census.py --check	^exact tier: \d+ classes, (\d+) of (\d+) functions	^relocation control: .*: ok$[\s\S]*^near control: .*: ok$	yes
+banked	python3 tools/banked.py --quiet	^banked: (\d+) of (\d+)$	^control: 1 of 2 ok$	yes
+progress	python3 tools/progress.py && ! python3 tools/progress.py --fixture functions	^progress: (\d+) of (\d+) game functions in C, \d+ of \d+ bytes \(fleet	^fixture functions: dropped [\s\S]*^denominator from build: FAIL 	yes
+cc_fingerprint	python3 tools/cc_fingerprint.py && p=.run/harness/plant_fp && rm -rf $p && mkdir -p $p/tools $p/config && cp tools/cc_fingerprint.py $p/tools/ && ln -s ../../../asm $p/asm && ln -s ../../../../config/loadmap.tsv $p/config/loadmap.tsv && awk -F'\t' '$2 != "lib-object"' config/boundaries.tsv > $p/config/boundaries.tsv && ! python3 $p/tools/cc_fingerprint.py	^aliases: (\d+)$	^cc_fingerprint: expected 83 aliases and a non-empty lib band$	yes
+compile_only	bash tools/compile_only.sh && p=.run/harness/plant_co && rm -rf $p && mkdir -p $p/.run && cp -r src $p/src && echo '#error harness planted unit' > $p/src/slus_012_79/zz_harness_plant.c && for d in tools config include Makefile; do ln -s ../../../$d $p/$d; done && ln -s ../../../.run/cc $p/.run/cc && ! bash $p/tools/compile_only.sh	^compiled: (\d+) of (\d+) units$	^FAILED src/slus_012_79/zz_harness_plant\.c$	no
+probe	python3 tools/probe.py --selftest && set -- $(awk -F'\t' '!/^#/ && $7 != "-" && $7 != "" {split($7, t, "/"); print $1, substr(t[1], 2), substr(t[2], 2), substr(t[3], 2)}' config/toolchains.tsv) && python3 tools/probe.py --pinned --cc "$1" --aspsx "$2" -G "$3" -O "$4"	^probes identical: (\d+) of (\d+) under the pinned triple$	^controls: true ok, false ok$	yes
+loadmap	p=.run/harness/mirror && mkdir -p $p/tools && cp tools/loadmap.py $p/tools/ && ln -sfn ../../../config $p/config && ln -sfn ../../../docs $p/docs && ln -sfn ../../extracted $p/extracted && python3 $p/tools/loadmap.py --check	^rows=\d+ N=(\d+) 	negative-control: OK$	yes
+boundaries	p=.run/harness/mirror && mkdir -p $p/tools && cp tools/boundaries.py $p/tools/ && ln -sfn ../../../config $p/config && ln -sfn ../../extracted $p/extracted && python3 $p/tools/boundaries.py --check	^exe jtbl: ours=\d+ ghidra=(\d+) 	^control switch jr=0x8003500c \[0x80018624,0x800186f8\): found$	yes

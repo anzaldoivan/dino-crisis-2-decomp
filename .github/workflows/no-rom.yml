@@ -16,7 +16,7 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: "17 6 * * 1"        # weekly: audits + compile-only
+    - cron: "17 6 * * 1"        # weekly: audits + compile-only + tools/harness.py --no-game (pairs, scanners, selftest)
   workflow_dispatch:
 
 permissions:
@@ -36,8 +36,7 @@ jobs:
           python-version: "3.12"
       - name: audit_public — no game-derived bytes, no purge path, nothing > 50 MiB, no pasted disassembly
         run: python tools/audit_public.py
-      # TODO(phase-5): add the project's text-only self-checks here as they are built (index freshness, symbol lint,
-      # decoder tests) — each one a derived check that asserts its own coverage.
+      # game-free self-checks run in the compile-only job: tools/harness.py --no-game (config/scanners.tsv game=no rows).
 
   compile-only:
     name: compile-only (pinned triple, no game bytes)
@@ -51,3 +50,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y binutils-mipsel-linux-gnu cpp-mipsel-linux-gnu
       - name: compile_only — every src/**/*.c, cpp → cc1 → maspsx
         run: bash tools/compile_only.sh
+      - name: harness --no-game — compiles pair, game-free scanners, planted-disagreement selftest
+        run: |
+          python3 tools/harness.py --no-game
+          python3 tools/harness.py --no-game --scanners
+          python3 tools/harness.py --no-game --selftest

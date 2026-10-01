@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """tools/harness.py -- differential harness (T6, Phase 1.5); stdlib only, run in the container:
-    dc.sh run python3 tools/harness.py [--plant PAIR | --selftest]     (normally from tools/fleet_check.sh)
+    dc.sh run python3 tools/harness.py [--no-game] [--plant PAIR | --selftest | --scanners]  (normally from fleet_check.sh)
 
 A pair = two independent computations of one fact; side B never calls or imports side A's tool.
   fleet        A .run/harness/clean_run.tsv (alias sha1, written by fleet_check.sh; N = loadmap exe|code rows)
                B touch src/**/*.c, `make -j build`, sha1 build/<alias>.bin; agree iff all N equal, make rc 0 and
                every bin matches config/check.<alias>.sha.
   compiles     A units `bash tools/compile_only.sh` compiled (src/**/*.c minus its FAILED lines, K == U)
-               B C-unit objects linked (build/<alias>/src/**.c.o named in build/<alias>.ld).
+               B C-unit objects linked (build/<alias>/src/**.c.o named in build/<alias>.ld); --no-game:
+               src/<alias>/<unit>.c of every config/c_units.tsv row (the splat cuts).
   coverage     A `tools/census.py --check` rows (.run/census/functions.tsv) + its `data in text` spans and totals
                B every 4-byte word of each text region [first asm|c subsegment vram (config/splat/<alias>.yaml),
                config/boundaries.tsv text-end end): covered by exactly one row or span, no row outside text,
@@ -26,6 +27,11 @@ in a subprocess, asserts rc 1 + DISAGREE. Prints `pair <name>: agree|DISAGREE (<
 detail lines, then `harness: A of P pairs agree, D disagreements`. rc 0 iff all agree and every control caught;
 1 otherwise; 2 `REFUSED: <why>` on empty/missing input (G28). Every invocation appends one line to
 .run/harness/history.tsv (`utc head mode agree total disagreements elapsed_s rc`). Writes only under .run/.
+--scanners (T6.c2): every config/scanners.tsv row (`name command denominator_regex control_regex game`) via `bash -c`
+at the repo root; ok iff rc 0, the denominator regex matches with last group an integer >= 1 and the control regex
+matches. Prints `scanner <name>: ok|FAIL (<denominator> ; <control>)`, then `scanners: S of S denominator+control ok`;
+rc 0 iff all ok, 2 REFUSED on a missing/empty registry. --no-game: only pairs (compiles) and scanner rows (game=no) that
+need no game data; combines with the default run, --scanners and --selftest; history mode gets `+no-game`.
 """
 import argparse
 import datetime
@@ -49,6 +55,9 @@ PREFIX = "extracted/retail/files/"
 PLANT_START = "slus_012_79:0x8001b45c"  # not a census start: oracle_diff must flag it
 FUNC = re.compile(r"^func_([0-9A-Fa-f]{8})$")
 MAXD = 20
+SCANNERS = ROOT / "config/scanners.tsv"
+C_UNITS = ROOT / "config/c_units.tsv"
+NO_GAME = False  # set by main(): --no-game
 
 
 class Refused(Exception):
@@ -212,15 +221,20 @@ def pair_compiles(plant):
         failed.add(units[0])
     k, u = int(m.group(1)) - (1 if plant else 0), int(m.group(2))
     a = set(units) - failed
-    b = {x for al in yaml_aliases() if (ROOT / f"build/{al}.ld").exists() for x in ld_units(al)}
-    need(b, "no C-unit object in any build/<alias>.ld")
+    if NO_GAME:
+        b = {f"src/{f[0]}/{f[2]}.c" for f in (l.split("\t") for l in C_UNITS.read_text().splitlines()
+                                             if l.strip() and not l.startswith("#"))}
+        need(b, "config/c_units.tsv has no row")
+    else:
+        b = {x for al in yaml_aliases() if (ROOT / f"build/{al}.ld").exists() for x in ld_units(al)}
+        need(b, "no C-unit object in any build/<alias>.ld")
 
     def cmp(x, y):
         out = [f"compiled, not linked: {u}" for u in sorted(x - y)] + [f"linked, not compiled: {u}" for u in sorted(y - x)]
         if k != u or u != len(units):
             out.append(f"compile_only: {k} of {u} units, src has {len(units)}")
         return out
-    return {"a": f"compiled {len(a)} of {u}", "b": f"linked {len(b)}", "diffs": cmp(a, b),
+    return {"a": f"compiled {len(a)} of {u}", "b": f"{'c_units' if NO_GAME else 'linked'} {len(b)}", "diffs": cmp(a, b),
             "control": len(cmp(a, b - {sorted(b)[0]})) >= 1}
 
 
@@ -452,7 +466,42 @@ def pair_denominators(plant):
 # Execution order: fleet touches src (census goes stale), coverage regenerates functions.tsv before matched/oracle.
 PAIRS = {"fleet": pair_fleet, "compiles": pair_compiles, "coverage": pair_coverage, "matched": pair_matched,
          "oracle": pair_oracle, "denominators": pair_denominators}
-# T6.c2 hook: --no-game / --scanners (config/scanners.tsv) add or filter entries of PAIRS here.
+NO_GAME_PAIRS = ("compiles",)  # --no-game: pairs whose A and B read no game data (compiles B = config/c_units.tsv)
+
+
+def scanners(mode, t0):
+    """--scanners: run config/scanners.tsv rows (game=no only under --no-game); rc 0 iff every row ok."""
+    rows = []
+    if SCANNERS.exists():
+        rows = [l.split("\t") for l in SCANNERS.read_text().splitlines() if l.strip() and not l.startswith("#")]
+    bad = [r[0] for r in rows if len(r) != 5 or r[4] not in ("yes", "no")]
+    if bad or not rows:
+        print(f"REFUSED: {SCANNERS.relative_to(ROOT)} " + (f"malformed rows {bad}" if bad else "missing or empty"))
+        history(mode, 0, 0, 0, t0, 2)
+        return 2
+    if NO_GAME:
+        rows = [r for r in rows if r[4] == "no"]
+        if not rows:
+            print(f"REFUSED: {SCANNERS.relative_to(ROOT)} has no game=no row")
+            history(mode, 0, 0, 0, t0, 2)
+            return 2
+    OUT.mkdir(parents=True, exist_ok=True)
+    k = 0
+    for name, cmd, drx, crx, _ in rows:
+        r = subprocess.run(["bash", "-c", cmd], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        (OUT / f"scanner_{name}.txt").write_text(r.stdout)
+        d = re.search(drx, r.stdout, re.M)
+        c = re.search(crx, r.stdout, re.M)
+        n = d.group(d.lastindex) if d and d.lastindex else ""
+        ok = r.returncode == 0 and n.isdigit() and int(n) >= 1 and c is not None
+        k += ok
+        dt = d.group(0).strip() if d else "denominator missing"
+        ct = c.group(0).strip().splitlines()[-1] if c else "control missing"
+        print(f"scanner {name}: {'ok' if ok else 'FAIL'} ({dt} ; {ct})" + ("" if ok else f" rc {r.returncode}"))
+    print(f"scanners: {k} of {len(rows)} denominator+control ok")
+    rc = 0 if k == len(rows) else 1
+    history(mode, k, len(rows), len(rows) - k, t0, rc)
+    return rc
 
 
 def git_head():
@@ -473,17 +522,18 @@ def history(mode, agree, total, dis, t0, rc):
         f.write(f"{utc}\t{git_head()}\t{mode}\t{agree}\t{total}\t{dis}\t{time.time() - t0:.0f}\t{rc}\n")
 
 
-def selftest(t0):
+def selftest(t0, mode):
+    names = list(NO_GAME_PAIRS) if NO_GAME else list(PAIRS)
     k = 0
-    for p in PAIRS:
-        r = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--plant", p], cwd=ROOT,
-                           capture_output=True, text=True)
+    for p in names:
+        r = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--plant", p] + (["--no-game"] if NO_GAME else []),
+                           cwd=ROOT, capture_output=True, text=True)
         hit = r.returncode == 1 and f"pair {p}: DISAGREE" in r.stdout
         k += hit
         print(f"selftest {p}: {'caught' if hit else 'FAIL'} (rc {r.returncode})")
-    print(f"selftest: {k} of {len(PAIRS)} planted disagreements caught")
-    rc = 0 if k == len(PAIRS) else 1
-    history("selftest", k, len(PAIRS), len(PAIRS) - k, t0, rc)
+    print(f"selftest: {k} of {len(names)} planted disagreements caught")
+    rc = 0 if k == len(names) else 1
+    history(mode, k, len(names), len(names) - k, t0, rc)
     return rc
 
 
@@ -492,12 +542,21 @@ def main():
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--plant", choices=sorted(PAIRS))
     g.add_argument("--selftest", action="store_true")
+    g.add_argument("--scanners", action="store_true")
+    ap.add_argument("--no-game", action="store_true", help="only pairs / scanner rows that need no game data")
     a = ap.parse_args()
+    global NO_GAME
+    NO_GAME = a.no_game
     t0 = time.time()
+    ng = "+no-game" if NO_GAME else ""
+    if a.scanners:
+        return scanners("scanners" + ng, t0)
     if a.selftest:
-        return selftest(t0)
-    names = [a.plant] if a.plant else list(PAIRS)
-    mode = f"plant:{a.plant}" if a.plant else "full"
+        return selftest(t0, "selftest" + ng)
+    if a.plant and NO_GAME and a.plant not in NO_GAME_PAIRS:
+        ap.error(f"--plant {a.plant} needs game data (--no-game pairs: {', '.join(NO_GAME_PAIRS)})")
+    names = [a.plant] if a.plant else list(NO_GAME_PAIRS if NO_GAME else PAIRS)
+    mode = (f"plant:{a.plant}" if a.plant else "full") + ng
     agree = dis = 0
     ctl_ok = True
     for n in names:
