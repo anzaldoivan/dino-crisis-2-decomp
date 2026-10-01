@@ -5,3 +5,4 @@ T2 | done | compiler fingerprint survey across the fleet | - | tasks/T2.md | log
 T3 | done | standalone probe harness with controls | - | tasks/T3.md | logs/T3.md | -
 T4 | done | probes run down the ladder; the fingerprint verdict | - | tasks/T4.md | logs/T4.md | -
 T5 | done | the pin wired into the build | - | tasks/T5.md | logs/T5.md | -
+T6 | done | c subsegments from a tracked unit list, zero C bodies | - | tasks/T6.md | logs/T6.md | -

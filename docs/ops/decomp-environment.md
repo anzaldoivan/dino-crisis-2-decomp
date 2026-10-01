@@ -61,6 +61,9 @@ Build use (T5.c1, Phase 1.4): `Makefile` vars `CPP CC1 MASPSX CPPFLAGS CFLAGS MA
 status counts) → as into `build/<alias>/…/<f>.c.o`, intermediates `.i`, `.s`, `.m.s` beside it. Per-alias override hook:
 `CPPFLAGS_<alias>`, `CFLAGS_<alias>`, `MASPSXFLAGS_<alias>` (empty by default, appended). Headers `include/common.h`
 (u8…s32, NULL) and `include/include_asm.h` (`INCLUDE_ASM(dir, name)`, `INCLUDE_RODATA`; -G0, so no maspsx hack wrapper).
+C units (T6, Phase 1.4): cuts come from `config/c_units.tsv` via `tools/splat_gen.py` (`--check` asserts them); the C
+branch prints `cc <obj>` per unit (grep `c\.o` in `.run/fleet_build.log`) and prepends `.include "macro.inc"` to each
+`.m.s` so nonmatchings `glabel`/`jlabel` assemble.
 
 ## The game and the medium
 
