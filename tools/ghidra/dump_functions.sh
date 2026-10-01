@@ -10,6 +10,8 @@
 #   4. (T2.c3) copies the untracked evidence sidecars .run/ghidra_functions/<prog>.evidence.tsv into the build volume's
 #      /work/.run/ghidra_functions/ (dc.sh sync keeps /work/.run; ignored files are never synced) for oracle_diff.py;
 #      skipped with a note when docker or the volume is absent (oracle_diff then prints n/a evidence).
+#      (T2.c5) also copies <prog>.refs.tsv (reference destinations + counts) and xprog_targets.tsv, read by
+#      oracle_diff.py's `unreferenced` exception predicate; prints `merged labels: n` (DumpFunctions.java n3 merges).
 # Before step 3 (T2.c4): tools/ghidra/xprog_targets.py writes .run/ghidra_functions/xprog_targets.tsv (`prog target`:
 #   jal targets / pointer words in OTHER fleet programs' bytes whose loadmap window does not overlap prog's, landing in
 #   prog's window), passed to DumpFunctions.java as the s4 seed file.
@@ -76,6 +78,7 @@ for f in "${FLEET[@]}"; do IFS=$'\t' read -r alias prog path _ <<<"$f"; printf '
     -scriptPath "$SCRIPTS" -postScript DumpFunctions.java "$RAW" "$RAW/xprog_targets.tsv" >.run/logs/dump_functions_headless.log 2>&1
 rc=$?
 echo "dump_functions: analyzeHeadless exit=$rc ($(grep -c DC2DUMPFUNCS .run/logs/dump_functions_headless.log) programs dumped)"
+echo "dump_functions: merged labels: $(grep 'DC2MERGE ' .run/logs/dump_functions_headless.log | grep -vc ' OPTION_BIN ') (fleet)"
 
 written=0; missing=0
 for f in "${FLEET[@]}"; do
@@ -102,7 +105,7 @@ echo "dump_functions: wrote $written of ${#FLEET[@]} caches, missing $missing"
 
 VOL="${DC2_VOLUME:-dc2-work}"
 if command -v docker >/dev/null 2>&1 && docker volume inspect "$VOL" >/dev/null 2>&1; then
-    (cd "$RAW" && COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -cf - *.evidence.tsv) \
+    (cd "$RAW" && COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -cf - *.evidence.tsv *.refs.tsv xprog_targets.tsv) \
       | docker run -i --rm --platform linux/amd64 -v "$VOL":/work dc2-build \
           sh -c 'rm -rf /work/.run/ghidra_functions && mkdir -p /work/.run/ghidra_functions && tar -xf - -C /work/.run/ghidra_functions' \
       && echo "dump_functions: evidence sidecars copied to volume $VOL:/work/.run/ghidra_functions ($(ls "$RAW"/*.evidence.tsv | wc -l | tr -d ' '))"

@@ -220,6 +220,20 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   OTHER fleet programs whose loadmap window `[base, end)` does not overlap this one's, landing in this window
   (`.run/ghidra_functions/xprog_targets.tsv`, script arg 2; 1902 targets, s4 281/643 made/tried). Each ascending; a
   seed inside a function body is skipped; else disassemble (flow) if not an instruction + `CreateFunctionCmd`.
+  T2.c5 order: s1, s2, **switch step**, s4, s3. Switch step (C0020): every function holding a `jr rs` (rs != ra)
+  without computed-jump targets is decompiled (`DecompInterface` + `SwitchAnalysisDecompileConfigurer`) and
+  `DecompilerSwitchAnalysisCmd` applied (case targets disassembled, `COMPUTED_JUMP` refs, body fixed), to a fixed point;
+  an s4/s3-made function is switch-resolved at once; s4/s3 skip targets inside a body or reached by a `COMPUTED_JUMP`
+  ref. s4 runs before s3 so s3 (jump-table words) does not seed the case labels of an s4-made switch function first.
+- **Label merge n3 (T2.c5, `DumpFunctions.java`, before writing):** a row whose every reference to its entry is a
+  jump/branch/call/fall-through from `[preceding row entry, entry)` (address range; implicit fall-through = instructions
+  at entry-8/-4 in that range, entry-8 not `jr`/`j`/`b`), none from a `jal`/`jalr`/`bal`-class word (opcode checked:
+  Ghidra types a `j` to a function as a call), none data, ≥ 1 reference, is merged into the preceding row (size
+  extended, row + evidence row dropped). Log: `DC2MERGE <prog> <label> into <fn>`, `DC2MERGEREJ <prog> {reason=n}`,
+  `DC2MERGESELF`; `dump_functions.sh` prints `merged labels: n (fleet)` (447 at T2.c5; exe 287, incl. 0x80071d20
+  `INTR_OBJ_68C` into 0x80071cb8). Headless line gains `sw=resolved/decompiled merged=n`.
+- **refs sidecar (T2.c5):** `.run/ghidra_functions/<prog>.refs.tsv` (`to refs`, reference destinations in the block,
+  end of txn) and `xprog_targets.tsv` are copied into the volume with the evidence sidecars.
   Headless log line: `DC2DUMPFUNCS <prog> rows= auto= txn= … s1=made/tried s2= s3= s4=`. Generator hash also
   covers `xprog_targets.py`. Pcode `Program does not contain
   referenced instruction` ERROR lines in `.run/logs/dump_functions_headless.log` come from seeds disassembled into
@@ -239,8 +253,17 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   when asm dirs are missing, for census data spans), `oracle: k of 83 binaries compared, d disagreements`; exit 0 iff 83/83, d = 0, no
   stale, controls ok; REFUSED rc 2 on empty census / 0 caches. Runs census.py first if functions.tsv is missing/older.
 - **Normalisations (only these):** n1 judge only starts in the census text region (others `not judged: n`); n2 ends
-  equal when the words between them are all zero. Exceptions: `config/oracle_exceptions.tsv` (rows need basis +
-  instrument, else `exceptions invalid`).
+  equal when the words between them are all zero. Exceptions: `config/oracle_exceptions.tsv` (`alias start kind basis
+  instrument`; rows need basis + instrument and a known kind, else `exceptions invalid`). Kinds (T2.c5), predicate
+  re-checked every run, a false one leaves the row a disagreement (`exceptions <kind>: valid applied failed`):
+  `data-span` = ghidra-only start inside a census data-in-text span (instrument `tools/census.py data spans`);
+  `unreferenced` = census-only start with 0 jal (own file), 0 `j`/branch in census text from outside its census
+  function, 0 aligned pointer word (own file), not an s4 target (`xprog_targets.tsv`), 0 Ghidra refs (`refs.tsv`),
+  previous census function ending at the start with `jr`/`j`/`b` + delay slot (instrument
+  `tools/oracle_diff.py:<pred_unreferenced line>`). `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
+  (`alias start kind predicate basis instrument`); copy only `predicate=true` rows. Also printed: `C0020: k of 10 exe
+  switch functions present (source txn n)` (txn rows of `config/ghidra/SLUS_012.79.switch_tables.tsv` whose jr lies in
+  an exe cache function).
 - **Hash:** `generator sha256` = sha256(DumpFunctions.java + dump_functions.sh bytes + `<ghidra>\n<loadmap sha1>\n<base>\n`);
   a mismatch → `stale: <prog>`, exit 1. Controls: `planted start detected`, `stale hash detected`.
 
