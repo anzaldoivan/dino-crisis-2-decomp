@@ -25,5 +25,6 @@ segments:
     start: 0x0
     vram: 0x8017c500
     subsegments:
-      - [0x0, asm, bin_wep_s07_0]  # text-end scan: last jr ra + delay slot
+      - [0x0, rodata, bin_wep_s07_0]  # text-end scan: last jr ra + delay slot
+      - [0x4, asm, bin_wep_s07_4]
   - [0x5a4]

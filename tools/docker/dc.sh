@@ -30,7 +30,7 @@ case "$sub" in
     docker volume inspect "$VOL" >/dev/null 2>&1 || docker volume create "$VOL" >/dev/null
     git ls-files -co --exclude-standard -z \
       | while IFS= read -r -d '' f; do [ -e "$f" ] && printf '%s\0' "$f"; done \
-      | COPYFILE_DISABLE=1 tar --null -T - -cf - \
+      | COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata --null -T - -cf - \
       | docker run -i --rm --platform "$PLAT" -v "$VOL":/work -w /work "$IMG" \
           sh -c 'find /work -mindepth 1 -maxdepth 1 ! -name .run -exec rm -rf {} + && tar -xf - -C /work'
     ;;

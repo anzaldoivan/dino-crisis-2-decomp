@@ -11,7 +11,8 @@ for its header pc0 and the startup $gp immediates.
 
 Cuts: edges = {0, size} + every boundaries start/end as file offset (+ 0x800 for the exe header).
 Types: jtbl -> rodata; [text_start, text_end) -> asm; [base, text_start) -> rodata; after -> data.
-text_start: exe = pc0; overlay = max jtbl end (base if none).
+text_start: exe = pc0; overlay = max jtbl end (base if none), moved to the first `addiu $sp,$sp,-N` when the
+words before it hold a MIPS II+ encoding (data head, head_end).
 """
 import argparse
 import re
@@ -111,6 +112,29 @@ def exe_gp():
     return None, f"no lui/addiu|ori $gp in {GP_SCAN} insns from pc0 (file +0x{start:x})"
 
 
+def mips2plus(w):
+    """True iff rabbitizer decodes w as an instruction gas -march=r3000 rejects (MIPS II/III; jalr rd==rs)."""
+    op, fn = w >> 26, w & 0x3F
+    if op == 0:
+        return fn in (0x0A, 0x0B, 0x14, 0x16, 0x17) or 0x1C <= fn <= 0x1F or 0x2C <= fn <= 0x36 \
+            or fn in (0x38, 0x3A, 0x3B, 0x3C, 0x3E, 0x3F) or (fn == 0x09 and (w >> 21) & 31 == (w >> 11) & 31)
+    return 0x14 <= op <= 0x1B or op in (0x27, 0x2C, 0x2D, 0x2F) or 0x30 <= op <= 0x3F and op not in (0x32, 0x3A)
+
+
+def head_end(row, text_start, text_end):
+    """Overlay data head (T4): when a word in [text_start, first `addiu $sp,$sp,-N`) is mips2plus (it would not
+    assemble), the whole head is data: return the prologue address; else text_start."""
+    d = (FILES / row["path"]).read_bytes()
+    a, bad = text_start, False
+    while a < text_end:
+        w = struct.unpack_from("<I", d, a - row["base"])[0]
+        if w >> 16 == 0x27BD and w & 0x8000:
+            return a if bad else text_start
+        bad = bad or mips2plus(w)
+        a += 4
+    return text_start
+
+
 def plan(row, rows_b, errs):
     """Return (segments, end) where segments = [(start, kind, vram|None, [(start, type, name, comment)])]."""
     a, size = row["alias"], row["size"]
@@ -124,6 +148,8 @@ def plan(row, rows_b, errs):
         return None, size
     text_end = te[0]["end"]
     text_start = EXE_PC0 if exe else max([r["end"] for r in jt], default=row["base"])
+    if not exe:
+        text_start = head_end(row, text_start, text_end)
     for r in jt:
         tgt = int(re.match(r"jr=(0x[0-9a-f]+)", r["basis"]).group(1), 16)
         if tgt < text_start:

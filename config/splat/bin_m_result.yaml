@@ -25,6 +25,7 @@ segments:
     start: 0x0
     vram: 0x800d5800
     subsegments:
-      - [0x0, asm, bin_m_result_0]  # text-end scan: last jr ra + delay slot
+      - [0x0, rodata, bin_m_result_0]  # text-end scan: last jr ra + delay slot
+      - [0x68, asm, bin_m_result_68]
       - [0x1d98, data, bin_m_result_1d98]  # data-island text-end..loadmap end
   - [0x39e0]

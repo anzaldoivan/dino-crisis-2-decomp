@@ -25,7 +25,8 @@ segments:
     start: 0x0
     vram: 0x80120000
     subsegments:
-      - [0x0, asm, bin_wep12_0]  # text-end scan: last jr ra + delay slot
+      - [0x0, rodata, bin_wep12_0]  # text-end scan: last jr ra + delay slot
+      - [0xc, asm, bin_wep12_c]
       - [0x1c04, data, bin_wep12_1c04]  # data-island text-end..loadmap end
       - [0x1d90, bin, bin_wep12_trailing]  # final 2 B (size not 4-aligned)
   - [0x1d92]

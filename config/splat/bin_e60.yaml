@@ -27,6 +27,7 @@ segments:
     subsegments:
       - [0x0, rodata, bin_e60_0]  # text-end scan: last jr ra + delay slot
       - [0x64, rodata, bin_e60_64]  # jtbl jr=0x800d202c sltiu
-      - [0x7c, asm, bin_e60_7c]
+      - [0x7c, rodata, bin_e60_7c]
+      - [0xec, asm, bin_e60_ec]
       - [0x4aa0, data, bin_e60_4aa0]  # data-island text-end..loadmap end
   - [0x4c04]

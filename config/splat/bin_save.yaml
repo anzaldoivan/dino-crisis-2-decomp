@@ -37,6 +37,7 @@ segments:
       - [0x114, rodata, bin_save_114]  # jtbl jr=0x801c4cf4 sltiu
       - [0x130, rodata, bin_save_130]
       - [0x134, rodata, bin_save_134]  # jtbl jr=0x801c5188 sltiu
-      - [0x150, asm, bin_save_150]
+      - [0x150, rodata, bin_save_150]
+      - [0x1ec, asm, bin_save_1ec]
       - [0xce28, data, bin_save_ce28]  # data-island text-end..loadmap end
   - [0x11b6c]

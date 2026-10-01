@@ -29,6 +29,7 @@ segments:
       - [0x2c, rodata, bin_e50_2c]  # jtbl jr=0x800d15fc sltiu
       - [0x40, rodata, bin_e50_40]
       - [0x4c, rodata, bin_e50_4c]  # jtbl jr=0x800d21e0 sltiu
-      - [0x90, asm, bin_e50_90]
+      - [0x90, rodata, bin_e50_90]
+      - [0xa8, asm, bin_e50_a8]
       - [0x33d8, data, bin_e50_33d8]  # data-island text-end..loadmap end
   - [0x34ec]

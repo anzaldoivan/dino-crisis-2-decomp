@@ -18,7 +18,10 @@ extract:
 	python3 tools/extract_disc.py --out $(OUT)
 
 # ---- Byte-identical rebuild of the fleet (docs/ops/docker-host.md "Build"). Container only (splat, mipsel binutils).
-# make [-j] split|build|expected [BASEDIR=dir] [ONLY="alias …"] · make clean (removes build/ asm/ only).
+# make [-j] split|build|expected [BASEDIR=dir] [ONLY="alias …"] · make clean (generated outputs only: asm/,
+# build/overlays.mk, per alias build/<alias>/ + build/<alias>.{bin,bin.bad,elf,map,ld,override.yaml}; any other
+# build/ entry survives). BASEDIR default: first existing of extracted/retail/files (host), .run/extracted/retail/files
+# (container). expected: all N aliases green, then build/<alias>.bin -> expected/<alias>.bin (else rc!=0, untouched).
 # Per alias (config/splat/<alias>.yaml, never edited): splat split with a generated build/<alias>.override.yaml
 # (target_path under $(BASEDIR); splat merges later configs) → asm/<alias>/; assemble every object the splat .ld
 # names; link; objcopy (odd-size tail: shrink-only trim ≤ 3 B, only when size(build) > size(target): SUBALIGN(4)
@@ -26,7 +29,7 @@ extract:
 # SPIMDISASM_SYMBOL_ALIGNMENT_REQUIRES_ALIGNED_SECTION: no `.align 3` on a jtbl in a non-8-aligned file.
 .PHONY: split build expected clean FORCE
 
-BASEDIR ?= extracted/retail/files
+BASEDIR ?= $(firstword $(wildcard extracted/retail/files .run/extracted/retail/files) extracted/retail/files)
 YAMLS   := $(sort $(wildcard config/splat/*.yaml))
 ALIASES := $(patsubst config/splat/%.yaml,%,$(YAMLS))
 ONLY    ?= $(ALIASES)
@@ -40,10 +43,14 @@ ASFLAGS := -march=r3000 -mabi=32 -G0 -no-pad-sections
 
 split: $(foreach a,$(ONLY),build/$(a)/split.stamp)
 build: $(foreach a,$(ONLY),build/$(a).bin)
-expected: build
-	mkdir -p expected && rm -rf expected/build && cp -r build expected/build
+expected: $(foreach a,$(ALIASES),build/$(a).bin)
+	@for a in $(ALIASES); do [ -f build/$$a.bin ] && [ ! -e build/$$a.bin.bad ] \
+	  || { echo "REFUSED expected: build/$$a.bin missing or bad" >&2; exit 1; }; done
+	@mkdir -p expected && for a in $(ALIASES); do cp build/$$a.bin expected/$$a.bin; done
+	@echo "expected: $(words $(ALIASES)) binaries"
 clean:
-	rm -rf build asm
+	@echo 'clean: asm/ build/overlays.mk + generated build/<alias>* for $(words $(ALIASES)) aliases'
+	@rm -rf asm build/overlays.mk $(foreach a,$(ALIASES),build/$(a) $(addprefix build/$(a).,bin bin.bad bin.tmp elf map ld override.yaml override.yaml.tmp))
 FORCE:
 
 # $(1) alias, $(2) path under BASEDIR
@@ -59,6 +66,7 @@ build/$(1)/split.stamp: config/splat/$(1).yaml build/$(1).override.yaml
 	@touch $$@
 
 build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev/null)
+	@rm -f $$@.bad
 	@for o in $$$$(grep -o 'build/$(1)/[^ ]*\.o' build/$(1).ld | sort -u); do \
 	  s=$$$${o#build/$(1)/}; s=$$$${s%.o}; mkdir -p $$$$(dirname $$$$o); \
 	  case $$$$s in \
@@ -67,8 +75,14 @@ build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev
 	    *) false ;; \
 	  esac || { echo "FAILED assemble: $(1): $$$$s"; exit 1; }; \
 	done
+	@# func_<ADDR> referenced (e.g. a `j` out of the overlay) but neither defined nor in undefined_funcs_auto
+	@{ grep -rhoE 'func_[0-9A-F]{8}' asm/$(1) | sort -u; \
+	  grep -rhoE '^ *[ag]label func_[0-9A-F]{8}' asm/$(1) | grep -oE 'func_[0-9A-F]{8}' | sort -u | sed p; \
+	  grep -oE '^func_[0-9A-F]{8}' build/$(1)/undefined_funcs_auto.txt | sed p; } | sort | uniq -u \
+	  | sed 's/^func_\(.*\)$$$$/func_\1 = 0x\1;/' > build/$(1)/undefined_jumps_auto.txt
 	@$(CROSS)ld -nostdlib --no-check-sections -Map build/$(1).map -T build/$(1).ld \
-	  -T build/$(1)/undefined_syms_auto.txt -T build/$(1)/undefined_funcs_auto.txt -o build/$(1).elf \
+	  -T build/$(1)/undefined_syms_auto.txt -T build/$(1)/undefined_funcs_auto.txt \
+	  -T build/$(1)/undefined_jumps_auto.txt -o build/$(1).elf \
 	  || { echo "FAILED link: $(1)"; exit 1; }
 	@$(CROSS)objcopy -O binary build/$(1).elf $$@.tmp
 	@t=$$$$(stat -c %s '$(BASEDIR)/$(2)'); b=$$$$(stat -c %s $$@.tmp); \

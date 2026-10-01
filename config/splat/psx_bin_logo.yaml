@@ -29,6 +29,7 @@ segments:
       - [0x4, rodata, psx_bin_logo_4]  # jtbl jr=0x800d5d20 sltiu
       - [0x18, rodata, psx_bin_logo_18]
       - [0x30, rodata, psx_bin_logo_30]  # jtbl jr=0x800d63b4 sltiu
-      - [0x80, asm, psx_bin_logo_80]
+      - [0x80, rodata, psx_bin_logo_80]
+      - [0x120, asm, psx_bin_logo_120]
       - [0x1e20, data, psx_bin_logo_1e20]  # data-island text-end..loadmap end
   - [0x2454]

@@ -37,7 +37,7 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 ## Volume and sync
 - Named volume `dc2-work` (override `DC2_VOLUME`), mounted at `/work`. dc.sh touches no other volume.
 - No bind mount of any host path, ever; never mounts `/Users/Shared/GameInputs`. Game data lives only in the local volume `dc2-disc`, never in the image or git.
-- `dc.sh sync`: `git ls-files -co --exclude-standard -z` (paths deleted in the working tree skipped) | `COPYFILE_DISABLE=1 tar` over stdin into a container that wipes every top-level entry of `/work` except `/work/.run`, then extracts. `/work` is thus an exact copy of tracked + untracked-unignored files, plus the container scratch `/work/.run`.
+- `dc.sh sync`: `git ls-files -co --exclude-standard -z` (paths deleted in the working tree skipped) | `COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata` over stdin into a container that wipes every top-level entry of `/work` except `/work/.run`, then extracts. `/work` is thus an exact copy of tracked + untracked-unignored files, plus the container scratch `/work/.run`.
 - Run `dc.sh sync` before any `dc.sh run` after host edits.
 - Limits: ignored paths (`disks/`, `extracted/`, RE database, host `.run/`) are never carried. `/work/.git` is not carried. Container-side edits outside `/work/.run` are lost on the next sync.
 
@@ -46,14 +46,20 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 - Loaded with `bash tools/docker/dc.sh disc /Users/Shared/GameInputs/dino-crisis-2/usa`: top-level `*.cue` + `*.bin` of the dir (no `.DS_Store`), `COPYFILE_DISABLE=1 tar` over stdin into a container that wipes then fills the volume. No bind mount. Reload only when the dump changes.
 - Reference extract (T1.c1; output in `/work/.run/ref`, kept across syncs, never in git):
   `bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run/ref && mkdir -p /work/.run/ref && dumpsxiso -x /work/.run/ref/files -s /work/.run/ref/layout.xml "/disc/Dino Crisis 2 (USA) (Track 1).bin" && mv /work/.run/ref/files/license_data.dat /work/.run/ref/files/ZNULL.WAV /work/.run/ref/'`
-- harness: macOS tar still emits `LIBARCHIVE.xattr.com.apple.provenance` headers; GNU tar in the container prints "Ignoring unknown extended header keyword" per file. Harmless noise.
+- `sync` is silent since T4.c1: host bsdtar `--no-xattrs --no-mac-metadata` stops the per-file `LIBARCHIVE.xattr.com.apple.provenance` header (COPYFILE_DISABLE=1 alone did not). `dc.sh disc` still uses plain `COPYFILE_DISABLE=1 tar` (harmless warning noise).
 
 ## Use
 - `bash tools/docker/dc.sh build` · `bash tools/docker/dc.sh sync` · `bash tools/docker/dc.sh disc <dir>` · `bash tools/docker/dc.sh run <cmd…>` (exit code passed through).
 
 ## Build (phase 1.3 T3.c1, 2026-10-01)
-- `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make -j build BASEDIR=.run/extracted/retail/files [ONLY="<alias> …"]`; green = one `<alias>.bin: OK` per alias, exit 0. Base files missing → the container extract above.
-- Targets: `split` (asm only), `build`, `expected` (copies `build/` → `expected/build`), `clean` (`rm -rf build asm`, nothing else). `ONLY` default = every `config/splat/*.yaml`; an unknown alias is a make error. `BASEDIR ?= extracted/retail/files`.
+- `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make -j build [ONLY="<alias> …"]`; green = one `<alias>.bin: OK` per alias, exit 0. Base files missing → the container extract above.
+- Targets: `split` (asm only), `build`, `expected`, `clean`. `ONLY` default = every `config/splat/*.yaml`; an unknown alias is a make error.
+- `BASEDIR ?=` first existing of `extracted/retail/files` (host), `.run/extracted/retail/files` (container), else the host path; no need to pass it.
+- `clean` (T4.c1): removes generated outputs only: `asm/`, `build/overlays.mk`, per alias `build/<alias>/` + `build/<alias>.{bin,bin.bad,bin.tmp,elf,map,ld,override.yaml}`. Any other `build/` entry (e.g. ignored `build/ghidra_rebuild/`) survives. `expected/` is not touched.
+- `expected` (T4.c1): depends on all N aliases' `build/<alias>.bin` (ignores `ONLY`); when all are green copies `build/<alias>.bin` → `expected/<alias>.bin`; any failure → rc ≠ 0, `expected/` untouched. After a green fleet_check it rebuilds nothing (prints `expected: 83 binaries`).
+- Fleet check (T4.c1): `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run bash tools/fleet_check.sh` → `make clean`, `make extract OUT=.run/extracted/retail` (`DC2_CUE` default `/disc/Dino Crisis 2 (USA).cue`), `make -j$(nproc) -k build`, prints `<k> of <N> byte-identical` + elapsed; rc 0 iff k == N (N = loadmap rows class exe|code; also rc 1 if #check.*.sha ≠ N or a bin is missing). Logs in container `/work/.run/fleet_{extract,build}.log`. Runtime ~51 s (8 cores).
+- Overlay data head (T4.c1, `tools/splat_gen.py head_end`): when a word between text_start and the first `addiu $sp,$sp,-N` decodes as MIPS II+ (gas `-march=r3000` rejects it), that whole head is `rodata`, text starts at the prologue.
+- Out-of-overlay `j func_<ADDR>` targets (splat leaves them out of `undefined_funcs_auto.txt`): make writes `build/<alias>/undefined_jumps_auto.txt` (`func_X = 0xX;` for each referenced, undefined, unlisted `func_X`) and links it as a third `-T`.
 - `sync` wipes `/work/build` + `/work/asm` (not under `.run`), so the first build after a sync is a full rebuild.
 - `build/overlays.mk` is generated by make from the YAML list (`$(eval $(call alias_rules,<alias>,<path>))` per alias, path from `target_path`).
 - Override mechanism: make writes `build/<alias>.override.yaml` (`options: target_path: $(BASEDIR)/<path>`, rewritten only on change) and runs `splat split config/splat/<alias>.yaml build/<alias>.override.yaml`; splat 0.41.0 `conf.load` merges later files into earlier (scalars replace), `base_path` resolves from the first file. YAMLs are never edited.
