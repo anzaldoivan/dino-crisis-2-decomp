@@ -254,13 +254,14 @@ def refresh_ghidra():
                              "-postScript", "DumpSwitchTables.java", "-postScript", "DumpPsyqObjects.java"],
                             stdout=fh, stderr=subprocess.STDOUT).returncode
     text = log.read_text(encoding="utf-8", errors="replace")
-    sw = re.findall(r"SWITCH jr=(0x[0-9a-f]{8}|none) start=(0x[0-9a-f]{8}) end=(0x[0-9a-f]{8}) n=(\d+)", text)
+    sw = re.findall(r"SWITCH jr=(0x[0-9a-f]{8}|none) start=(0x[0-9a-f]{8}) end=(0x[0-9a-f]{8}) n=(\d+) src=(auto|txn)", text)
     ob = re.findall(r"OBJ start=(0x[0-9a-f]{8}) size=(0x[0-9a-f]+) lib=(\S+) obj=(\S+) low=([01])", text)
     m1, m2 = re.search(r"SWITCH_COUNT (\d+)", text), re.search(r"OBJ_COUNT (\d+)", text)
     if rc or not m1 or not m2 or int(m1[1]) != len(sw) or int(m2[1]) != len(ob):
         sys.exit(f"boundaries: ghidra dump failed rc={rc} (see {log.relative_to(REPO)})")
     write_cache(GH_SWITCH, "# Ghidra DumpSwitchTables.java on program SLUS_012.79 (ghidra/dc2, read-only); "
-                "jr<TAB>start<TAB>end<TAB>entries; end exclusive; refresh: PY tools/boundaries.py --ghidra",
+                "jr<TAB>start<TAB>end<TAB>entries<TAB>src (auto | txn = recovered in a rolled-back txn); end exclusive; "
+                "refresh: PY tools/boundaries.py --ghidra",
                 [list(r) for r in sw])
     write_cache(GH_OBJS, "# Ghidra DumpPsyqObjects.java (psx_ldr SigApplier, PsyQ 470, rolled back) on SLUS_012.79; "
                 "start<TAB>size<TAB>lib<TAB>obj<TAB>low; refresh: PY tools/boundaries.py --ghidra",
@@ -284,8 +285,10 @@ def check():
         if b == EXE and kind == "jtbl":
             ours[int(basis.split()[0][3:], 16)] = (s, e)
     theirs = {}
-    for jr, s, e, _n in read_cache(GH_SWITCH):
+    srcs = {}
+    for jr, s, e, _n, src in read_cache(GH_SWITCH):
         theirs[jr] = (int(s, 16), int(e, 16))
+        srcs[src] = srcs.get(src, 0) + 1
     dis = 0
     keys = sorted({f"0x{k:08x}" for k in ours} | set(theirs))
     for k in keys:
@@ -296,7 +299,8 @@ def check():
             fa = "-" if a is None else f"[0x{a[0]:08x},0x{a[1]:08x})"
             fg = "-" if g is None else f"[0x{g[0]:08x},0x{g[1]:08x})"
             print(f"DISAGREE jr={k} ours={fa} ghidra={fg}")
-    print(f"exe jtbl: ours={len(ours)} ghidra={len(theirs)} disagreements={dis}")
+    print(f"exe jtbl: ours={len(ours)} ghidra={len(theirs)} (auto={srcs.get('auto', 0)} txn={srcs.get('txn', 0)}) "
+          f"disagreements={dis}")
     if dis:
         ok = False
     jr, cs, ce = CONTROL
