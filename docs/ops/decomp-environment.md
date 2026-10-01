@@ -12,7 +12,7 @@ the rules behind them are the G group in `rules/`.*
 | The splitter / disassembler and its config | TODO(phase-3) | version pinned in the bootstrap script |
 | The build host | x86-64 Linux, Ubuntu 24.04, ext4 | On another host, use the container `tools/docker/Dockerfile` (`--platform linux/amd64`). Keep the tree in a named volume. The vintage 32-bit compiler runs under the container's emulation. Entry point `tools/docker/dc.sh`; host facts `docs/ops/docker-host.md`. |
 | The disassembler database and its agent server | Ghidra 12.1.3 (`ghidra_12.1.3_PUBLIC_20260817.zip`, https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.3_build/ghidra_12.1.3_PUBLIC_20260817.zip, sha256 `93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54`; JDK Temurin 21) + psx_ldr 2026.09.03 (https://github.com/lab313ru/ghidra_psx_ldr/releases/download/2026.09.03/ghidra_12.1.3_PUBLIC_20260903_ghidra_psx_ldr.zip, sha256 `04ddface00dd141f41924effa93a5dadb5630a24cdde36400bc703d25fcdec27`) in `$GHIDRA_INSTALL_DIR/Ghidra/Extensions`; agent server GhidrAssistMCP 2.11.0 (https://github.com/symgraph/GhidrAssistMCP/releases/download/2.11.0/ghidra_12.1_PUBLIC_20260802_GhidrAssistMCP.zip, sha256 `baba204a9fe839921a1487be9dfb15526faea787e5e4312c8404281d82b3a1a7`; classes are Java 21 (major 65), no rebuild) installed as `$GHIDRA_INSTALL_DIR/Ghidra/Extensions/GhidrAssistMCP` (zip's `GhidrAssistMCP/` minus `.claude/`, `CLAUDE.md`, `*.db`, `lucene/`, `res/`; `extension.properties` `version=12.1` → `12.1.3`), served by `tools/ghidra/mcp_start.sh` on `http://127.0.0.1:8080/sse` (docs/ops/disassembler-mcp.md) | the static oracle; project `ghidra/dc2` (ignored), built by `tools/ghidra/import.sh`; the database is tracked as a TEXT export with a rebuild script. The release zip has no `mac_arm_64` decompiler natives: on Apple silicon build them once from `Ghidra/Features/Decompiler/src/decompile/cpp` (`make ghidra_opt "ARCH_TYPE=-arch arm64"`, then `make sleigh_opt …`, one goal per call) and copy to `os/mac_arm_64/{decompile,sleigh}` — psx_ldr's analyzer needs the decompiler (LibgpuMacroDetector) |
-| The emulator and its scripting bridge | TODO(phase-2) | the runtime oracle |
+| The emulator and its scripting bridge | PCSX-Redux dev build 279 (`f7b388cc`, changeset `f7b388cc1e6555e2caf3ad78ed431126a546214a`), macOS arm64 `PCSX-Redux-f7b388cc-Arm.dmg` from https://distrib.app/storage/assets/bdd/5bd/80d/f23a1096406516ac7b2d9a0a1d1fb02e4cd634a972ef44833d9cbaf/PCSX-Redux-f7b388cc-Arm.dmg (catalog https://distrib.app/storage/manifests/pcsx-redux/dev-macos-arm/manifest.json), sha256 `f4adc63fd218dbcbda860956c2227a09278bb7b2b5efd95e810664962aa41561`, installed `$HOME/Applications/PCSX-Redux.app`; BIOS: bundled OpenBIOS (boots the game; `$DC2_BIOS` → `-bios` optional) | the runtime oracle; `tools/emu/emu.sh start|stop|status` runs it headless (`-no-ui -interpreter`, web API `127.0.0.1:8081`); the arm64 dynarec of this build dies with SIGILL ~25 s into the game, so the interpreter is used |
 
 ## The game and the medium
 
@@ -58,8 +58,15 @@ TODO(phase-3)
   `import.sh --info SLUS_012.79`: `PSX:LE:32:default`, 1501 functions, 874 sig-hit functions. psx_ldr sets the
   image base to the RAM base `80000000` (by design), not the header t_addr `80018000`; the gate checks instead that the
   initialized block at t_addr starts exactly at t_addr (`BASE_CHECK`).
-- **Emulator bridge:** TODO(phase-2) — a live-memory finding is verified only with three or more consistent datapoints
-  or a controlled before/after diff.
+- **Emulator bridge:** PCSX-Redux web API on `127.0.0.1:8081` (`tools/emu/emu.sh`), verified with curl on build 279:
+  `GET /api/v1/cpu/ram/raw` (2 MiB, offset i = `0x80000000+i`; `tools/emu/ram_probe.py`); `GET /api/v1/execution-flow`
+  (JSON `running`, `debugger`, `isDynarec`, `8mb`); `POST /api/v1/execution-flow?function=pause|resume` (200);
+  `GET /api/v1/gpu/vram/raw` (200). No built-in frame/vsync route: `tools/emu/lua/vsync.lua` (`-dofile`) counts
+  `GPU::Vsync` events and serves `GET /api/v1/lua/vsync` (text count); `PCSX.WebServer` exists only after the first
+  `/api/v1/lua/` request (404), so `emu.sh start` pokes it once. `DC2_BREAK=<addr>` adds `-debugger` and a pausing
+  Exec breakpoint. Other routes in the binary (unprobed): `/api/v1/assembly/symbols`, `cd/`, `cpu/cache`, `screen/`,
+  `state/`. A live-memory finding is verified only with three or more consistent datapoints or a controlled
+  before/after diff.
 
 ## Models and effort (decomp, on PA3)
 

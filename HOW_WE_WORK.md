@@ -46,7 +46,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - docker-vm-no-privileged — Never probe the Docker VM with --privileged or --pid=host; the classifier treats it as containment escape
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Oracles (X3): the byte gate (whole-binary hash); disassembler DB = Ghidra 12.1.3 project `ghidra/dc2` (ignored) via `tools/ghidra/import.sh <exe>` / `--info <prog>`; MCP GhidrAssistMCP `bash tools/ghidra/mcp_start.sh [prog]` → `http://127.0.0.1:8080/sse` (stop+save `mcp_stop.sh`, check `mcp_verify.sh <addr> <name>`); scriptable emulator `TODO(phase-2)`
+- Oracles (X3): the byte gate (whole-binary hash); disassembler DB = Ghidra 12.1.3 project `ghidra/dc2` (ignored) via `tools/ghidra/import.sh <exe>` / `--info <prog>`; MCP GhidrAssistMCP `bash tools/ghidra/mcp_start.sh [prog]` → `http://127.0.0.1:8080/sse` (stop+save `mcp_stop.sh`, check `mcp_verify.sh <addr> <name>`); emulator PCSX-Redux web API `127.0.0.1:8081` (`tools/emu/emu.sh`, RAM `tools/emu/ram_probe.py`; docs/ops/decomp-environment.md)
 - Data: the dump, machine-local (`docs/ops/decomp-environment.md`), never in git; extraction gitignored
 - Generated (never hand-edited, H1): `asm/`, `assets/`, linker scripts, progress reports
 - Hand-edited: `src/`, `include/`, `config/`, `tools/`, `docs/`
@@ -54,7 +54,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - Build: `bash tools/docker/dc.sh build|sync|run <cmd>` (amd64, volume `dc2-work`; `docs/ops/docker-host.md`); `make build` — `TODO(phase-3)`
-- Run: the emulator on the Mac host — `TODO(phase-2)`
+- Run: `bash tools/emu/emu.sh start|stop|status` (headless PCSX-Redux, OpenBIOS, `-interpreter`, pid/log `.run/emu/`); `DC2_BREAK=<addr>` pauses at a PC; `bash tools/emu/prove_load.sh <exe>` checks an EXE image in RAM
 - Test / the gate: the clean fleet check — `TODO(phase-3)` — green means N of N byte-identical from a clean rebuild
 - Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump
 Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
