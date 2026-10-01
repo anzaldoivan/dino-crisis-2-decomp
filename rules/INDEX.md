@@ -167,3 +167,5 @@ G63 | Outward text is written by a person | decomp,ai-conduct | active | decomp-
 G64 | No automated traffic against community infrastructure | decomp,ai-conduct | active | decomp-architect
 
 G65 | Agents assist; a person owns | decomp,ai-conduct | active | decomp-architect
+
+G68 | Oracle comparisons are symmetric, unseeded and fixed in advance | decomp,oracle,proof | active | phase 1.2 T3.1/T5/T7

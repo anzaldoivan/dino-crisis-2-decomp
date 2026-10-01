@@ -252,7 +252,8 @@ def main():
             print(f"FAIL: {p}")
         return 1
     uncl = sum(r["class"] not in CLASSES for r in rows)
-    print(f"rows={len(rows)} N={count_n(rows)} unclassified: {uncl} controls: OK negative-control: OK")
+    k = sum(r["class"] == "exe" or r["status"] == "proven" for r in rows)  # same set as check_controls
+    print(f"rows={len(rows)} N={count_n(rows)} unclassified: {uncl} controls: {k}/{k} pass negative-control: OK")
     return 0
 
 
