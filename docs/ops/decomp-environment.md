@@ -65,6 +65,19 @@ C units (T6, Phase 1.4): cuts come from `config/c_units.tsv` via `tools/splat_ge
 branch prints `cc <obj>` per unit (grep `c\.o` in `.run/fleet_build.log`) and prepends `.include "macro.inc"` to each
 `.m.s` so nonmatchings `glabel`/`jlabel` assemble.
 
+### Carve chain (T3, Phase 1.6)
+
+`config/c_units.tsv` optional 5th column `end` (hex, exclusive): a closing cut, `[start, end)` is the `c` unit and
+`[end, …)` reverts to `asm`; empty = up to the next cut (the T6 rows). `tools/carve.py <alias> <start> [--end E]
+[--unit name]` (in the container: `bash tools/docker/dc.sh run python3 tools/carve.py …`) adds or narrows the row,
+reruns `splat_gen.py --force --only <alias>`, writes `src/<alias>/<unit>.c` (`#include "common.h"` + one INCLUDE_ASM
+per census fn in range; an existing unit only loses out-of-range INCLUDE_ASM lines, a C body out of range is refused),
+then `make build ONLY=<alias>` + sha1; any refusal restores c_units/yaml/sha/unit byte-exactly, rc 1. Start must be a
+census fn start and `--end` a census fn end (`.run/census/functions.tsv`). The container has no `extracted/`
+(`splat_gen.py` falls back to `.run/extracted/`, like the Makefile's BASEDIR); copy the 3 changed files back to the host
+with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row relinked hash-equal
+(`carves: C of C build hash-equal`) + a planted lib-object carve refused with the tree unchanged (`control: ok`).
+
 ### Compile-only (no ROM) (T8, Phase 1.4)
 
 `bash tools/compile_only.sh` (container or any Linux host with `mipsel-linux-gnu-cpp` and python3): every

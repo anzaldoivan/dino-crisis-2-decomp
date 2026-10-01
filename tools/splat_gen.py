@@ -10,7 +10,8 @@ for its header pc0 and the startup $gp immediates.
   splat_gen.py --check [--only <alias>] [--out-dir <dir>]     assert the written files, exit 0 iff OK
 
 Cuts: edges = {0, size} + every boundaries start/end as file offset (+ 0x800 for the exe header).
-C units (c_units.tsv): each start is a further cut; [start, next cut) -> `c` named <unit> (T6).
+C units (c_units.tsv): each start is a further cut; [start, next cut) -> `c` named <unit> (T6). Optional 5th
+column `end` (hex, exclusive; T3, Phase 1.6): a closing cut, [start, end) -> `c`, [end, …) reverts to `asm`.
 Types: jtbl -> rodata; [text_start, text_end) -> asm; [base, text_start) -> rodata; after -> data.
 text_start: exe = pc0; overlay = max jtbl end (base if none), moved to the first `addiu $sp,$sp,-N` when the
 words before it hold a MIPS II+ encoding (data head, head_end).
@@ -25,7 +26,9 @@ ROOT = Path(__file__).resolve().parent.parent
 LOADMAP = ROOT / "config/loadmap.tsv"
 BOUNDARIES = ROOT / "config/boundaries.tsv"
 C_UNITS = ROOT / "config/c_units.tsv"
-FILES = ROOT / "extracted/retail/files"
+# Makefile BASEDIR order: the container keeps the extract under .run/ (extracted/ is ignored, never synced)
+FILES = next((p for p in (ROOT / "extracted/retail/files", ROOT / ".run/extracted/retail/files") if p.is_dir()),
+             ROOT / "extracted/retail/files")
 EXE_PATH = "SLUS_012.79"
 EXE_BASE = 0x80018000
 EXE_HDR = 0x800
@@ -79,8 +82,9 @@ def boundaries():
 
 def c_units():
     by = {}
-    for r in read_tsv(C_UNITS, ("alias", "start", "unit", "notes")):
+    for r in read_tsv(C_UNITS, ("alias", "start", "unit", "notes", "end")):
         r["start"] = int(r["start"], 16)
+        r["end"] = int(r["end"], 16) if r.get("end") else None
         by.setdefault(r["alias"], []).append(r)
     return by
 
@@ -180,12 +184,19 @@ def plan(row, rows_b, errs, units=()):
             errs.append(f"{row['path']}: c unit {u['unit']} 0x{u['start']:08x} not in game text")
         cu[off_of(row, u["start"])] = u["unit"]
         edges.add(off_of(row, u["start"]))
+        if u["end"] is not None:
+            if not u["start"] < u["end"] <= text_end:
+                errs.append(f"{row['path']}: c unit {u['unit']} end 0x{u['end']:08x} not in (start, text_end]")
+            edges.add(off_of(row, u["end"]))
     tail = size & ~3
     if size % 4:
         if any(tail < e < size for e in edges):
             errs.append(f"{row['path']}: edge inside the odd tail")
         edges.add(tail)
     edges = sorted(edges)
+    for u in units:
+        if u["end"] is not None and any(off_of(row, u["start"]) < e < off_of(row, u["end"]) for e in edges):
+            errs.append(f"{row['path']}: c unit {u['unit']} [0x{u['start']:08x}, 0x{u['end']:08x}) crosses a cut")
     if edges[0] != 0 or edges[-1] != size:
         errs.append(f"{row['path']}: edge outside [0, size)")
     seg0 = EXE_HDR if exe else 0
@@ -379,6 +390,10 @@ def check(args):
             hit = [p for p in pieces if p[1] == "c" and p[0] == off_of(row, u["start"]) and p[2] == u["unit"]]
             if len(hit) != 1:
                 bad["c_unit"].append(f"{a}:{u['unit']}")
+            elif u["end"] is not None:  # closing cut: the next piece starts at end and is not C
+                nxt = [p for p in pieces if p[0] > hit[0][0]][:1]
+                if not nxt or nxt[0][0] != off_of(row, u["end"]) or nxt[0][1] == "c":
+                    bad["c_unit"].append(f"{a}:{u['unit']} end")
         for p in pieces:
             if p[1] == "c" and not any(p[0] == off_of(row, u["start"]) and p[2] == u["unit"] for u in units):
                 bad["c_unit"].append(f"{a}:{p[2]} no row")
