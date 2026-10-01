@@ -14,6 +14,27 @@ the rules behind them are the G group in `rules/`.*
 | The disassembler database and its agent server | Ghidra 12.1.3 (`ghidra_12.1.3_PUBLIC_20260817.zip`, https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.3_build/ghidra_12.1.3_PUBLIC_20260817.zip, sha256 `93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54`; JDK Temurin 21) + psx_ldr 2026.09.03 (https://github.com/lab313ru/ghidra_psx_ldr/releases/download/2026.09.03/ghidra_12.1.3_PUBLIC_20260903_ghidra_psx_ldr.zip, sha256 `04ddface00dd141f41924effa93a5dadb5630a24cdde36400bc703d25fcdec27`) in `$GHIDRA_INSTALL_DIR/Ghidra/Extensions`; agent server GhidrAssistMCP 2.11.0 (https://github.com/symgraph/GhidrAssistMCP/releases/download/2.11.0/ghidra_12.1_PUBLIC_20260802_GhidrAssistMCP.zip, sha256 `baba204a9fe839921a1487be9dfb15526faea787e5e4312c8404281d82b3a1a7`; classes are Java 21 (major 65), no rebuild) installed as `$GHIDRA_INSTALL_DIR/Ghidra/Extensions/GhidrAssistMCP` (zip's `GhidrAssistMCP/` minus `.claude/`, `CLAUDE.md`, `*.db`, `lucene/`, `res/`; `extension.properties` `version=12.1` → `12.1.3`), served by `tools/ghidra/mcp_start.sh` on `http://127.0.0.1:8080/sse` (docs/ops/disassembler-mcp.md) | the static oracle; project `ghidra/dc2` (ignored), built by `tools/ghidra/import.sh`; the database is tracked as a TEXT export with a rebuild script. The release zip has no `mac_arm_64` decompiler natives: on Apple silicon build them once from `Ghidra/Features/Decompiler/src/decompile/cpp` (`make ghidra_opt "ARCH_TYPE=-arch arm64"`, then `make sleigh_opt …`, one goal per call) and copy to `os/mac_arm_64/{decompile,sleigh}` — psx_ldr's analyzer needs the decompiler (LibgpuMacroDetector) |
 | The emulator and its scripting bridge | PCSX-Redux dev build 279 (`f7b388cc`, changeset `f7b388cc1e6555e2caf3ad78ed431126a546214a`), macOS arm64 `PCSX-Redux-f7b388cc-Arm.dmg` from https://distrib.app/storage/assets/bdd/5bd/80d/f23a1096406516ac7b2d9a0a1d1fb02e4cd634a972ef44833d9cbaf/PCSX-Redux-f7b388cc-Arm.dmg (catalog https://distrib.app/storage/manifests/pcsx-redux/dev-macos-arm/manifest.json), sha256 `f4adc63fd218dbcbda860956c2227a09278bb7b2b5efd95e810664962aa41561`, installed `$HOME/Applications/PCSX-Redux.app`; BIOS: bundled OpenBIOS (boots the game; `$DC2_BIOS` → `-bios` optional) | the runtime oracle; `tools/emu/emu.sh start|stop|status` runs it headless (`-no-ui -interpreter`, web API `127.0.0.1:8081`); the arm64 dynarec of this build dies with SIGILL ~25 s into the game, so the interpreter is used |
 
+### Compiler fingerprint (T2, Phase 1.4, 2026-10-01)
+
+`tools/cc_fingerprint.py` (container, after `make -j split`) over `.text` of all 83 aliases; output `.run/fingerprint/`
+(`summary.txt`, `<alias>.tsv`). Lib band = 183 lib-object ranges of SLUS_012.79, scored apart. Counts only.
+- Denominators: game 283,386 insns / 3,406 functions (EXE 85,453/973; E 46,684/618; KOF 29,621/483; WEP 42,205/458;
+  WEP_S 3,426/42; ST 31,542/487; RES 3,297/28; MISC 41,158/317; WEP_S00 is a raw 28-byte bin, 0/0); lib 23,836/480.
+- Div trap: `tge` 0 everywhere. Game code: 171 trap-7 breaks, every one with the code in the low field (EXE 84, E 4,
+  KOF 4, WEP 2, ST 45, RES 3, MISC 29); EXE also 2 trap-7 + 1 trap-6 high-field; lib: 0 low-field, 6 trap-7 + 4 trap-6 high-field. The
+  encoding split game vs lib is itself a per-module (assembler) difference.
+- mflo/mfhi → next mult/div distance: 0 → 0 and 1 → 0 in game and lib; game 2 → 223, ≥3 → 401; lib 2 → 75, ≥3 → 26.
+- gp-relative: 0 `($gp)` loads/stores, 0 `%gp_rel`, 0 `addiu …,$gp` in every group and in the lib band (exe sets
+  `$gp` = 0x800a79b0 in its entry stub only).
+- `$at` expansions (lui `$at` → mem op via `$at`, adjacent / with `addu $at` index): EXE 100/0, ST 16/0, RES 9/0,
+  MISC 66/3, E/KOF/WEP/WEP_S 0/0; lib 299/67. `li`: lui+ori pairs game 2,741 vs single-insn 26,132; lib 59 vs 1,331.
+- -O0 frame-pointer prologue: game 0 functions, lib 1.
+- Verdict, ASPSX window (game code, every group): not 2.05/2.08 (no `tge`); ≥ 2.30 (no mflo/mfhi→mult/div at distance
+  < 2); the 2.67 (`%hi/%lo`), 2.77 (`$gp` sym+offset) and 2.81 (`$gp` for `la`) tells are unobservable here (no
+  gp-relative code; `%hi/%lo` is the disassembler's rendering) → window 2.30 … latest, no upper bound from these tells.
+- Verdict, `-G`: 0 for every group (EXE, E, KOF, WEP, WEP_S, ST, RES, MISC) and for the lib band: zero gp-relative
+  accesses in 283,386 game + 23,836 lib instructions.
+
 ## The game and the medium
 
 - **Title / platform / serial:** Dino Crisis 2 · Sony PlayStation (MIPS R3000A) · USA, SLUS-01279
