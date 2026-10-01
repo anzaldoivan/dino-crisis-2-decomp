@@ -22,3 +22,4 @@ types	python3 tools/types_check.py	^units scanned: (\d+)$	^control: planted dupl
 carve	python3 tools/carve.py --check	^carves: (\d+) of (\d+) build hash-equal$	^control: ok$	yes
 propagate	python3 tools/propagate.py --dry-run	^propagation dry run: (\d+) of \1 members gated$	^fail-closed control: ok$	yes
 reconcile	python3 tools/reconcile.py --check	^reconcile: (\d+) of \1 banked without redraft$	^control: banked decl-sync$[\s\S]*^directory gate: banked\+failed\+no-verdict = drafts: ok$	yes
+draw_filter	python3 tools/draw_filter.py --all	^draw: \d+ of (\d+) accepted$	^control: ok$	yes

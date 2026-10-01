@@ -119,6 +119,29 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
   (as-is fails: `conflicting types`). Never writes src/. `--apply` output is container-written: copy the unit back
   with `dc.sh run cat <f> > <f>`.
 
+### Draw filter (T6, Phase 1.6)
+
+- **Command:** `dc.sh run python3 tools/draw_filter.py --all | --list FILE` (scanner row `draw_filter`, `--all`).
+  `--list`: lines `alias<ws>start`, `#` comments; empty → `REFUSED: empty candidate list` rc 1.
+- **Inputs (derived every run, no stored exclude list):** `.run/census/functions.tsv`, `.run/twins/twins.tsv`,
+  `config/boundaries.tsv` (binary path → alias via `census.load_fleet()`), `config/probes.tsv`, `config/loadmap.tsv`,
+  `build/<alias>.ld` + linked src units, `asm/<alias>/`. asm/ or build/*.ld missing → `make -j build` (log
+  `.run/draw/build.log`); twins.tsv missing/stale → `tools/twins.py` (refreshes census + dup.tsv); failure → REFUSED rc 2.
+- **Reasons, in precedence (first that holds):** not-a-census-start (no start row) · lib (census kind lib) · banked
+  (C body `func_<ADDR>` in a unit `build/<alias>.ld` links; progress.linked_units/bodies) · out-of-range ([start,end) not
+  inside the binary's `text-end` row; no row → loadmap base..end, said in evidence) · data-in-text (overlaps a `jtbl`
+  table or `data-island`) · no-asm (no asm line at start, `dup_census.read_asm`) · switch (a `jtbl` basis `jr=` in
+  [start,end)) · pin-unproven (census family not the family of any probes.tsv alias; `self` ignored) · has-banked-twin
+  (twins.tsv row with twin_banked 1) · open-twin-sibling (direct twin of a candidate accepted earlier; candidates sorted
+  by alias, start) · none → accepted.
+- **Outputs:** `draw: A of D accepted` + `refused <reason>: n` for all ten (zeros included);
+  `.run/draw/{accepted,refused}.tsv` `# alias\tstart\treason\tevidence` (evidence = the concrete row/twin/absence).
+- **Control (every run, `.run/draw/control/`):** planted banked game fn + census lib fn + a game fn start+4 + two direct
+  twins that each pass every other reason → exactly banked 1, lib 1, not-a-census-start 1, open-twin-sibling 1,
+  accepted 1 (the first twin) → `control: ok`; else `control: FAIL <diff>` rc 1 (no twin pair found = FAIL).
+- **Fleet (T6.c1, 2026-10-01):** 769 of 3426 accepted; refused banked 7, pin-unproven 1879, open-twin-sibling 635,
+  switch 122, has-banked-twin 14, others 0. Pinned families = exe, LOGO+ST.
+
 ### Compile-only (no ROM) (T8, Phase 1.4)
 
 `bash tools/compile_only.sh` (container or any Linux host with `mipsel-linux-gnu-cpp` and python3): every
