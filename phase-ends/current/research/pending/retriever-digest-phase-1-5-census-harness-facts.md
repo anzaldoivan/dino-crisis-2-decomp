@@ -1,0 +1,49 @@
+# Phase 1.5 census and differential harness: prior facts
+task: extract census-relevant facts from phase 1.2-1.4, memory-map, DK kernels, rules
+agent: retriever-digest
+tags: census, differential-oracle, boundaries, psyq, DK-8, DK-9, G19, G21, G27, G32
+
+## Answer
+See Findings. Key: boundaries are generated, not guessed (tools/boundaries.py, 481 rows); Ghidra missed 10 exe switch functions (C0020); 183 lib-object rows from psx_ldr; family map in docs/memory-map.md:232; no explicit canonical list of >=5 question pairs beyond DK-9's six.
+
+## Findings
+(a) Facts
+- 83 binaries = exe + 82 code overlays (T4 1.2); 84 top-level segments (82 code + 2 bin: exe header, WEP_S00); 653 subsegments (asm 275, rodata 281, data 80, bin 17). memory-map.md:224-229
+- Family counts: exe 1, E 13, KOF 14, WEP 20, WEP_S 10 (+WEP_S00 raw 28 B), LOGO+ST 11, MAP 1, R2 5, RES 3, misc 5. memory-map.md:232-234
+- Function counts found: exe 874 Ghidra-named by PsyQ sigs (1.2/T1); OPTION 158 functions (memory-map:54); lib control 480 functions/23836 insns in 183 ranges (1.4/T2); exe unit game_<ADDR> spans 603 fns (1.4/T6). No per-binary function-count table exists: NOT FOUND, census must build it.
+- Boundaries are known by our own generator: tools/boundaries.py -> config/boundaries.tsv 481 rows (exe jtbl 59, lib-object 183, text-end 1, data-island 1; code jtbl 77, text-end 81, data-island 79). Not splat or Ghidra auto. 1.2/T7
+- Ghidra comparison symmetric, no exemption lists, exe 59/59 jr equal, 0 disagreements. Ghidra auto missed 10 switch functions (0x80026c94..0x800285a8 cluster, 0x80056028); recovered by decompiler in a rolled-back txn (C0020, cookbook/C0020.md). The Ghidra DB still lacks them (later DB task). 11th jr 0x8007e480 has no table in either scan (SWITCH_UNRECOVERED, no row).
+- Control (known-true): switch jr 0x8003500c, table [0x80018624,0x800186f8) 53 entries; exe text-end 0x80085f74.
+- Lib objects: psx_ldr 4.7 sigs via DumpPsyqObjects.java: 244 matched, 61 low-entropy, 183 rows; 12 overlapping same-start pairs (identical code in two libs, e.g. LIBCD/LIBDS) both kept. Lib control scored apart in tools/cc_fingerprint.py. Lib asm is distinct in style: $at lui+mem 299+67 vs game 100 (EXE), overlays E/KOF/WEP 0.
+- Lib objects are exe-only; overlays carry no lib rows. 1.2/T7 basis `psyq470 <LIB>/<OBJ>`.
+- Sony library = exe-only 183 ranges; G27 anecdote: lib instructions in a denominator inflated a % for weeks, so the census must exclude them.
+- Odd tails: 17 binaries size%4!=0 (KOF_P10P..PA1P 10 at 2 B; WEP06, WEP0C 1 B; WEP0F..13 2 B), emitted as bin <alias>_trailing. WEP_S00 no base, no rows, counts in fleet 83.
+- Overlay windows time-shared (0x800d5800, 0x8017e500); overlays have SMC extents; proofs only .text to text_end. 1.2/T5
+- Pinned toolchain psyq4.6 a2.86 G0 O2 (1.4/T4); units are wide (exe 603 fns), narrowing needs a closing cut column (1.4/T6). 28 functions keep jlabels referenced from separate jtbl rodata subsegments.
+- Harness gotchas: coder agents have no MCP client (use split asm or headless script); Ghidra headless refuses while :8080 listens; Ghidra labels such as caseD_ drift between runs.
+- Not found: any duplication/family/reach data in phase-1.2-1.4 (census is new work in 1.5).
+
+(b) Definitions
+- DK-8 (decomp-kernels.md:108): census duplication, structural families, reach x size distribution, unique tail with coverage-asserting scanners, a second oracle, known-true case first. Example: a "families cannot be automated" doctrine was a broken tool 0% vs fixed tool 89%.
+- DK-9 (:121): differential harness at 0%; the canonical six question pairs: matched? (source scanner vs built binary); compiles? (standalone vs real TU); fleet green? (incremental vs clean); scanner coverage? (count vs over-approximating set); agent produced work? (verdict vs scratch dir); bankable? (draw filter vs wall oracle). Same list at decomp-architect.md:194. Only the first 3-4 apply before agents/banks exist.
+- phantom (DK-27, :365): a target that is not a real function (no real boundary, no asm, out of range, already banked); costs agents per tier. Also DK-14 phantom hunt from a decoder gap (:257). Phantom stack slot (DK-45) is a different sense (compiler residual).
+- truncation: no census sense; only a model output-token cap (DK-:998) and knowledge docs silently truncated by programmatic edits (:1100). Interpret for 1.5 as a scanner dropping rows (count vs over-approximation).
+- reach x size (DK-72 :952, DK-73 :972): reach = copies/sibling-weighted gain (size x copies); not a size, not "crackable". unique tail = functions with no duplicate and no structural sibling (decomp-architect.md:327). families = structural families (DK-8). DK-10: dedup wants under-matching, frontier wants over-matching; build exact + near tier, control vs random pairs.
+- wave-playbook.md: no matches for phantom/truncation/reach/unique tail.
+
+(c) Rules
+- G19: scanner compares to an over-approximating candidate set and fails on the gap; never returns an empty set that reads as done.
+- G21: second independent oracle that must agree, run on a schedule, fail loudly on disagreement.
+- G27: every number states its denominator, reconciled against an independent list; claim TYPE stated.
+- G32: test every scan/census on a known-true case first; exactly-zero is a decoder gap until a positive is reproduced.
+- G7: check duplicate report first; duplicates matched once; a new binary must be known to signature set, family map, dedup registry, headers, reports, gated.
+- G25: negative-control every new refusal on the already-succeeded population; zero false positives.
+- G28: refuse unsupported input loudly; helper refuses an empty work list.
+- G30: a guard downstream or not running is no guard; unattended lanes leave evidence; deciding numbers written to a readable file.
+- G35: distinct not-judged state; "unchanged for N cycles" proves it iterated; model the gate before judging.
+- G53: producer census from compiler source before spelling sweeps; "PROVED" names its list.
+
+## Dead ends
+Glob with nested braces failed; wave-playbook.md has no census terms; no per-binary function count table.
+
+sources: phase-ends/phase-1.2/tasks/T1,T4,T5,T7.md; phase-1.3/tasks/T4,T5.md; phase-1.4/tasks/T2,T4,T6.md; docs/memory-map.md:196-243; docs/decomp-kernels.md:108-135; docs/decomp-architect.md:185-198; cookbook/C0020.md; rules/G*.md
