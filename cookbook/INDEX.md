@@ -23,3 +23,10 @@ C0020 | Ghidra misses whole switch-bearing functions on PSX exes | ghidra,switch
 C0021 | Keep non-generated artifacts out of build/; make clean removes only generated outputs | make,clean,build,hygiene | 2026-10-01 | 1.3/T3 | PhaseEnd 1.3
 C0022 | splat: carve an overlay's pre-code data head as rodata (MIPS II+ ops rejected by as -march=r3000) | splat,overlay,rodata,mips,psx | 2026-10-01 | 1.3/T4 | PhaseEnd 1.3
 C0023 | splat 0.41 omits out-of-segment j targets from undefined_funcs_auto; generate them | splat,linker,undefined-symbols,overlay | 2026-10-01 | 1.3/T4 | PhaseEnd 1.3
+C0024 | Prefer i686 wibo under Apple-silicon Docker | psx,psyq,wibo,docker,apple-silicon,toolchain | 2026-10-01 | 1.4/T1 | T1 gotcha
+C0025 | Count gp-relative accesses before picking -G | psx,gcc,gp,flags,fingerprint | 2026-10-01 | 1.4/T2 | T2 gotcha
+C0026 | Pin a toolchain by output equivalence classes, not by triples | toolchain,probe,ladder,aspsx,pin | 2026-10-01 | 1.4/T4 | T4 gotcha
+C0027 | make -n checks also see recipe comments and case branches | make,dry-run,check | 2026-10-01 | 1.4/T5 | T5 gotcha
+C0028 | splat 0.41 c subsegments can emit stub C bodies | splat,c,include_asm,match | 2026-10-01 | 1.4/T6 | T6 gotcha
+C0029 | INCLUDE_ASM through maspsx needs macro.inc in the assembled file | maspsx,include_asm,as,macro | 2026-10-01 | 1.4/T6 | T6 gotcha
+C0030 | A verify clause that reads extracted data must extract it itself | milestone,verify,extract,fresh-volume | 2026-10-01 | 1.4/T9 | phase-end gotcha

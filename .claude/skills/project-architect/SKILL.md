@@ -142,3 +142,4 @@ change a decision. Commit lines ≤ 100 chars, imperative, naming the task id.
 - G12 — No game-derived bytes in any tracked or published artifact, from the first commit
 - G18 — Never `git clean -x` where irreplaceable data is ignored-but-present
 - G61 — The byte gate is the only claim of success
+- G69 — The compiler triple and its flags are defined once, in the Makefile

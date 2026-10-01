@@ -17,3 +17,12 @@
 - harness: phaseend_index.py verify matches placeholder text (`K of K`, `banked: n`) literally; a milestone with variables can never go GREEN; `--help` silent on it
 - harness: a foreground Bash call over 285 s is moved to background by the harness and can stall at 0 CPU (docker run); long gates only via run.sh --bg + --wait ≤ 270 s
 - generalizable: a verify clause that reads extracted data must extract itself or run after the clause that does
+
+## Rerun (closer 2, after T9 + T10)
+- run.sh --bg pe3-verify (`phaseend_index.py verify --verbose`) → VERIFY: GREEN (7/7); primary check: verify1.log:2652 `probes identical: 5 of 5 under the pinned triple`, :2653 `ladder: exactly 1 triple matches all 5`, :2655 controls ok; verify3.log `banked: 5`/`verbatim: 0`; verify2 `83 of 83 byte-identical` 68 s; verify4 `compiled: 4 of 4 units`; verify5 = 4, no-rom.yml:42 `compile-only:` uncommented.
+- run.sh pe3-gotchas (`task_log.py gotchas`) → 22 lines / 10 summaries; 0 `workflow:`.
+- Promoted generalizable: C0024 (T1 wibo i686), C0025 (T2 gp count), C0026 (T4 equivalence classes), C0027 (T5 make -n), C0028 (T6 splat stub C), C0029 (T6 macro.inc), C0030 (phase-end: verify clause extracts itself). Bodies in .run/pe3/.
+- binding: T5:12 + T8:11 → rule G69 (rules_add add + promote); others already in docs/ops, README, card (RECAP.md routing).
+- H7: T7 tools/banked.py had no docs entry → closer added inventory row docs/ops/decomp-environment.md:211; host run `banked.py` → banked: 5, verbatim: 0, rc 0.
+- run.sh pe3-lint (`phaseend_index.py lint`) → 1 problem: PhaseEnd_Phase1.4.md not assembled (archive step, not the closer's).
+- No coder, no retriever.
