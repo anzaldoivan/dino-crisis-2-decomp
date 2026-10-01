@@ -319,7 +319,12 @@
     "tools/phaseend_index.py": {
       "base": null,
       "sha": "5e7f4e48937b7dac0de20edad19ab24120cef0d8b04cecf30eee1294f2d4a833",
-      "user": null
+      "user": {
+        "at": "2026-10-01T15:17:40Z",
+        "mark": null,
+        "sha": "a2d5ed92a8ee45cffd405361a6b58cc9258aeb02ccb4080d3d5c483b55bf2061",
+        "state": "stamped"
+      }
     },
     "tools/plan_edit.py": {
       "base": null,
