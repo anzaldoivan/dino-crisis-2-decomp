@@ -393,9 +393,13 @@ def analyze(b, glob, scan):
     res["gsplit"] = len(gstarts)
     # R3 (T2.c7): leading R3/invalid words of a function that no control flow reaches leave it (data head; a
     # %hi/%lo or pointer reference to them is data evidence, not a block)
+    # T2.c8: in this trim only, `syscall`/`break` with a nonzero code also count (handwritten trap words, wep0a)
+    trap = lambda w: w is not None and w >> 26 == 0 and (w & 63) in (0x0C, 0x0D) and (w >> 6) & 0xFFFFF != 0
     for r in recs:
-        while len(r[3]) > 1 and scan["words"].get(r[3][0][0]) == "invalid" and r[3][0][0] not in (
+        while len(r[3]) > 1 and (scan["words"].get(r[3][0][0]) == "invalid" or trap(scan["wv"].get(r[3][0][0]))) \
+                and r[3][0][0] not in (
                 glob["targets"] if b.family == "exe" else scan["targets"]) and r[3][0][0] not in jstarts | gstarts:
+            scan["words"][r[3][0][0]] = "invalid"  # a trimmed trap word is data-head evidence like R3 (T2.c8)
             r[3] = r[3][1:]
             r[0], r[2] = r[3][0][0], "func_%08X" % r[3][0][0]
     one, gaps, ovl = spans([(r[0], r[1]) for r in recs], ts, te)

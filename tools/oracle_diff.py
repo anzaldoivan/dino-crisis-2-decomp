@@ -15,7 +15,8 @@ predicate is false leaves the disagreement counted (`failed`):
                 cross-program target (.run/ghidra_functions/xprog_targets.tsv, other fleet programs' jal/pointer
                 words), 0 Ghidra references to it (.run/ghidra_functions/<prog>.refs.tsv, DumpFunctions.java), and the
                 previous census function ends at the start with an unconditional transfer (jr, j, b) + delay slot
-                (T2.c7: zero padding words before the start are skipped first);
+                (T2.c7: zero padding words before the start are skipped first), or (T2.c8) the start, after
+                skipping zero padding, follows the census text start or a census data-in-text span end;
   switch-case   (T2.c6) a ghidra-only start, or the ghidra_end of an end-ghidra-shorter row, equal to a target of a
                 config/boundaries.tsv `jtbl` row's table (targets = the table words read from the binary) whose jr
                 lies in the census function containing the start (end-ghidra-shorter: the census function at the
@@ -24,9 +25,14 @@ predicate is false leaves the disagreement counted (`failed`):
                 outside the census text region) or inside a census data-in-text span, the census start being the
                 first census start after that Ghidra start (Ghidra's function begins on the data head the census
                 leaves out). basis `g 0x<start> n1|in census <kind> span`, instrument `tools/oracle_diff.py:<line>`.
+  lib-patch-blob (T2.c8) a census-only or ghidra-only start, or the ghidra_end of an end-ghidra-shorter row, inside an
+                exe row of config/ghidra/SLUS_012.79.psyq_objects.tsv whose obj begins `PATCH` (PsyQ patch code the
+                library copies to RAM at runtime), with 0 jal words (own file) targeting it. basis `<lib> <obj>: code
+                copied to RAM at runtime`, instrument `config/ghidra/SLUS_012.79.psyq_objects.tsv`.
 --propose-exceptions writes .run/oracle/proposed_exceptions.tsv (`alias start kind predicate basis instrument`) for
-every residual census-only / ghidra-only / end-ghidra-shorter row, one per candidate kind (ghidra-only: data-span
-and switch-case; census-only: unreferenced and data-head); only predicate-true rows may be copied into the config.
+every residual census-only / ghidra-only / end-ghidra-shorter row, one per candidate kind (ghidra-only: data-span,
+switch-case, lib-patch-blob; census-only: unreferenced, data-head, lib-patch-blob; end-ghidra-shorter: switch-case,
+lib-patch-blob); only predicate-true rows may be copied into the config.
 C0020 line: the txn rows of config/ghidra/SLUS_012.79.switch_tables.tsv (switch functions Ghidra auto-analysis
 missed) whose jr lies inside an exe cache function (`k of 10 … (source txn n)`).
 Disagreement = a start in one list and not the other (class census-only | ghidra-only), or the same start with a
@@ -74,9 +80,11 @@ GEN_FILES = (ROOT / "tools/ghidra/scripts/DumpFunctions.java", ROOT / "tools/ghi
 FILES = ROOT / ".run/extracted/retail/files"
 EVIDENCE = ROOT / ".run/ghidra_functions"
 SWITCHES = ROOT / "config/ghidra/SLUS_012.79.switch_tables.tsv"
-KINDS_OF = {"ghidra-only": ("data-span", "switch-case"), "census-only": ("unreferenced", "data-head"),
-            "end-ghidra-shorter": ("switch-case",)}
-KINDS = ("data-span", "unreferenced", "switch-case", "data-head")
+KINDS_OF = {"ghidra-only": ("data-span", "switch-case", "lib-patch-blob"),
+            "census-only": ("unreferenced", "data-head", "lib-patch-blob"),
+            "end-ghidra-shorter": ("switch-case", "lib-patch-blob")}
+KINDS = ("data-span", "unreferenced", "switch-case", "data-head", "lib-patch-blob")
+PSYQ = ROOT / "config/ghidra/SLUS_012.79.psyq_objects.tsv"
 BOUNDARIES = ROOT / "config/boundaries.tsv"
 OUT = ROOT / ".run/oracle"
 CLASSES = ("census-only", "ghidra-only", "end-ghidra-shorter", "end-ghidra-longer")
@@ -187,7 +195,7 @@ def pred_data_span(spans, s):
     return sp is not None, sp and "in census %s span [0x%08x,0x%08x)" % (sp[2], sp[0], sp[1])
 
 
-def pred_unreferenced(ca, s, word, jal, jmp, br, ptr, xprog, grefs):
+def pred_unreferenced(ca, s, word, jal, jmp, br, ptr, xprog, grefs, text, spans):
     """unreferenced: (true?, basis) -- see the module doc; grefs None (no refs sidecar) is false."""
     cs = s if s in ca else parent(ca, s)
     out = sum(cs is None or not cs <= v < ca[cs] for v in jmp.get(s, []) + br.get(s, []))
@@ -199,8 +207,13 @@ def pred_unreferenced(ca, s, word, jal, jmp, br, ptr, xprog, grefs):
         v -= 4
     tr = (uncond(word(v - 4)) or (uncond(word(v)) if v < s - 4 else None)) if prev is not None and ca[prev] == s \
         else None
+    w = s
+    while w > text[0] and word(w - 4) == 0 and not any(e == w for _, e, _ in spans):  # T2.c8: zero padding
+        w -= 4
+    if tr is None and (w == text[0] or any(e == w for _, e, _ in spans)):  # T2.c8: follows text start / data span
+        tr = "follows %s 0x%08x" % ("text start" if w == text[0] else "data span end", w)
     ok = tr is not None and g is not None and not any(refs)
-    return ok, "prev 0x%08x ends %s; refs 0" % (prev, tr) if ok else "prev %s ends %s; jal %d xj/br %d ptr %d xprog %d ghidra %s" % (
+    return ok, (tr if tr.startswith("follows") else "prev 0x%08x ends %s" % (prev, tr)) + "; refs 0" if ok else "prev %s ends %s; jal %d xj/br %d ptr %d xprog %d ghidra %s" % (
         "-" if prev is None else "0x%08x" % prev, tr, *refs[:4], "n/a" if g is None else g)
 
 
@@ -213,6 +226,14 @@ def pred_data_head(ca, gh, s, text, spans):
     where = "n1" if not text[0] <= g < text[1] else sp and "in census %s span" % sp[2]
     ok = bool(where) and min((c for c in ca if c > g), default=None) == s
     return ok, ok and "g 0x%08x %s" % (g, where)
+
+
+def pred_lib_patch_blob(cl, s, ge, jal, objs):
+    """lib-patch-blob: (true?, basis) -- see the module doc."""
+    t = ge if cl == "end-ghidra-shorter" else s
+    o = next(((lb, ob) for a, z, lb, ob in objs if a <= t < a + z and ob.upper().startswith("PATCH")), None)
+    ok = o is not None and not jal.get(t, 0)
+    return ok, ok and "%s %s: code copied to RAM at runtime" % (o[0].split(".")[0].lower(), o[1])
 
 
 def jtbls(path, word):
@@ -351,6 +372,8 @@ def main(argv=None):
         grefs = read_refs(prog_of(alias))
         xp = {t for p, t in xprog if p == prog_of(alias)}
         tbls = jtbls(b.path, word) if word else []
+        objs = [(int(r[0], 16), int(r[1], 16), r[2], r[3]) for r in census.rows(PSYQ) if len(r) > 3] \
+            if alias == "slus_012_79" and PSYQ.exists() else []
         if alias == "slus_012_79" and SWITCHES.exists():
             tx = [int(r[0], 16) for r in census.rows(SWITCHES) if len(r) > 4 and r[4] == "txn"]
             fs = [s for s in (j if j in gh else parent(gh, j) for j in tx) if s is not None]
@@ -360,8 +383,9 @@ def main(argv=None):
             hit = False
             for kind in KINDS_OF.get(d[0], ()):
                 pq = pred_data_span(dspans.get(alias, []), s) if kind == "data-span" else pred_unreferenced(
-                    ca, s, word, jal, jmp, br, ptr, xp, grefs) if kind == "unreferenced" else pred_data_head(
-                    ca, gh, s, b.text, dspans.get(alias, [])) if kind == "data-head" else pred_switch_case(
+                    ca, s, word, jal, jmp, br, ptr, xp, grefs, b.text, dspans.get(alias, [])) if kind == "unreferenced" else pred_data_head(
+                    ca, gh, s, b.text, dspans.get(alias, [])) if kind == "data-head" else pred_lib_patch_blob(
+                    d[0], s, d[3], jal, objs) if kind == "lib-patch-blob" else pred_switch_case(
                     d[0], ca, s, d[3], tbls)
                 if (alias, s, kind) in exc:
                     if pq[0]:
@@ -443,7 +467,8 @@ def main(argv=None):
         inst = {"data-span": "tools/census.py data spans",
                 "unreferenced": "tools/oracle_diff.py:%d" % pred_unreferenced.__code__.co_firstlineno,
                 "switch-case": "tools/boundaries.py jtbl",
-                "data-head": "tools/oracle_diff.py:%d" % pred_data_head.__code__.co_firstlineno}
+                "data-head": "tools/oracle_diff.py:%d" % pred_data_head.__code__.co_firstlineno,
+                "lib-patch-blob": "config/ghidra/SLUS_012.79.psyq_objects.tsv"}
         (OUT / "proposed_exceptions.tsv").write_text("# alias\tstart\tkind\tpredicate\tbasis\tinstrument\n" + "".join(
             "%s\t0x%08x\t%s\t%s\t%s\t%s\n" % (a, s, kd, "true" if ok else "false", bs, inst[kd])
             for a, s, kd, ok, bs in props))

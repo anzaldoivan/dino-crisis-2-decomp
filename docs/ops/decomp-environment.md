@@ -195,19 +195,22 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   than nop) or a load/store with base `$zero` counts as `invalid` (data-in-text evidence); printed `R3 words: n`.
   Leading invalid words of a function that no control-flow target reaches leave it (its start moves past them; the
   span becomes an `invalid-insn` data span, confirming the new start by (b')), e.g. psx_bin_st9 0x800d5a58..0x800d5a68.
+  T2.c8: in this leading trim only, `syscall`/`break` with a nonzero code also count (handwritten trap word; the
+  trimmed word is marked invalid, so it becomes an `invalid-insn` span: bin_wep0a 0x8017e500..0x8017e504).
 - **Truncation:** text bytes not covered by exactly one function, or a function crossing a boundary edge.
 - **Data in text:** an uncovered span is data (leaves the denominator, printed per span) iff every word is a spimdisasm
   `.word` (or flagged invalid instruction), no control-flow target lands in it (jal/j/branch operands, jlabels,
   `.word .L…` jtbl entries; exe: fleet-wide, else same binary), and it holds an invalid instruction or a line outside it
   references it as data (%hi/%lo, la, `.word`; exe: fleet-wide). Kind `dlabel-head` = data-referenced, `invalid-insn` =
   invalid-instruction evidence only. Otherwise the span stays a truncation, labelled `not-data|cf-target|no-evidence`.
-- **Fleet (2026-10-01):** `functions: 3885` · `text bytes covered: 1228888 of 1228888` · `data in text: 4792 B (14
-  spans: 5 dlabel-head, 9 invalid-insn)` · `binaries: 83 of 83` · `phantoms: 0` · `truncations: 0`. Confirmations:
-  a 3580, b 3796, b' 85, c 170, d 5, e 179; sole a 6, b 135, b' 6. Kinds: lib 480, game 5, unknown 3400.
-  Data spans: 11 overlay heads at text start (bin_e30 0x800d0000+880, bin_kof_p70p 0x80128000+568, bin_m_title
-  0x800d5800+1628, bin_title2 0x800d5830+204, bin_wep04 0x8017e500+152, bin_wep0e 0x80120000+480, bin_wep_s01
-  0x80180d00+284, bin_wep_s02/s08/s09 0x80180d00+152, bin_wep_s03 0x80180d00+116); 3 exe 8-byte islands 0x80078d84,
-  0x80081244, 0x80081bf4.
+- **Fleet (2026-10-01, T2.c8):** `functions: 3911` · `text bytes covered: 1228852 of 1228852` · `data in text: 4828 B
+  (20 spans: 5 dlabel-head, 15 invalid-insn)` · `binaries: 83 of 83` · `phantoms: 0` · `truncations: 0` · `(f) 2` ·
+  `(g) 24` · `R3 words: 47`. Confirmations: a 3581, b 3821, b' 85, c 170, d 5, e 197, f 2, g 24; sole a 6, b 135,
+  b' 5. Kinds: lib 485, game 5, unknown 3421. Data spans: 11 overlay heads at text start (bin_e30 0x800d0000+880,
+  bin_kof_p70p 0x80128000+568, bin_m_title 0x800d5800+1628, bin_title2 0x800d5830+204, bin_wep04 0x8017e500+152,
+  bin_wep0e 0x80120000+480, bin_wep_s01 0x80180d00+284, bin_wep_s02/s08/s09 0x80180d00+152, bin_wep_s03
+  0x80180d00+116); 4-byte text-start heads bin_res00 0x80150000, bin_wep00/bin_wep0a 0x8017e500, psx_bin_st6/st7
+  0x800d5800; psx_bin_st9 0x800d5a58+16; 3 exe 8-byte islands 0x80078d84, 0x80081244, 0x80081bf4.
 - **Controls:** 5 probes exact start/end; `jr 0x8003500c` in function 0x80034f08; fixtures (synthetic encodings):
   `phantom` (planted mid-body glabel → phantoms 1), `gap` (a function's insn words without a glabel → `not-data` gap),
   `datahead` (invalid-insn data head that a `jal` targets → `cf-target` gap); empty `--only` → rc 2. Odd tails: 17
@@ -239,7 +242,10 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   T2.c7: s3/s4 (and s2 when every reference to the target is non-flow) skip a target that is fall-through reachable:
   scanning back over zero words, it is seeded only after the region start, >= 2 zero words, a last non-zero word that
   is no Ghidra instruction or a never-emitted word (census R3), a transfer + delay slot, or one word after zero
-  padding. s4 jal words count only from inside a Ghidra function body of their source program: `dump_functions.sh`
+  padding. T2.c8 (s2 pointer seeds only): the last non-zero word need only decode as a MIPS I instruction (raw, not
+  a Ghidra instruction: the code before may be disassembled later by s4, bin_wep05 0x80180000, or never, psx_bin_logo
+  0x800d638c), and a conditional branch from after the target (loop-back) is not a flow ref. exe
+  `DC2DUMPFUNCS … s2=504/603 s3=13/255 s4=95/103 merged=457`. s4 jal words count only from inside a Ghidra function body of their source program: `dump_functions.sh`
   writes an unfiltered `xprog_unfiltered.tsv`, runs a bodies pass (`DumpFunctions.java bodies <outdir> <seeds>`: full
   seeding, rolled back, `<prog>.bodies.tsv`), then the filtered `xprog_targets.tsv` (`xprog_targets.py … <bodies dir>`)
   for the main pass (exe 0x80040500 had been seeded from a psx_bin_st1 data word decoding as `jal`). ~4.5 min total.
@@ -297,7 +303,14 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `unreferenced` skips zero padding words before the start when testing the previous transfer; `data-head` = a
   census-only start strictly inside a Ghidra function that starts on non-judged (n1) bytes or in a census data span,
   the census start being the first census start after that Ghidra start (basis `g 0x<start> n1|in census <kind> span`,
-  instrument `tools/oracle_diff.py:<pred_data_head line>`). `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
+  instrument `tools/oracle_diff.py:<pred_data_head line>`). T2.c8: `unreferenced` also passes the previous-transfer
+  test when the start (after zero padding) follows the census text start or a census data-span end (basis `follows
+  text start|data span end 0x…; refs 0`); `lib-patch-blob` = a census-only / ghidra-only start, or an
+  end-ghidra-shorter ghidra_end, inside an exe `config/ghidra/SLUS_012.79.psyq_objects.tsv` row whose obj begins
+  `PATCH` (library code copied to RAM at runtime), 0 jal words (own file) to it (basis `<lib> <obj>: code copied to RAM
+  at runtime`, instrument the psyq_objects.tsv path); candidate for all three classes. Result (T2.c8): `oracle: 83 of
+  83 binaries compared, 0 disagreements`, 101 exceptions valid (data-span 17, unreferenced 66, switch-case 7,
+  data-head 6, lib-patch-blob 5), 100 applied (bin_title2 0x800d58a8 data-span no longer a disagreement). `--propose-exceptions` writes `.run/oracle/proposed_exceptions.tsv`
   (`alias start kind predicate basis instrument`); copy only `predicate=true` rows. Also printed: `C0020: k of 10 exe
   switch functions present (source txn n)` (txn rows of `config/ghidra/SLUS_012.79.switch_tables.tsv` whose jr lies in
   an exe cache function).

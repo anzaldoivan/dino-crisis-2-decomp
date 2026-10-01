@@ -35,7 +35,10 @@
 //       (data or never disassembled: rodata before the first function), a transfer + delay slot (jr rs, j, b), a
 //       never-emitted data word (writes $zero, or load/store with base $zero; tools/census.py R3), or one word after
 //       zero padding / the region start precede it. Also s2 when every reference to the target is non-flow (data,
-//       param: a pointer seed; e.g. bin_wep05 0x80180000 after `jal` + delay, a PARAM ref).
+//       param: a pointer seed; e.g. bin_wep05 0x80180000 after `jal` + delay, a PARAM ref). T2.c8: for s2 the last
+//       non-zero word need only decode as a MIPS I instruction (raw), not be a Ghidra instruction (the code before
+//       the target may be disassembled later, by s4, or never: psx_bin_logo 0x800d638c mid-prologue), and a
+//       conditional branch from after the target (a loop-back: logo 0x800d6c90 bnez -> 0x800d638c) is not a flow ref.
 // Bodies mode (T2.c7): `DumpFunctions.java bodies <outdir> <seed file>` runs s1, s2, sw, s4, s3 in the rolled-back
 // transaction (s4 from the unfiltered seed file), writes only <outdir>/<program>.bodies.tsv (`0x<start>\t0x<end>`,
 // end exclusive, every address range of every function body at that point) and returns; dump_functions.sh runs it
@@ -273,14 +276,29 @@ public class DumpFunctions extends GhidraScript {
         return (op == 0x10 || op == 0x12) && (rs == 0 || rs == 2) && rt == 0;
     }
 
-    /** T2.c7: can t be reached by falling through the words before it? (see header) */
-    private static boolean fallReachable(Program p, long t) throws Exception {
+    /** T2.c8: a word that decodes to a MIPS I (R3000) instruction: defined opcode / SPECIAL funct / REGIMM rt. */
+    private static boolean mipsI(int w) {
+        int op = w >>> 26, fn = w & 63, rt = (w >>> 16) & 31;
+        if (op == 0) return fn == 0 || fn == 2 || fn == 3 || fn == 4 || fn == 6 || fn == 7 || fn == 8 || fn == 9
+                || fn == 0xc || fn == 0xd || (fn >= 0x10 && fn <= 0x13) || (fn >= 0x18 && fn <= 0x1b)
+                || (fn >= 0x20 && fn <= 0x27) || fn == 0x2a || fn == 0x2b;
+        if (op == 1) return rt == 0 || rt == 1 || rt == 0x10 || rt == 0x11;
+        return op <= 0x13 || (op >= 0x20 && op <= 0x26) || (op >= 0x28 && op <= 0x2b) || op == 0x2e
+                || (op >= 0x30 && op <= 0x33) || (op >= 0x38 && op <= 0x3b);
+    }
+
+    /** T2.c7: can t be reached by falling through the words before it? (see header) raw (T2.c8, s2 pointer seeds):
+     *  the last non-zero word need only decode as a MIPS I instruction (mipsI, not never-emitted), not be a Ghidra
+     *  instruction: code before t may not be disassembled yet when s2 runs (bin_wep05 0x80180000, s4-made caller
+     *  later) or ever (psx_bin_logo 0x800d638c, mid-prologue of an unreferenced function). */
+    private static boolean fallReachable(Program p, long t, boolean raw) throws Exception {
         long n = t - 4;
         int z = 0;
         Integer w;
         while ((w = wordAt(p, n)) != null && w == 0) { z++; n -= 4; }
         if (w == null || z >= 2 || neverEmitted(w)) return false;
-        if (p.getListing().getInstructionContaining(p.getAddressFactory().getDefaultAddressSpace().getAddress(n)) == null)
+        if (raw ? !mipsI(w) :
+                p.getListing().getInstructionContaining(p.getAddressFactory().getDefaultAddressSpace().getAddress(n)) == null)
             return false;                                            // data / never disassembled before t
         Integer w1 = wordAt(p, n - 4), w2 = wordAt(p, n - 8);
         if (w1 != null && uncondWord(w1)) return false;              // n = delay slot of a transfer
@@ -296,11 +314,13 @@ public class DumpFunctions extends GhidraScript {
         if (k >= 2) {                                                // T2.c5: s3/s4 skip switch-case targets
             for (Reference r : p.getReferenceManager().getReferencesTo(a))
                 if (r.getReferenceType().isComputed() && r.getReferenceType().isJump()) return;
-            if (fallReachable(p, t)) return;                         // T2.c7
+            if (fallReachable(p, t, false)) return;                  // T2.c7
         }
-        if (k == 1 && fallReachable(p, t)) {                         // T2.c7: s2 by data/param refs only = a pointer seed
+        if (k == 1 && fallReachable(p, t, true)) {                   // T2.c7: s2 by data/param refs only = a pointer seed
             boolean flow = false;
-            for (Reference r : p.getReferenceManager().getReferencesTo(a)) flow |= r.getReferenceType().isFlow();
+            for (Reference r : p.getReferenceManager().getReferencesTo(a))   // T2.c8: a conditional branch from after t
+                flow |= r.getReferenceType().isFlow()                         // is a loop-back, not an entry (psx_bin_logo
+                        && !(r.getReferenceType().isConditional() && r.getFromAddress().getOffset() > t);   // 0x800d638c)
             if (!flow) return;
         }
         tried[k]++;
