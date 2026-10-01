@@ -366,6 +366,29 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   95 classes, 256 functions, 50808 bytes; unique tail 2094 functions, 871200 bytes. Control 1 `3032 of 3032` (22903
   fields moved); control 2 6 of 10000 (0.06%). Fixtures: nomask 1191 of 3032; nearall 10000 of 10000.
 
+### Progress denominators (T5, Phase 1.5)
+
+- **Command:** `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make progress`
+  (`split`, then `python3 tools/progress.py`). Fleet list = `make -s print-aliases` (Makefile `ALIASES`, one line).
+  Census rerun fresh each run (`tools/census.py`, stdout kept), then `.run/census/functions.tsv` read.
+- **Lines:** per alias `progress: C of G game functions in C, c of b bytes (<alias>)`; fleet `progress: … (fleet, <k>
+  binaries)`; `lib: L of F functions, l of B bytes (not in G)`; `denominator from build: ok|FAIL <reason>`. rc 0 iff ok.
+- **Definitions:** G/b = census rows of kind `game` of the alias / their bytes; lib never in G. C/c = census game rows
+  whose start is a C body `func_<ADDR>` (`banked.functions()`; INCLUDE_ASM is not a body) in a src C unit the alias's
+  `build/<alias>.ld` links (`build/<alias>/src/**.c.o`).
+- **Checks (FAIL rc 1):** census aliases (stdout lines; tsv aliases inside them, a no-text alias has none) ≠ ALIASES ≠
+  aliases with `build/<alias>.ld`; per alias game+lib rows / bytes ≠ census stdout `<alias>: functions: n text bytes
+  covered: B`; per-alias sum or tsv rows ≠ census `functions:` total; a linked C body with no census game row in its
+  alias. Empty ALIASES / census or census rc ≠ 0 → `REFUSED`, rc 2 (G28).
+- **Fixtures (G25):** `--fixture alias` (one alias dropped from ALIASES in memory), `--fixture functions` (one census
+  row dropped in memory); each → `denominator from build: FAIL`, rc 1.
+- **banked.py:** `banked: <n> of <G>` (G = fleet census game functions via `progress.game_fleet()`; census rerun when
+  functions.tsv missing or older than `src/**/*.c`, `config/splat/*.yaml`, `build/*/split.stamp`; unavailable →
+  `REFUSED`, rc 2), `verbatim: <m> of <n>`. Control every run: `.run/banked_fixture/fixture.c` (one `func_<A>` body +
+  one `INCLUDE_ASM(… func_<B>)`) against a 2-row in-memory game census → `control: 1 of 2 ok`, else FAIL rc 1.
+  banked n counts every body in `src/**/*.c`; progress C only linked, census-mapped ones (equal while every src unit
+  is linked).
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything

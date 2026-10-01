@@ -53,7 +53,14 @@ MASPSXFLAGS := --aspsx-version=2.86 -G0
 
 # make print-c A=<alias> [CCDIR=dir] — the C triple and flags for one alias as shell-assignable lines (base flags +
 # the per-alias hooks); tools/compile_only.sh evals these, so no flag is re-typed outside this Makefile.
-.PHONY: print-c
+# make print-aliases — $(ALIASES) on one line (tools/progress.py reads the fleet list from here). make progress —
+# split, then tools/progress.py: game-function denominators from the census of that split (docs/ops/decomp-environment.md).
+.PHONY: print-c print-aliases progress
+print-aliases:
+	@echo $(ALIASES)
+progress: split
+	python3 tools/progress.py
+
 print-c:
 	@printf "%s='%s'\n" CPP '$(CPP)' CC1 '$(CC1)' MASPSX '$(MASPSX)' \
 	  CPPFLAGS '$(strip $(CPPFLAGS) $(CPPFLAGS_$(A)))' CFLAGS '$(strip $(CFLAGS) $(CFLAGS_$(A)))' \
@@ -114,7 +121,7 @@ build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev
 	  || { mv $$@ $$@.bad; echo "FAILED sha1: $(1) (build/$(1).bin.bad)"; exit 1; }
 endef
 
-ifeq ($(filter-out clean format format-check extract print-c,$(or $(MAKECMDGOALS),all)),)
+ifeq ($(filter-out clean format format-check extract print-c print-aliases,$(or $(MAKECMDGOALS),all)),)
 else
 include build/overlays.mk
 endif
