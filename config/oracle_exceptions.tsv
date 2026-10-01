@@ -31,7 +31,6 @@ bin_save	0x801c16ec	data-head	g 0x801c16e4 n1	tools/oracle_diff.py:220
 bin_save	0x801c4244	unreferenced	prev 0x801c413c ends j; refs 0	tools/oracle_diff.py:198
 bin_title2	0x800d5848	data-span	in census dlabel-head span [0x800d5830,0x800d58fc)	tools/census.py data spans
 bin_title2	0x800d58a4	data-span	in census dlabel-head span [0x800d5830,0x800d58fc)	tools/census.py data spans
-bin_title2	0x800d58a8	data-span	in census dlabel-head span [0x800d5830,0x800d58fc)	tools/census.py data spans
 bin_wep04	0x8017e504	data-span	in census invalid-insn span [0x8017e500,0x8017e598)	tools/census.py data spans
 bin_wep05	0x8017e950	unreferenced	prev 0x8017e67c ends jr ra; refs 0	tools/oracle_diff.py:198
 bin_wep0c	0x8017fbc4	unreferenced	prev 0x8017fba4 ends jr ra; refs 0	tools/oracle_diff.py:198

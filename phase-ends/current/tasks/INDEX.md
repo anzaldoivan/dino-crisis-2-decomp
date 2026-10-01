@@ -1,3 +1,4 @@
 # Task summaries -- this phase
 # id | status | title | tags | summary | log | research
 T1 | done | function census with phantoms, truncations and control | - | tasks/T1.md | logs/T1.md | R1.5-001
+T2 | done | Ghidra function list as the second oracle, 0 disagreements | - | tasks/T2.md | logs/T2.md | -
