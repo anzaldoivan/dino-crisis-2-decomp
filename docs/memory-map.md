@@ -67,6 +67,8 @@ Evidence: `tools/loadmap_evidence.py --controls --json .run/t4/ranks.json` (cont
 `0x80018000` first, score 220599: self-jals on start 4116/4369, ptrs on start 1164, lui pairs 1919). Signals below:
 `j` self-jals onto own starts, `p` abs pointers onto own starts, `l` lui/lo16 pairs into range; ranges over the family.
 Status `ranked` = static evidence only; the byte gate is the arbiter. No sha1 twins among the 105 .BIN.
+- N = 83 = exe 1 + code 82 (R1 12, R2 5, R3 65 incl. WEP_S00 ranked none); debug code 0 (SYS_DEB not code-shaped);
+  stub 22; debug 1. Total rows 106.
 
 <a id="fam-logo-st"></a>
 ### LOGO, ST0..ST9 (R1)
