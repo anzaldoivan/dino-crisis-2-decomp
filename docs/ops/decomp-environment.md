@@ -367,6 +367,27 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   95 classes, 256 functions, 50808 bytes; unique tail 2094 functions, 871200 bytes. Control 1 `3032 of 3032` (22903
   fields moved); control 2 6 of 10000 (0.06%). Fixtures: nomask 1191 of 3032; nearall 10000 of 10000.
 
+### Twin band (T1, Phase 1.6)
+
+- **Command:** `bash tools/docker/dc.sh run python3 tools/twins.py --check` (scanner row `twins`); ~20-35 s, 8 cores.
+  Needs `asm/` + `build/*.ld` (`make -j build`; `dc.sh sync` drops both): else `REFUSED` rc 2.
+- **Inputs:** game rows (kind=game) of `.run/census/functions.tsv` + `.run/census/dup.tsv`; both refreshed by running
+  `tools/dup_census.py` when either is missing or older than its inputs (src/*.c, splat yaml, split stamps, asm, tool).
+- **Tokens:** `dup_census.exact_key` per function (relocation-normalised: J targets and hi/lo imm16 masked, trailing zero
+  words stripped); no second masker (G33). Identical sequences deduplicated (distance 0 between their members).
+- **Prefilter:** lengths within 25% (`4*min >= 3*max`); opcode-histogram bound over `near_word(token)`:
+  `max(|la-lb|, ceil(L1/2)) <= 0.7*max`. Survivors: Levenshtein, bit-parallel Myers/Hyyrö on Python ints, process pool.
+- **Ratio:** `1 - dist/max(len)`; kept iff `>= 0.3` (`10*dist <= 7*max`).
+- **Output:** `.run/twins/twins.tsv` `alias start twin_alias twin_start distance ratio twin_banked`, one row per fn per
+  twin, both directions; sorted distance asc, twin_banked desc, alias, start, twin_alias, twin_start. twin_banked = C body
+  `func_<ADDR>` in a unit `build/<alias>.ld` links (progress.linked_units/bodies).
+- **Lines:** `twins: T fns with >= 1 twin of G game fns`; `exact pairs reproduced: X of N` (every game pair of every
+  dup.tsv exact class found at distance 0 in both directions); `random-pair control: h of 10000 (<= 2%): ok|FAIL` (seed
+  1601, game pairs with different exact keys, h = pairs in the band); `open with banked twin: k` + `open → best banked`.
+- **Fixture:** `--fixture drop` drops the first exact pair's rows from the band → X = N-1 → `--check` rc 1.
+- **Fleet (T1.c1, 2026-10-01):** 2635 of 3426 game fns with a twin; exact pairs 26745 of 26745; control 71 of 10000;
+  open with banked twin 16 (incl. psx_bin_st8 0x800d6ab4 → psx_bin_st6 0x800d5c40 at distance 0).
+
 ### Progress denominators (T5, Phase 1.5)
 
 - **Command:** `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make progress`
