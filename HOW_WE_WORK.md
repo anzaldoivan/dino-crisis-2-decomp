@@ -44,6 +44,8 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
 - docker-vm-no-privileged — Never probe the Docker VM with --privileged or --pid=host; the classifier treats it as containment escape
+- pipe-exit-status — A check piped into tail reports tail's exit; read FAIL lines or run without a pipe (zsh has pipestatus, not PIPESTATUS)
+- ghidra-mcp-scratch-copy — Run MCP smoke tests on a scratch copy of the Ghidra project so a live headless job never hits the project lock
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - Oracles (X3): the byte gate (whole-binary hash); disassembler DB = Ghidra 12.1.3 project `ghidra/dc2` (ignored) via `tools/ghidra/import.sh <exe>` / `--info <prog>`; MCP GhidrAssistMCP `bash tools/ghidra/mcp_start.sh [prog]` → `http://127.0.0.1:8080/sse` (stop+save `mcp_stop.sh`, check `mcp_verify.sh <addr> <name>`); emulator PCSX-Redux web API `127.0.0.1:8081` (`tools/emu/emu.sh`, RAM `tools/emu/ram_probe.py`; docs/ops/decomp-environment.md)
