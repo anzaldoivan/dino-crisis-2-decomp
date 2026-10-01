@@ -361,6 +361,7 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
 - **Control 1 (relocation, known-true):** an independent word relocator moves J targets and data-flow hi/lo pairs inside
   the binary's loadmap range by delta 0x12340; every function with a moved field must keep its exact key (k = n).
 - **Control 2 (near false positives):** seed 1505, 10000 random pairs from different exact classes; near-key hits ≤ 1%.
+  Then `control: ok|FAIL` (both controls; the Phase 1.5 milestone line), then `check: OK|FAIL` under `--check`.
 - **Fixtures:** `nomask` (all hi/lo masking off → control 1 FAIL), `nearall` (every near key equal → control 2 FAIL).
 - **Fleet (T3.c2, 2026-10-01):** 3911 functions, 1228852 bytes. Exact 364 classes, 1561 functions, 306844 bytes; near
   95 classes, 256 functions, 50808 bytes; unique tail 2094 functions, 871200 bytes. Control 1 `3032 of 3032` (22903

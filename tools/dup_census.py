@@ -318,6 +318,7 @@ def main(argv=None):
     c2 = pct <= 1.0
     print("near control: seed %d, %d of %d pairs (%.2f%%): %s" % (SEED, h, PAIRS, pct, "ok" if c2 else "FAIL"))
     ok = c1 and c2
+    print("control: %s" % ("ok" if ok else "FAIL"))  # both controls; the milestone's line
     if a.check:
         print("check: %s" % ("OK" if ok else "FAIL"))
         return 0 if ok else 1
