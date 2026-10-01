@@ -37,7 +37,8 @@ fi
 CCDIR="$(cd "$CCDIR" && pwd)"
 echo "compile_only: CCDIR=$CCDIR"
 
-mapfile -t units < <(find src -type f -name '*.c' -not -name '.*' | LC_ALL=C sort)
+# a src/shared/*.inc.c is a shared body included by units (tools/propagate.py, T4 Phase 1.6), not a unit
+mapfile -t units < <(find src -type f -name '*.c' -not -name '.*' -not -name '*.inc.c' | LC_ALL=C sort)
 U=${#units[@]}; K=0; failed=()
 for c in "${units[@]}"; do
   rel="${c#src/}"; alias="${rel%%/*}"

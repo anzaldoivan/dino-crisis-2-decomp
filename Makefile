@@ -91,7 +91,7 @@ build/$(1)/split.stamp: config/splat/$(1).yaml build/$(1).override.yaml
 	@touch $$@
 
 build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev/null) \
-  $$(shell find src/$(1) -name '*.c' 2>/dev/null) $$(wildcard include/*.h)
+  $$(shell find src/$(1) -name '*.c' 2>/dev/null) $$(wildcard include/*.h src/shared/*.inc.c)
 	@rm -f $$@.bad
 	@for o in $$$$(grep -o 'build/$(1)/[^ ]*\.o' build/$(1).ld | sort -u); do \
 	  s=$$$${o#build/$(1)/}; s=$$$${s%.o}; mkdir -p $$$$(dirname $$$$o); \

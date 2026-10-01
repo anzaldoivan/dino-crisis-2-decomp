@@ -144,7 +144,8 @@ def ld_units(alias):
 
 
 def src_units():
-    return sorted(str(p.relative_to(ROOT)) for p in (ROOT / "src").rglob("*.c") if not p.name.startswith("."))
+    return sorted(str(p.relative_to(ROOT)) for p in (ROOT / "src").rglob("*.c")
+                  if not p.name.startswith(".") and not p.name.endswith(".inc.c"))  # .inc.c: shared body, not a unit
 
 
 # ---- ELF32 little-endian reader -------------------------------------------------------------------------------------

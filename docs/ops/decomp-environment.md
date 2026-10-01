@@ -78,6 +78,26 @@ census fn start and `--end` a census fn end (`.run/census/functions.tsv`). The c
 with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row relinked hash-equal
 (`carves: C of C build hash-equal`) + a planted lib-object carve refused with the tree unchanged (`control: ok`).
 
+### Propagation (T4, Phase 1.6)
+
+- **Registry:** `config/families.tsv` `# family role alias start unit basis`; family = exemplar `alias:start`, one
+  `exemplar` row + `member` rows, basis `exact:<sha1[:16] of the exact key>` (retail words, data-flow lui/lo masks).
+- **Shared body:** `src/shared/func_<A>.inc.c` holds the statements only (`#undef`s at its end; `*.inc.c` is not a
+  unit: compile_only.sh and harness.py skip it, types_check scans it). A unit instantiates it: `#define SHARED_<X> <symbol>` lines, the signature line, `{`, `#include
+  "../shared/func_<A>.inc.c"`, `}` (signature stays in the unit so banked/census/splat see `func_<ADDR>`). The Makefile
+  rebuilds an alias when `src/shared/*.inc.c` changes.
+- **Dry run:** `dc.sh run python3 tools/propagate.py --dry-run [--family F]` per member: exact key == exemplar's ==
+  basis (fail closed, C0036); bindings = each exemplar define's symbol moved by the delta its masked operands (J
+  targets, lui/lo addresses) agree on; member unit written to scratch `.run/propagate/<alias>/` (copied config/ src/
+  Makefile, fresh asm/ build/), `make build ONLY=<alias>` there, sha1 vs `config/check.<alias>.sha`. Needs
+  `.run/census/functions.tsv` (fn ends). Prints `member <alias>:<start>: hash-equal|FAIL …`,
+  `propagation dry run: M of N members gated`. Writes nothing outside `.run/`.
+- **Apply:** `--apply --family F` runs the dry run, then (green only) replaces each member fn's INCLUDE_ASM line with
+  the instantiation (+ the exemplar's missing `#include`s). Container-written: copy the unit back with
+  `dc.sh run cat <f> > <f>`.
+- **Control** (every dry run, scanner `propagate`): `--apply --plant --family <first>` (member callee rebound to itself)
+  must exit 1 on the hash gate with src/ config/ build/ tree-hash unchanged → `fail-closed control: ok`.
+
 ### Compile-only (no ROM) (T8, Phase 1.4)
 
 `bash tools/compile_only.sh` (container or any Linux host with `mipsel-linux-gnu-cpp` and python3): every

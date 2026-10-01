@@ -1,19 +1,12 @@
 #include "common.h"
 #include "dc2.h"
 
-/* func_800D5C40: Entry, Obj in dc2.h */
-extern Entry D_800D6A70[];
-extern void func_80047814(Obj *p);
-
+/* func_800D5C40: Entry, Obj in dc2.h; body shared with its exact-class members (src/shared, config/families.tsv) */
+#define SHARED_D0 D_800D6A70
+#define SHARED_F0 func_80047814
 void func_800D5C40(Obj *p)
 {
-    int i;
-
-    D_800D6A70[0].c = p->x98;
-    for (i = 0; i < 8; i++) {
-        D_800D6A70[i + 1].c = p->x9e[i] + D_800D6A70[i].c;
-    }
-    func_80047814(p);
+#include "../shared/func_800D5C40.inc.c"
 }
 
 INCLUDE_ASM("asm/psx_bin_st6/nonmatchings/game_800D5C40", func_800D5CA0);

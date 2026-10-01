@@ -1,0 +1,5 @@
+# config/families.tsv -- shared-body families for tools/propagate.py (T4, Phase 1.6). family = exemplar alias:start; role exemplar|member;
+# unit = src/<alias>/<unit>.c; basis = exact:<sha1[:16] of the exact key> (retail words, data-flow masks; re-checked every run).
+# family	role	alias	start	unit	basis
+psx_bin_st6:0x800d5c40	exemplar	psx_bin_st6	0x800d5c40	game_800D5C40	exact:2ba4608ca6fe0e9c
+psx_bin_st6:0x800d5c40	member	psx_bin_st8	0x800d6ab4	game_800D6AB4	exact:2ba4608ca6fe0e9c
