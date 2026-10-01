@@ -55,9 +55,9 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 - Scratch: `.run/` (gitignored; never the system temp); cap 25 GB, warn at 20 GB; pruning is the developer's call
 
 ## Build / run / test <!-- roles: expert coder router planner review critic discuss auditor curator -->
-- Build: `dc.sh sync && dc.sh run make -j build BASEDIR=.run/extracted/retail/files [ONLY="<alias>…"]` (`tools/docker/`, amd64; pins ubuntu digest, binutils 2.42, splat64 0.41.0 `/opt/splat`; `docs/ops/docker-host.md`)
+- Build: `dc.sh sync && dc.sh run make -j build [ONLY="<alias>…"]` (`tools/docker/`, amd64; pins ubuntu digest, binutils 2.42, splat64 0.41.0 `/opt/splat`; `docs/ops/docker-host.md`)
 - Run: `bash tools/emu/emu.sh start|stop|status` (headless PCSX-Redux, OpenBIOS, `-interpreter`, pid/log `.run/emu/`); `DC2_BREAK=<addr>` pauses at a PC; `bash tools/emu/prove_load.sh <exe>` checks an EXE image in RAM
-- Test / the gate: the clean fleet check — `TODO(phase-3)` — green means N of N byte-identical from a clean rebuild
+- Test / the gate: `dc.sh run bash tools/fleet_check.sh` (clean+extract+build) — green = `83 of 83 byte-identical`
 - Modes: CI = ROM audit + compile every unit (no game); local = byte-identity with the dump
 Long gates go through `tools/run.sh` with a raised timeout, never a poll loop.
 
