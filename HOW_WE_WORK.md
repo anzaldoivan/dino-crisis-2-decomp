@@ -40,7 +40,7 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
 | dc | `bash tools/docker/dc.sh` | amd64 build host: `build`, `sync` (tree → volume `dc2-work`), `run <cmd>` in `/work` |
 | extract | `make extract [OUT=…]` | own disc extractor → files/ + manifest |
-| census | `dc.sh run python3 tools/{census,oracle_diff}.py` | → `.run/census/`; oracle_diff: Ghidra vs census (host `ghidra/dump_functions.sh`) |
+| census | `dc.sh run python3 tools/{census,oracle_diff,dup_census}.py` | → `.run/census/`; Ghidra vs census (`ghidra/dump_functions.sh`); dup tiers |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
