@@ -67,6 +67,10 @@ TODO(phase-3)
   Exec breakpoint. Other routes in the binary (unprobed): `/api/v1/assembly/symbols`, `cd/`, `cpu/cache`, `screen/`,
   `state/`. A live-memory finding is verified only with three or more consistent datapoints or a controlled
   before/after diff.
+- **Load proof:** `tools/emu/prove_load.sh <exe>` boots fresh with `DC2_BREAK=pc0`, compares the full
+  `[t_addr,t_addr+t_size)` at pc0, then only `[t_addr,.text end)` at +300/+600 vsyncs with two hard-coded libcard
+  self-modifying exclusions (`_patch_card_info`, `_patch_card2`); stops the emulator at the end. Ranges, offsets and
+  datapoints: `docs/memory-map.md#slus_01279`.
 
 ## Models and effort (decomp, on PA3)
 
