@@ -29,6 +29,7 @@ ROOT = splat_gen.ROOT
 PROBES = ROOT / "config/probes.tsv"
 TOOLCHAINS = ROOT / "config/toolchains.tsv"
 SCRATCH = ROOT / ".run/probe"
+DISC_CUE = Path("/disc/Dino Crisis 2 (USA).cue")
 CC_DIR = Path("/opt/cc")
 WIBO = CC_DIR / "wibo/wibo"
 MASPSX = CC_DIR / "maspsx/maspsx.py"
@@ -57,8 +58,11 @@ def ensure_extracted():
     if os.environ.get("BASEDIR") or (basedir() / splat_gen.EXE_PATH).is_file():
         return 0
     SCRATCH.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    if "DC2_CUE" not in env and DISC_CUE.is_file():  # same default as tools/fleet_check.sh (image /disc mount)
+        env["DC2_CUE"] = str(DISC_CUE)
     with open(SCRATCH / "extract.log", "w") as log:
-        rc = subprocess.run(["make", "extract", "OUT=.run/extracted/retail"], cwd=ROOT,
+        rc = subprocess.run(["make", "extract", "OUT=.run/extracted/retail"], cwd=ROOT, env=env,
                             stdout=log, stderr=subprocess.STDOUT).returncode
     if rc != 0 or not (basedir() / splat_gen.EXE_PATH).is_file():
         print(f"probe: extraction failed (make extract OUT=.run/extracted/retail, rc {rc}); "
