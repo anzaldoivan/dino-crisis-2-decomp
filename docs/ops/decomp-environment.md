@@ -31,6 +31,7 @@ bash tools/run.sh t1-ref -- bash tools/docker/dc.sh run sh -c 'rm -rf /work/.run
 # our own extract (tools/extract_disc.py; host python3 >= 3.12, disc in disks/ or $DC2_CUE; see docs/formats.md)
 make extract                       # → extracted/retail/files + manifest.jsonl + manifest.sha1
 (cd extracted/retail && sha1sum -c --quiet manifest.sha1)   # verify the files against the manifest
+# the two manifests are tracked via config/firewall.txt `allow:` (exact path); manifest.jsonl + config/medium.sha1 are `required:` hash sources
 # against the reference: dc.sh sync, then in the container
 #   python3 tools/extract_disc.py --cue "/disc/Dino Crisis 2 (USA).cue" --out /work/.run/ours && diff -rq /work/.run/ref/files /work/.run/ours/files
 # the clean fleet verification — every binary from clean → extract → build, exit code read

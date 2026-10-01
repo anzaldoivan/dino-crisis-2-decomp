@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Firewall negative control: the planted fixture must FAIL the ROM audit, the tree must PASS. Exit 0 iff both.
+# Firewall negative control: the planted fixture must FAIL the ROM audit, the tree must PASS, and a non-allowed path
+# under extracted/ must FAIL (the allow: exemption is exact-path only). Exit 0 iff all.
 set -u; cd "$(dirname "$0")/.."
 PY="${PY:-/opt/homebrew/opt/python@3.14/bin/python3.14}"; command -v "$PY" >/dev/null || PY=python3
 P=.run/firewall-control/planted.bin
@@ -15,4 +16,8 @@ echo "(b) planted audit FAIL naming $P: ok"
 rm -f "$P"; [ ! -e "$P" ] || fail c "planted copy not removed"; echo "(c) planted copy removed: ok"
 out=$("$PY" tools/audit_public.py 2>&1); rc=$?; echo "$out" | tail -1
 [ $rc -eq 0 ] || fail d "tree audit rc=$rc"; echo "(d) tree audit PASS: ok"
+Q=extracted/retail/planted.bin   # a non-allowed path under extracted/ — named only, never created
+out=$("$PY" tools/audit_public.py --paths "$Q" 2>&1); rc=$?; echo "$out" | tail -1
+[ $rc -eq 1 ] && echo "$out" | grep -q "^[[:space:]]*OFFENDER $Q: purge path" || fail e "planted extracted path rc=$rc, no OFFENDER $Q"
+echo "(e) non-allowed extracted path FAIL naming $Q: ok"
 echo "firewall_control: OK"

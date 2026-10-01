@@ -6,7 +6,8 @@
     tools/audit_public.py --paths a b …   # an explicit file list (the planted-fixture control; a pre-commit hook)
 
 Everything it forbids is DERIVED from config/firewall.txt — purge rules and hash sources — never from a typed list:
-  1. PURGE PATHS — no tracked file lies under a `purge:` prefix or a `glob:` rule.
+  1. PURGE PATHS — no tracked file lies under a `purge:` prefix or a `glob:` rule, unless its path is EXACTLY an `allow:`
+     line (string equality, never a prefix or glob); an allowed path still goes through checks 2-4.
   2. CONTENT HASH — no tracked file's SHA1 appears in the hash set built from the `required:` / `fixture:` / resolvable
      `pending:` sources (a `.jsonl` manifest with a `sha1` key per line, or sha1sum-format checksum files, globs allowed).
      A renamed copy is caught by content. Zero-length files are exempt by content (an empty payload shares the empty
@@ -45,10 +46,10 @@ DISASM_RES = [
 
 
 def read_config():
-    """Returns (prefixes, globs, required, pending, fixtures). Refuses an absent or empty config (a tool must refuse)."""
+    """Returns (prefixes, globs, required, pending, fixtures, allows). Refuses an absent or empty config (a tool must refuse)."""
     if not CONFIG.exists():
         sys.exit(f"audit_public: {CONFIG.relative_to(REPO)} is missing — nothing to derive the forbidden set from")
-    prefixes, globs, required, pending, fixtures = [], [], [], [], []
+    prefixes, globs, required, pending, fixtures, allows = [], [], [], [], [], []
     for raw in CONFIG.read_text(encoding="utf-8").splitlines():
         ln = raw.split("#", 1)[0].strip()
         if not ln:
@@ -65,11 +66,13 @@ def read_config():
             pending.append(value)
         elif kind == "fixture":
             fixtures.append(value)
+        elif kind == "allow":
+            allows.append(value)
         else:
             sys.exit(f"audit_public: unknown rule kind {kind!r} in {CONFIG.relative_to(REPO)} — refusing to guess")
     if not prefixes and not globs:
         sys.exit("audit_public: no purge rules in config/firewall.txt — refusing to pass on an empty forbidden set")
-    return prefixes, globs, required, pending, fixtures
+    return prefixes, globs, required, pending, fixtures, allows
 
 
 def under_rules(path, prefixes, globs):
@@ -156,13 +159,13 @@ def longest_disasm_run(path):
 
 def main(argv):
     files = argv[argv.index("--paths") + 1:] if "--paths" in argv else tracked_files()
-    prefixes, globs, required, pending, fixtures = read_config()
+    prefixes, globs, required, pending, fixtures, allows = read_config()
     hashes, n_sources = rom_hashes(required, pending, fixtures)
     offenders, top_runs = [], []
     n_hashed = n_text = 0
     for rel in files:
         p = REPO / rel
-        rule = under_rules(rel, prefixes, globs)
+        rule = None if rel in allows else under_rules(rel, prefixes, globs)   # exact path only; checks 2-4 still apply
         if rule:
             offenders.append((rel, f"purge path ({rule})"))
         if not p.is_file():          # a submodule gitlink or a file deleted in the worktree — nothing to hash
