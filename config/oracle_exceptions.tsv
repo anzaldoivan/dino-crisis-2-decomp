@@ -1,0 +1,4 @@
+# config/oracle_exceptions.tsv -- accepted census/Ghidra-oracle disagreements, read by tools/oracle_diff.py.
+# kind = disagreement class (census-only|ghidra-only|end-ghidra-shorter|end-ghidra-longer); a row missing basis or
+# instrument is ignored and counted `exceptions invalid`.
+# alias	start	kind	basis	instrument

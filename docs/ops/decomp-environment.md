@@ -200,6 +200,23 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `datahead` (invalid-insn data head that a `jal` targets → `cf-target` gap); empty `--only` → rc 2. Odd tails: 17
   binaries, all after text-end.
 
+### Ghidra oracle (T2)
+
+- **Tools:** `tools/ghidra/dump_functions.sh` (host; MCP stopped) backs up `ghidra/` once to `.run/ghidra_backup/`,
+  imports missing fleet programs via `import_raw.sh` at the loadmap base (exe `SLUS_012.79` never re-imported; overlays
+  named by alias), dumps read-only (`DumpFunctions.java`) to `config/ghidra/<prog>.functions.tsv` (`start size source`,
+  size = body max + 1 − entry; `# non-contiguous bodies: n`; `bin_wep_s00` = `# no-text`, 0 rows). Long: `bash
+  tools/run.sh --bg t2-import -- bash tools/ghidra/dump_functions.sh`, then `--wait t2-import --max 280`.
+- **Diff:** `bash tools/docker/dc.sh sync && bash tools/docker/dc.sh run python3 tools/oracle_diff.py [--plant-start
+  ALIAS:ADDR]` → classes `census-only|ghidra-only|end-ghidra-shorter|end-ghidra-longer` (5 examples each), full list
+  `.run/oracle/disagreements.tsv`, `oracle: k of 83 binaries compared, d disagreements`; exit 0 iff 83/83, d = 0, no
+  stale, controls ok; REFUSED rc 2 on empty census / 0 caches. Runs census.py first if functions.tsv is missing/older.
+- **Normalisations (only these):** n1 judge only starts in the census text region (others `not judged: n`); n2 ends
+  equal when the words between them are all zero. Exceptions: `config/oracle_exceptions.tsv` (rows need basis +
+  instrument, else `exceptions invalid`).
+- **Hash:** `generator sha256` = sha256(DumpFunctions.java + dump_functions.sh bytes + `<ghidra>\n<loadmap sha1>\n<base>\n`);
+  a mismatch → `stale: <prog>`, exit 1. Controls: `planted start detected`, `stale hash detected`.
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything
