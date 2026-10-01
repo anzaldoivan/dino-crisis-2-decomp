@@ -215,6 +215,20 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `phantom` (planted mid-body glabel → phantoms 1), `gap` (a function's insn words without a glabel → `not-data` gap),
   `datahead` (invalid-insn data head that a `jal` targets → `cf-target` gap); empty `--only` → rc 2. Odd tails: 17
   binaries, all after text-end.
+- **Kind (T4.c1, H7):** exe `lib` iff the start lies in a `config/boundaries.tsv` lib-object extent, else `game`
+  (183 rows → distinct extents; rows sharing a start share the end and collapse to one object named `A=B[=C…]`).
+  Overlay `lib` iff in a `tools/dup_census.py` exact-tier class (its `load()`+`classify()`, imported lazily after
+  functions.tsv is written; functions.tsv is then rewritten) that holds an exe `lib` member, else `game`; `unknown`
+  only when the exe is not in the run (`--only` without it). Fleet block: `lib objects: O (183 rows, k same-start
+  groups resolved)`, one `lib same-start 0x… A=B…: n functions` per group, `lib functions: L of F (exe a, overlays b
+  in m binaries, c exact classes, smallest S B)` (S = smallest overlay lib function), `lib bytes: b of B` (B = text
+  bytes covered), `game functions: G of F`, `unknown: U`, info `exe non-lib functions exact-equal to a lib function:
+  k`, `lib objects with 0 functions: z` (listed). Controls: `control lib: n of n cc_fingerprint lib functions kind
+  lib` (cc_fingerprint.py's own main() observed, count checked against its summary.txt) and `control game: 5 of 5
+  probes kind game`; `--fixture libgame` flips one exe lib function → control lib FAIL, rc 1. `--check` fails on
+  U ≠ 0. 2026-10-01: objects 171 (10 groups), lib 666 of 3911 (exe 485, overlays 181 in 53 binaries, 1 exact class,
+  smallest 8 B: all 181 overlay lib functions are 8-byte, one stub class), lib bytes 96792 of 1228852, game 3245,
+  unknown 0, exe non-lib exact-equal 40, 0-function objects 0; control lib 480 of 480.
 
 ### Ghidra oracle (T2)
 

@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """census.py -- function census of the fleet (T1, Phase 1.5); stdlib only, run in the container:
-    dc.sh run python3 tools/census.py [--check] [--only ALIAS...] [--fixture phantom|gap|datahead]
+    dc.sh run python3 tools/census.py [--check] [--only ALIAS...] [--fixture phantom|gap|datahead|libgame]
 
 One record per `glabel` in text (`.section .text` + asm/<alias>/nonmatchings/**) plus one per C-defined
 `func_<ADDR>` in src/<alias>/<unit>.c (fills the gaps of its `c` subsegment). Writes .run/census/functions.tsv
 (`alias start end size kind family`, sorted, end exclusive), prints per-binary and fleet counts, runs the
 known-true (config/probes.tsv, jr 0x8003500c) and negative controls (fixtures, empty --only).
 Uncovered text spans that are evidenced data (data_spans) leave the denominator and are listed as `data in text`.
+Kind (T4.c1): exe lib iff inside a boundaries.tsv lib-object extent, else game; overlay lib iff in a
+tools/dup_census.py exact class with an exe lib member, else game (unknown when the exe is not in the run).
+Controls: cc_fingerprint.py lib-band functions are kind lib; probe rows are kind game (--fixture libgame flips one).
 Definitions: phase 1.5 PHASE_PLAN `## Interfaces`; notes: docs/ops/decomp-environment.md "Function census".
-Exit: 0 clean; 1 phantom/truncation/control failure (and every fixture run); 2 refused (empty alias list).
+Exit: 0 clean; 1 phantom/truncation/control failure, --check with unknown kinds (and every fixture run);
+2 refused (empty alias list).
 """
 import argparse
 import re
@@ -27,6 +31,7 @@ FLEET_N = 83
 FAMILIES = {"exe": 1, "E": 13, "KOF": 14, "WEP": 20, "WEP_S": 10, "LOGO+ST": 11, "MAP": 1, "R2": 5, "RES": 3,
             "misc": 5}  # docs/memory-map.md:232
 JR_CONTROL = 0x8003500C  # tools/boundaries.py CONTROL: switch jr in the exe
+EXE = "slus_012_79"
 
 INSN = re.compile(r"^\s*/\*\s*[0-9A-Fa-f]+\s+([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]{8}\s*\*/\s*(\S*)\s*(.*)$")
 FUNC_TOK = re.compile(r"\bfunc_([0-9A-Fa-f]{8})\b")
@@ -445,16 +450,22 @@ def analyze(b, glob, scan):
                 res["cross"].append((st, x))
     res["T"] = len(res["gaps"]) + len(ovl) + len(res["cross"])
     for st, en, name, ins, srck in recs:
-        if srck == "c":
-            kind = "game"
-        elif b.family == "exe" and any(s <= st < e for s, e in b.lib):
-            kind = "lib"
+        if b.family == "exe":  # T4.c1: exe lib iff inside a lib-object extent; overlays: lib_pass()
+            kind = "lib" if any(s <= st < e for s, e in b.lib) else "game"
         else:
             kind = "unknown"
         res["recs"].append((b.alias, st, en, kind, b.family))
         if ins:
             res["insns"][st] = (en, ins)
     return res
+
+
+def write_tsv(results):
+    OUT.mkdir(parents=True, exist_ok=True)
+    recs = sorted(x for r in results.values() for x in r["recs"])
+    (OUT / "functions.tsv").write_text(
+        "# alias\tstart\tend\tsize\tkind\tfamily -- tools/census.py; end exclusive\n" + "".join(
+            "%s\t0x%08x\t0x%08x\t0x%x\t%s\t%s\n" % (a, s, e, e - s, k, f) for a, s, e, k, f in recs))
 
 
 def run(bins, only_full, write=True):
@@ -497,11 +508,7 @@ def run(bins, only_full, write=True):
             sole[k] = sole.get(k, 0) + v
     print("\n".join(out))
     if write:
-        OUT.mkdir(parents=True, exist_ok=True)
-        recs = sorted(x for r in results.values() for x in r["recs"])
-        (OUT / "functions.tsv").write_text(
-            "# alias\tstart\tend\tsize\tkind\tfamily -- tools/census.py; end exclusive\n" + "".join(
-                "%s\t0x%08x\t0x%08x\t0x%x\t%s\t%s\n" % (a, s, e, e - s, k, f) for a, s, e, k, f in recs))
+        write_tsv(results)
     print("functions: %d" % tot["F"])
     print("text bytes covered: %d of %d" % (tot["b"], tot["B"]))
     print("data in text: %d B (%d spans: %d dlabel-head, %d invalid-insn)" % (
@@ -537,6 +544,100 @@ def run(bins, only_full, write=True):
     return tot, results
 
 
+def lib_pass(bins, results, tot):
+    """T4.c1: exe lib objects = distinct lib-object extents (same-start rows collapse to one, named A=B…); overlay
+    functions in a dup_census exact class with an exe lib member -> lib, other overlay functions -> game (needs the
+    exe in the run, else they stay unknown); rewrites functions.tsv; prints the fleet lib block. -> unknown count."""
+    objs = {}  # start -> (ends, names)
+    if EXE in bins:
+        for r in rows(BOUNDARIES):
+            if r[0] == bins[EXE].path and r[1] == "lib-object":
+                o = objs.setdefault(int(r[2], 16), (set(), []))
+                o[0].add(int(r[3], 16))
+                o[1].append(r[4].split()[-1] if len(r) > 4 else "?")
+        bad = sorted(s for s, o in objs.items() if len(o[0]) != 1)
+        if bad:
+            sys.exit("census: lib-object rows with one start, different ends: %s" % " ".join("0x%08x" % s for s in bad))
+    nrows = sum(len(o[1]) for o in objs.values())
+    ncls, eqk = 0, 0
+    if EXE in results and len(results) > 1:
+        import dup_census  # lazy: dup_census imports census
+        funcs, _ = dup_census.load(None)
+        dup_census.classify(funcs)
+        kind = {(x[0], x[1]): x[3] for x in results[EXE]["recs"]}
+        cls = {}
+        for f in funcs:
+            if f["tier"] == "exact":
+                cls.setdefault(f["cls"], []).append(f)
+        libcls = [m for m in cls.values() if any(f["alias"] == EXE and kind[(EXE, f["start"])] == "lib" for f in m)]
+        olib = {(f["alias"], f["start"]) for m in libcls for f in m if f["alias"] != EXE}
+        ncls = sum(1 for m in libcls if any(f["alias"] != EXE for f in m))
+        eqk = sum(1 for m in libcls for f in m if f["alias"] == EXE and kind[(EXE, f["start"])] != "lib")
+        for a, r in results.items():
+            if a != EXE:
+                r["recs"] = [x[:3] + ("lib" if x[:2] in olib else "game",) + x[4:] for x in r["recs"]]
+        write_tsv(results)
+    allr = [x for r in results.values() for x in r["recs"]]
+    F = len(allr)
+    lib = [x for x in allr if x[3] == "lib"]
+    olibr = [x for x in lib if x[0] != EXE]
+    exer = results[EXE]["recs"] if EXE in results else []
+    nin = lambda s, e: sum(1 for x in exer if s <= x[1] < e)
+    groups = sorted(s for s, o in objs.items() if len(o[1]) > 1)
+    print("lib objects: %d (%d rows, %d same-start groups resolved)" % (len(objs), nrows, len(groups)))
+    for s in groups:
+        e = min(objs[s][0])
+        print("lib same-start 0x%08x %s: %d functions" % (s, "=".join(objs[s][1]), nin(s, e)))
+    print("lib functions: %d of %d (exe %d, overlays %d in %d binaries, %d exact classes, smallest %s B)" % (
+        len(lib), F, len(lib) - len(olibr), len(olibr), len({x[0] for x in olibr}), ncls,
+        min((x[2] - x[1] for x in olibr), default="-")))
+    print("lib bytes: %d of %d" % (sum(x[2] - x[1] for x in lib), tot["b"]))
+    print("game functions: %d of %d" % (sum(1 for x in allr if x[3] == "game"), F))
+    U = sum(1 for x in allr if x[3] == "unknown")
+    print("unknown: %d" % U)
+    print("exe non-lib functions exact-equal to a lib function: %d" % eqk)
+    zero = [s for s in sorted(objs) if not nin(s, min(objs[s][0]))]
+    print("lib objects with 0 functions: %d%s" % (len(zero), "" if not zero else " -- " + ", ".join(
+        "0x%08x %s" % (s, "=".join(objs[s][1])) for s in zero)))
+    return U
+
+
+def cc_lib_starts():
+    """{(alias, start)} of every function tools/cc_fingerprint.py counts in its lib band: its own main() (parsing,
+    lib ranges) run with in_lib/scan_func/scan_alias observed; the count is checked against its summary.txt."""
+    import contextlib
+    import io
+    import cc_fingerprint as cc
+    got, st = [], {}
+    o_in, o_sf, o_sa = cc.in_lib, cc.scan_func, cc.scan_alias
+
+    def in_lib(v, ranges):
+        x = o_in(v, ranges)
+        st.setdefault("first", (v, x))  # flush() asks for func[0] first
+        return x
+
+    def scan_func(body, c):
+        v, x = st.pop("first")
+        if x:
+            got.append((st["alias"], v))
+        o_sf(body, c)
+
+    def scan_alias(alias, *a):
+        st["alias"] = alias
+        o_sa(alias, *a)
+
+    cc.in_lib, cc.scan_func, cc.scan_alias = in_lib, scan_func, scan_alias
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            cc.main()
+    finally:
+        cc.in_lib, cc.scan_func, cc.scan_alias = o_in, o_sf, o_sa
+    m = re.search(r"^lib control: .*\bfunctions=(\d+)", (cc.OUT / "summary.txt").read_text(), re.M)
+    if not m or int(m.group(1)) != len(got):
+        sys.exit("census: cc_fingerprint lib functions %s != observed %d" % (m and m.group(1), len(got)))
+    return set(got)
+
+
 def odd_tails(bins):
     tails = [b for b in bins.values() if b.size % 4]
     inside = 0
@@ -559,7 +660,7 @@ def odd_tails(bins):
 
 def controls(bins, results):
     ok = True
-    n = 0
+    n = ng = 0
     for r in rows(PROBES):
         name, alias, s, e = r[0], r[1], r[2], r[3]
         if alias == "self":
@@ -570,8 +671,18 @@ def controls(bins, results):
         n += 1
         s, e = int(s, 16), int(e, 16)
         hit = any(x[1] == s and x[2] == e for x in results[alias]["recs"])
+        ng += any(x[1] == s and x[2] == e and x[3] == "game" for x in results[alias]["recs"])
         ok &= hit
         print("control probe %s %s [0x%08x,0x%08x): %s" % (name, alias, s, e, "ok" if hit else "FAIL"))
+    ok &= ng == n
+    print("control game: %d of %d probes kind game: %s" % (ng, n, "ok" if ng == n else "FAIL"))
+    if EXE in results:
+        cl = cc_lib_starts()
+        kind = {(x[0], x[1]): x[3] for x in results[EXE]["recs"]}
+        k = sum(1 for x in cl if kind.get(x) == "lib")
+        good = k == len(cl) >= 1
+        ok &= good
+        print("control lib: %d of %d cc_fingerprint lib functions kind lib: %s" % (k, len(cl), "ok" if good else "FAIL"))
     if "slus_012_79" in results:
         ins = results["slus_012_79"]["insns"]
         hit = [(st, en, i) for st, (en, i) in ins.items() if st <= JR_CONTROL < en]
@@ -640,9 +751,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--only", nargs="*")
-    ap.add_argument("--fixture", choices=("phantom", "gap", "datahead"))
+    ap.add_argument("--fixture", choices=("phantom", "gap", "datahead", "libgame"))
     a = ap.parse_args(argv)
-    if a.fixture:
+    if a.fixture and a.fixture != "libgame":
         tot = run_fixture(a.fixture)
         return 1 if tot["P"] or tot["T"] else 0
     aliases = sorted(p.stem for p in SPLAT.glob("*.yaml"))
@@ -672,11 +783,22 @@ def main(argv=None):
             return 1
     bins = {x: fleet[x] for x in aliases}
     tot, results = run(bins, full)
+    unk = lib_pass(bins, results, tot)
     _, tails_in = odd_tails(bins)
+    if a.fixture == "libgame":  # negative control: one exe lib function flipped to game (functions.tsv untouched)
+        r = results.get(EXE, {"recs": []})["recs"]
+        i = next((i for i, x in enumerate(r) if x[3] == "lib"), None)
+        if i is not None:
+            r[i] = r[i][:3] + ("game",) + r[i][4:]
+            print("fixture libgame: %s 0x%08x lib -> game" % (EXE, r[i][1]))
     cok, nprobe = controls(bins, results)
     if full:
         cok &= nprobe == 5
     good = cok and tot["P"] == 0 and tot["T"] == 0 and tails_in == 0
+    if a.check:
+        good &= unk == 0
+    if a.fixture:
+        good = False
     if a.check:
         fp = run_fixture("phantom")
         neg_p = fp["P"] == 1
