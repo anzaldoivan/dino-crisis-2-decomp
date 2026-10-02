@@ -122,6 +122,8 @@ segments:
       - [0x3b64, rodata, slus_012_79_3b64]
       - [0x3bb8, asm, slus_012_79_3bb8]  # lib-object psyq470 NOHEAP.OBJ/NOHEAP.OBJ
       - [0x3d30, asm, slus_012_79_3d30]
+      - [0xa84c, c, game_8002204C]
+      - [0xa99c, asm, slus_012_79_a99c]
       - [0x20024, c, game_80037824]
       - [0x21e54, c, game_80039654]
       - [0x22178, c, game_80039978]
