@@ -14,24 +14,24 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 
 ## expand-cse
 
-- `shift-scaled-index`: tell addu operand order in a scaled-index address: index,base vs base,index (same insns); before plateau reg-substitution; game fn slus_012_79:0x800604f4; drafts `tools/probes/levers/shift-scaled-index.before.c` / `tools/probes/levers/shift-scaled-index.after.c`; cookbook C0050
+- `shift-scaled-index`: tell addu operand order in a scaled-index address: index,base vs base,index (same insns); before plateau REGALLOC-PERM; game fn slus_012_79:0x800604f4; drafts `tools/probes/levers/shift-scaled-index.before.c` / `tools/probes/levers/shift-scaled-index.after.c`; cookbook C0050
 
 ## loop
 
-- `while-postdec`: tell count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez); before plateau insn-shape; game fn slus_012_79:0x800474b4; drafts `tools/probes/levers/while-postdec.before.c` / `tools/probes/levers/while-postdec.after.c`; cookbook C0049
+- `while-postdec`: tell count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez); before plateau LENGTH-DRIFT; game fn slus_012_79:0x800474b4; drafts `tools/probes/levers/while-postdec.before.c` / `tools/probes/levers/while-postdec.after.c`; cookbook C0049
 
 ## combine
 
-- `mask-then-shift`: tell andi-before-srl vs srl-before-andi on a byte field; before plateau insn-shape; game fn slus_012_79:0x8001b538; drafts `tools/probes/levers/mask-then-shift.before.c` / `tools/probes/levers/mask-then-shift.after.c`; cookbook C0045
+- `mask-then-shift`: tell andi-before-srl vs srl-before-andi on a byte field; before plateau OPCODE-MIXED; game fn slus_012_79:0x8001b538; drafts `tools/probes/levers/mask-then-shift.before.c` / `tools/probes/levers/mask-then-shift.after.c`; cookbook C0045
 
 ## regalloc
 
-- `reuse-user-var`: tell late pointer-bump temp in $v0 vs $v1 (3 insns after the last call); before plateau reg-substitution; game fn slus_012_79:0x8005ed34; drafts `tools/probes/levers/reuse-user-var.before.c` / `tools/probes/levers/reuse-user-var.after.c`; cookbook C0046
+- `reuse-user-var`: tell late pointer-bump temp in $v0 vs $v1 (3 insns after the last call); before plateau REGALLOC-PERM; game fn slus_012_79:0x8005ed34; drafts `tools/probes/levers/reuse-user-var.before.c` / `tools/probes/levers/reuse-user-var.after.c`; cookbook C0046
 
 ## sched-reorg
 
-- `multi-set-param`: tell narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered); before plateau insn-order; game fn slus_012_79:0x8003e164; drafts `tools/probes/levers/multi-set-param.before.c` / `tools/probes/levers/multi-set-param.after.c`; cookbook C0048
-- `swap-returning-arm`: tell if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns); before plateau block-order; game fn slus_012_79:0x8005ee58; drafts `tools/probes/levers/swap-returning-arm.before.c` / `tools/probes/levers/swap-returning-arm.after.c`; cookbook C0047
+- `multi-set-param`: tell narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered); before plateau SCHEDULE-REORDER; game fn slus_012_79:0x8003e164; drafts `tools/probes/levers/multi-set-param.before.c` / `tools/probes/levers/multi-set-param.after.c`; cookbook C0048
+- `swap-returning-arm`: tell if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns); before plateau BRANCH-POLARITY; game fn slus_012_79:0x8005ee58; drafts `tools/probes/levers/swap-returning-arm.before.c` / `tools/probes/levers/swap-returning-arm.after.c`; cookbook C0047
 
 ## Inherited tells (C0002)
 

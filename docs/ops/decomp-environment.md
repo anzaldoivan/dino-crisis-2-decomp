@@ -635,6 +635,25 @@ Working order:
   `--check` adds the scorer control (after_c 0, before_c > 0 → `scorer control: ok`), rc 1 if W < 100 or D < 2.
 - Scanner row `permute` (game `yes`).
 
+### Plateau classifier (T7, Phase 1.7)
+- `dc.sh run python3 tools/plateau.py <draft.c> --target alias:start:end` | `.run/permute/<lever>/` | `--check`.
+  Compile/target as codegen_map.py (probe.py Probe, pinned triple, sym `func_<START>`, `probe.target_of`); mask =
+  draft relocs only; index-wise alignment; pure-python MIPS-I decoder (skel/regs/imm), undecodable → never a reg diff.
+- Prints `evidence: …` (counts, diff indices, mnemonic names only; G12), `label:`, `bucket:`, `levers: <ids>|none`.
+  Dir mode: lever = basename's levers.tsv row; labels the lowest `output-<score>-<n>/source.c` (tie: lower n).
+- Order, first match (C0043): MATCH · SIZE-MISMATCH (|d| > max(2, .15 nt) or ≥ .5 nt) · LENGTH-DRIFT (`tail`|`partial`)
+  · REGALLOC-PERM (`map: consistent|inconsistent`) · SCHEDULE-REORDER · DELAY-SLOT · WIDTH · BRANCH-POLARITY ·
+  IMM-OFFSET · IMM-VALUE · OPCODE-MIXED · UNKNOWN.
+- Buckets (policy, print time): MATCH integration; SIZE-MISMATCH redraft; LENGTH-DRIFT structural (permuter if |d| ≤ 2
+  and tail); REGALLOC-PERM, SCHEDULE-REORDER, DELAY-SLOT, IMM-VALUE permuter; WIDTH, BRANCH-POLARITY, IMM-OFFSET,
+  OPCODE-MIXED structural; UNKNOWN unknown. `levers:` = rows in the label's static groups (REGALLOC-PERM regalloc;
+  SCHEDULE-REORDER, DELAY-SLOT, BRANCH-POLARITY sched-reorg; WIDTH, IMM-VALUE expand-cse; IMM-OFFSET loop) ∪ groups of
+  rows carrying the label.
+- Relabel rule: a levers.tsv `label` is the classifier's computed label of `before_c` (vocabulary above, else `--check`
+  rc 2), never a guess; never tune a predicate to one fixture (H9). `--check`: per-row lines, `plateau: k of P planted
+  labelled`, `match control: ok|FAIL` (every after_c MATCH), `unknown: U`; rc 1 on any mislabel or control FAIL.
+- Scanner row `plateau` (game `yes`).
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything

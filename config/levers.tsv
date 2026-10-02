@@ -1,12 +1,12 @@
 # config/levers.tsv -- lever registry for tools/codegen_map.py (T2, Phase 1.7). One row per byte-proven lever, TAB-separated.
 # group: expand-cse|loop|combine|regalloc|sched-reorg (gcc 2.95.2 pass groups). tell: the residual the lever moves. label: expected
-# plateau class of `before`. alias/start/end: the game fn, hex, end exclusive. before_c/after_c: our C under tools/probes/levers/,
+# plateau class of `before` (tools/plateau.py vocabulary; checked by plateau.py --check). alias/start/end: the game fn, hex, end exclusive. before_c/after_c: our C under tools/probes/levers/,
 # self-contained, defining func_<START>. cookbook: C<nnnn>. Checked by `tools/codegen_map.py --check`; docs/codegen-map.md is
 # generated from this file by `tools/codegen_map.py --write`. No game bytes or asm here (G12).
 # lever	group	tell	label	alias	start	end	before_c	after_c	cookbook
-mask-then-shift	combine	andi-before-srl vs srl-before-andi on a byte field	insn-shape	slus_012_79	0x8001b538	0x8001b56c	tools/probes/levers/mask-then-shift.before.c	tools/probes/levers/mask-then-shift.after.c	C0045
-reuse-user-var	regalloc	late pointer-bump temp in $v0 vs $v1 (3 insns after the last call)	reg-substitution	slus_012_79	0x8005ed34	0x8005eda0	tools/probes/levers/reuse-user-var.before.c	tools/probes/levers/reuse-user-var.after.c	C0046
-swap-returning-arm	sched-reorg	if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns)	block-order	slus_012_79	0x8005ee58	0x8005ee98	tools/probes/levers/swap-returning-arm.before.c	tools/probes/levers/swap-returning-arm.after.c	C0047
-multi-set-param	sched-reorg	narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered)	insn-order	slus_012_79	0x8003e164	0x8003e1b4	tools/probes/levers/multi-set-param.before.c	tools/probes/levers/multi-set-param.after.c	C0048
-shift-scaled-index	expand-cse	addu operand order in a scaled-index address: index,base vs base,index (same insns)	reg-substitution	slus_012_79	0x800604f4	0x80060538	tools/probes/levers/shift-scaled-index.before.c	tools/probes/levers/shift-scaled-index.after.c	C0050
-while-postdec	loop	count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez)	insn-shape	slus_012_79	0x800474b4	0x800474dc	tools/probes/levers/while-postdec.before.c	tools/probes/levers/while-postdec.after.c	C0049
+mask-then-shift	combine	andi-before-srl vs srl-before-andi on a byte field	OPCODE-MIXED	slus_012_79	0x8001b538	0x8001b56c	tools/probes/levers/mask-then-shift.before.c	tools/probes/levers/mask-then-shift.after.c	C0045
+reuse-user-var	regalloc	late pointer-bump temp in $v0 vs $v1 (3 insns after the last call)	REGALLOC-PERM	slus_012_79	0x8005ed34	0x8005eda0	tools/probes/levers/reuse-user-var.before.c	tools/probes/levers/reuse-user-var.after.c	C0046
+swap-returning-arm	sched-reorg	if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns)	BRANCH-POLARITY	slus_012_79	0x8005ee58	0x8005ee98	tools/probes/levers/swap-returning-arm.before.c	tools/probes/levers/swap-returning-arm.after.c	C0047
+multi-set-param	sched-reorg	narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered)	SCHEDULE-REORDER	slus_012_79	0x8003e164	0x8003e1b4	tools/probes/levers/multi-set-param.before.c	tools/probes/levers/multi-set-param.after.c	C0048
+shift-scaled-index	expand-cse	addu operand order in a scaled-index address: index,base vs base,index (same insns)	REGALLOC-PERM	slus_012_79	0x800604f4	0x80060538	tools/probes/levers/shift-scaled-index.before.c	tools/probes/levers/shift-scaled-index.after.c	C0050
+while-postdec	loop	count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez)	LENGTH-DRIFT	slus_012_79	0x800474b4	0x800474dc	tools/probes/levers/while-postdec.before.c	tools/probes/levers/while-postdec.after.c	C0049
