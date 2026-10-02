@@ -96,9 +96,22 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
   `src/shared/<fn>.inc.c`, else FAIL) scratch-built the same way, sha1 vs `config/check.<alias>.sha`. Prints
   `member <alias>:<start>: hash-equal|FAIL …` (exemplar, then members), `propagation dry run: M of N members gated`
   (N = members + exemplar; M counts only real scratch builds hash-equal). Writes nothing outside `.run/`.
+  Batched (T7.c27): one scratch build per alias holding all its members' units (`JOBS`=4 aliases in parallel); a
+  failed alias build FAILs every member of that alias.
+- **Register** (T7.c27): `dc.sh run python3 tools/propagate.py --register --family <alias>:<start>` turns a banked
+  exemplar into the shared shape: body → `src/shared/func_<S>.inc.c` (unit-local extern decls/prototypes it uses
+  move in as block-scope externs on `SHARED_D<n>`/`SHARED_F<n>`; a symbol declared only in a header is refused),
+  unit-local types it needs → guarded `src/shared/func_<S>.h` renamed `<T>_s<S>` (member units hold their own
+  `Obj`s); the unit keeps defines + one-line signature + `#include` (decls still used elsewhere stay). Then every
+  `kind=game` member of its exact class in `.run/census/dup.tsv` (needs `functions.tsv` + `dup.tsv` current) is
+  made addressable: a member in no src unit is carved (`carve.carve`, one span `[first, last end)` per alias asm
+  piece, halved on refusal), and families.tsv gets exemplar + member rows (basis re-derived; prior rows of the
+  family replaced). Near-tier or member-less classes: `not an exact class` / `no kind=game member`, rc 1.
+  Carves batch per family, not across families (a later family carves again in the same alias). Container-written:
+  pull `src/ config/` back with `dc.sh run tar -cf - src config | tar -xf -`.
 - **Apply:** `--apply --family F` runs the dry run, then (green only) replaces each member fn's INCLUDE_ASM line with
-  the instantiation (+ the exemplar's missing `#include`s). Container-written: copy the unit back with
-  `dc.sh run cat <f> > <f>`.
+  the instantiation (+ the exemplar's missing `#include`s, its family `.h` included). Container-written: copy the
+  unit back with `dc.sh run cat <f> > <f>`.
 - **Control** (every dry run, scanner `propagate`): `--apply --plant --family <first>` (member callee rebound to itself)
   must exit 1 on the hash gate with src/ config/ build/ tree-hash unchanged → `fail-closed control: ok`.
 
