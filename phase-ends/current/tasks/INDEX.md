@@ -5,3 +5,4 @@ T2 | done | lever registry, byte-proof checker, generated triage table | - | tas
 T3 | done | levers for regalloc and combine, byte-proven on game fns | - | tasks/T3.md | logs/T3.md | R1.7-002,R1.7-003
 T4 | done | levers for sched-reorg, byte-proven on game fns | - | tasks/T4.md | logs/T4.md | R1.7-004,R1.7-005
 T5 | done | levers for expand-cse and loop, byte-proven on game fns | - | tasks/T5.md | logs/T5.md | R1.7-006,R1.7-007
+T6 | done | permuter pinned in the image, stored-draft run proves iteration | - | tasks/T6.md | logs/T6.md | R1.7-001
