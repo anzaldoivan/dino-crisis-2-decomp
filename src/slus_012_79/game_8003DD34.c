@@ -173,7 +173,23 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80043284);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_800434DC);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_800436C8);
+typedef struct {
+    short x;
+    short y;
+    short z;
+} V3s;
+
+int func_800436C8(V3s *a, V3s *b)
+{
+    int dx;
+    int dz;
+
+    dx = b->x - a->x;
+    dx = (dx < 0) ? -dx : dx;
+    dz = b->z - a->z;
+    dz = (dz < 0) ? -dz : dz;
+    return dx * dx + dz * dz;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80043714);
 
