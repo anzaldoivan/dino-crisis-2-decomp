@@ -43,3 +43,12 @@
 1.6 | T7 | done | wiring, card row, clean fleet and scanners gate | - | phase-1.6/tasks/T7.md | phase-1.6/logs/T7.md | -
 1.6 | T8 | done | milestone clauses 3,4,5: exemplar gated in dry run, plain control lines | - | phase-1.6/tasks/T8.md | phase-1.6/logs/T8.md | -
 1.6 | T9 | done | verifier: single capital letter in a count slot is a placeholder (clause 7) | - | phase-1.6/tasks/T9.md | phase-1.6/logs/T9.md | -
+1.7 | T1 | done | gcc 2.95.2 source staged; per-pass dumps from a real TU | - | phase-1.7/tasks/T1.md | phase-1.7/logs/T1.md | R1.7-001
+1.7 | T2 | done | lever registry, byte-proof checker, generated triage table | - | phase-1.7/tasks/T2.md | phase-1.7/logs/T2.md | R1.7-001
+1.7 | T3 | done | levers for regalloc and combine, byte-proven on game fns | - | phase-1.7/tasks/T3.md | phase-1.7/logs/T3.md | R1.7-002,R1.7-003
+1.7 | T4 | done | levers for sched-reorg, byte-proven on game fns | - | phase-1.7/tasks/T4.md | phase-1.7/logs/T4.md | R1.7-004,R1.7-005
+1.7 | T5 | done | levers for expand-cse and loop, byte-proven on game fns | - | phase-1.7/tasks/T5.md | phase-1.7/logs/T5.md | R1.7-006,R1.7-007
+1.7 | T6 | done | permuter pinned in the image, stored-draft run proves iteration | - | phase-1.7/tasks/T6.md | phase-1.7/logs/T6.md | R1.7-001
+1.7 | T7 | done | plateau classifier labels the planted plateaus | - | phase-1.7/tasks/T7.md | phase-1.7/logs/T7.md | -
+1.7 | T8 | done | cookbook symptom index with coverage assertion | - | phase-1.7/tasks/T8.md | phase-1.7/logs/T8.md | -
+1.7 | T9 | done | wiring, card row, clean milestone run | - | phase-1.7/tasks/T9.md | phase-1.7/logs/T9.md | R1.7-001
