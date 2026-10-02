@@ -127,6 +127,8 @@ segments:
       - [0xabbc, asm, slus_012_79_abbc]
       - [0x14620, c, game_8002BE20]
       - [0x1478c, asm, slus_012_79_1478c]
+      - [0x1d514, c, game_80034D14]
+      - [0x1d560, asm, slus_012_79_1d560]
       - [0x20024, c, game_80037824]
       - [0x21e54, c, game_80039654]
       - [0x22178, c, game_80039978]
