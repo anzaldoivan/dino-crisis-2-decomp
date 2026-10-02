@@ -24,6 +24,14 @@ RUN git clone --depth 1 --branch "$MKPSXISO_TAG" --recurse-submodules --shallow-
 RUN python3 -m venv /opt/splat \
     && /opt/splat/bin/pip install --no-cache-dir \
       'splat64[mips]==0.41.0' spimdisasm==1.42.4 rabbitizer==1.16.2
+# decomp-permuter in its own venv, pinned to main HEAD (git ls-remote …/decomp-permuter HEAD, 2026-10-02).
+# Deps per its README minus the network extra (pynacl); pycparser is vendored (perm_pycparser).
+ARG PERMUTER_SHA=059609d4aec73eb0650726772954e1ad575825f8
+RUN python3 -m venv /opt/permuter \
+    && git clone https://github.com/simonlindholm/decomp-permuter /opt/permuter/decomp-permuter \
+    && git -C /opt/permuter/decomp-permuter checkout -q "$PERMUTER_SHA" \
+    && test "$(git -C /opt/permuter/decomp-permuter rev-parse HEAD)" = "$PERMUTER_SHA" \
+    && /opt/permuter/bin/pip install --no-cache-dir toml==0.10.2 Levenshtein==0.27.5 rapidfuzz==3.14.6
 # Candidate compilers (phase 1.4 T1): old-gcc psx builds, esa PsyQ CC1PSX.EXE, maspsx, wibo → /opt/cc/<name>/.
 # sha256-pinned in config/toolchains.tsv (named build context `cfg`, see dc.sh build). Pin: toolchains.tsv col 7 (psyq4.6 a2.86/G0/O2).
 COPY --from=cfg toolchains.tsv /usr/local/share/toolchains.tsv

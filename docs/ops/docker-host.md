@@ -31,6 +31,12 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
   - image id after this layer `sha256:52431507e7454e60c623a653eba651ae908fcb983c4851c319644000a8937312`
 - `mipsel-linux-gnu-as --version`: `GNU assembler (GNU Binutils for Ubuntu) 2.42`.
 - splat invocation: `bash tools/docker/dc.sh run /opt/splat/bin/python -m splat <split|create_config|capy> …` (`--help` exits 0).
+- Phase T6.c1 (2026-10-02) adds venv `/opt/permuter` + clone `/opt/permuter/decomp-permuter`: `https://github.com/simonlindholm/decomp-permuter`
+  commit `059609d4aec73eb0650726772954e1ad575825f8` (ARG `PERMUTER_SHA`, main HEAD via `git ls-remote … HEAD`; build fails if `git rev-parse HEAD` differs). Sources unpatched.
+  - pip pins (`Dockerfile`): toml 0.10.2, Levenshtein 0.27.5, rapidfuzz 3.14.6 (Levenshtein's only dep; `pip freeze` shows exactly these 3). pycparser vendored (`perm_pycparser`); network extra pynacl/docker not installed.
+  - objdump: permuter MIPS default list (`src/objdump.py:211-215`) `mips-linux-gnu-objdump`, `mips64-linux-gnu-objdump`, `mips64-elf-objdump`: all absent in image. Present: `mipsel-linux-gnu-objdump` (GNU Binutils 2.42); select it via settings key `objdump_command` (`src/main.py:361`).
+  - image id after this layer `sha256:704415d85de907f14c3c5cbf8dafe4e5bb55ab2589afec30f061a964ef5a95fc`; apt package versions above unchanged (earlier layers cached).
+- permuter invocation: `bash tools/docker/dc.sh run /opt/permuter/bin/python /opt/permuter/decomp-permuter/permuter.py <dir> …` (`--help` exits 0).
 - Configs: `PY tools/splat_gen.py [--force] [--only <alias>] [--out-dir <d>] [--check]` (host) writes `config/splat/<alias>.yaml` + `config/check.<alias>.sha` from loadmap/boundaries; YAML `target_path` is host-canonical `extracted/retail/files/…`; `make` overrides it per alias (see Build).
 - Container extract needs the cue: `bash tools/docker/dc.sh run sh -c 'DC2_CUE="/disc/Dino Crisis 2 (USA).cue" make extract OUT=.run/extracted/retail'`; its `manifest.sha1` equals the host's (T1.c1).
 
