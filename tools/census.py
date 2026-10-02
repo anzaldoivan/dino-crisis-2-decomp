@@ -14,9 +14,11 @@ game (unknown when the exe is not in the run).
 Controls: cc_fingerprint.py lib-band functions are kind lib; probe rows are kind game (--fixture libgame flips one).
 Stubs/ledger (Phase 1.8 T1): `stubs: S of G` = game rows with no C body and no handasm row; `ledger: N of D` over
 config/ledger.tsv (lib|handasm); --check fails on N < D or a stale row; `ledger control` plants an unledgered lib row.
+--set exe|stage|module (T12.c1, Phase 1.8 replan): full run, then stubs/ledger/ledger control scoped to the set;
+membership from census game rows + .run/census/dup.tsv exact classes (regenerated once on key mismatch); see set_partition.
 Definitions: phase 1.5 PHASE_PLAN `## Interfaces`; notes: docs/ops/decomp-environment.md "Function census".
 Exit: 0 clean; 1 phantom/truncation/control failure, --check with unknown kinds (and every fixture run);
-2 refused (empty alias list).
+2 refused (empty alias list, --set with --only).
 """
 import argparse
 import re
@@ -677,6 +679,68 @@ def ledger_eval(results, led):
     return S, len(game), len(D & valid), len(D), stale
 
 
+SET_FAMS = {"stage": ("LOGO+ST", "MAP")}  # module = every other non-exe family (Phase 1.8 replan, ## Context)
+DUP = OUT / "dup.tsv"
+
+
+def load_dup():
+    """.run/census/dup.tsv -> {(alias, start): class_id} of exact-tier rows, set of all keys."""
+    if not DUP.is_file():
+        return {}, set()
+    d = [r for r in rows(DUP) if len(r) >= 5]
+    return {(r[0], int(r[1], 16)): r[4] for r in d if r[3] == "exact"}, {(r[0], int(r[1], 16)) for r in d}
+
+
+def set_partition(results):
+    """-> ({name: set of game keys}, X exe-headed class copies) or None when dup.tsv cannot match the census.
+    exe = game rows of slus_012_79 + game rows of an exact class with >= 1 slus_012_79 member; stage = game rows of
+    an exact class with a LOGO+ST/MAP member, else by own family; module = the rest. Derived per run (C0042)."""
+    keys = {(x[0], x[1]) for r in results.values() for x in r["recs"]}
+    game = {(x[0], x[1]) for r in results.values() for x in r["recs"] if x[3] == "game"}
+    for attempt in (0, 1):
+        cls, dk = load_dup()
+        if game <= dk <= keys:
+            break
+        if attempt:
+            print("census: set: dup.tsv keys != census rows (%d game rows missing, %d stale) after regenerate" % (
+                len(game - dk), len(dk - keys)))
+            return None
+        with open(OUT / "dup_regen.log", "w") as fh:
+            subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "dup_census.py")], cwd=ROOT,
+                           stdout=fh, stderr=subprocess.STDOUT)
+    mem = {}
+    for k, c in cls.items():
+        mem.setdefault(c, []).append(k)
+    exe_c = {c for c, m in mem.items() if any(a == EXE for a, _ in m)}
+    stage_c = {c for c, m in mem.items() if any(family_of(a) in SET_FAMS["stage"] for a, _ in m)}
+    part = {"exe": set(), "stage": set(), "module": set()}
+    for k in game:
+        c = cls.get(k)
+        if k[0] == EXE or c in exe_c:
+            part["exe"].add(k)
+        elif c in stage_c or family_of(k[0]) in SET_FAMS["stage"]:
+            part["stage"].add(k)
+        else:
+            part["module"].add(k)
+    return part, sum(1 for k in part["exe"] if k[0] != EXE)
+
+
+def set_scope(results, led, name, members):
+    """Scoped (results, ledger rows) for one set: its game members + the lib rows of its aliases (exe: slus_012_79;
+    stage: LOGO+ST/MAP; module: the rest); ledger = lib rows of those aliases + handasm rows of members."""
+    own = lambda a: (a == EXE if name == "exe" else
+                     a != EXE and (family_of(a) in SET_FAMS["stage"]) == (name == "stage"))
+    sres = {}
+    for a, r in results.items():
+        recs = [x for x in r["recs"] if (x[0], x[1]) in members or (x[3] == "lib" and own(a))]
+        if recs or own(a):
+            sres[a] = dict(r, recs=recs)
+    sled = [l for l in led if len(l) > 3 and l[0] in sres and (
+        (l[3] == "lib" and own(l[0])) or (l[3] == "handasm" and re.fullmatch(r"0x[0-9a-f]+", l[1])
+                                          and (l[0], int(l[1], 16)) in members))]
+    return sres, sled
+
+
 def ledger_text(bins, results, led):
     """Regenerated config/ledger.tsv: header + one `lib` row per kind lib census row (basis = its boundaries.tsv
     lib-object extent; a same-start group's bases joined with =>) + existing handasm rows verbatim; stable sort by
@@ -854,10 +918,15 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--fixture", choices=("phantom", "gap", "datahead", "libgame"))
+    ap.add_argument("--set", choices=("exe", "stage", "module"),
+                    help="full run, then stubs/ledger/ledger control scoped to the set (not with --only)")
     ap.add_argument("--write-ledger", action="store_true",
                     help="print the regenerated config/ledger.tsv to stdout (report to stderr); full fleet only")
     a = ap.parse_args(argv)
     real_out = sys.stdout
+    if a.set and a.only is not None:
+        print("REFUSED: --set and --only are mutually exclusive")
+        return 2
     if a.write_ledger:
         if a.only is not None or a.fixture or a.check:
             print("REFUSED: --write-ledger takes no --only/--fixture/--check")
@@ -900,6 +969,27 @@ def main(argv=None):
         real_out.flush()
         print("ledger written to stdout: %d rows" % (txt.count("\n") - LEDGER_HEAD.count("\n")))
         return 0
+    set_ok, sres, sled = True, None, None
+    if a.set:
+        sp = set_partition(results)
+        if sp is None:
+            return 1
+        part, X = sp
+        for n in ("exe", "stage", "module"):
+            print("set %s: %d aliases, %d game fns (%d exe-headed class copies)" % (
+                n, len({k[0] for k in part[n]}), len(part[n]), X if n == "exe" else 0))
+        T = sum(len(m) for m in part.values())
+        Gall = sum(1 for r in results.values() for x in r["recs"] if x[3] == "game")
+        print("sets: exe %d + stage %d + module %d = %d of %d game fns" % (
+            len(part["exe"]), len(part["stage"]), len(part["module"]), T, Gall))
+        if T != Gall or len(set().union(*part.values())) != T:
+            print("census: set partition FAIL (sum %d != %d game fns, or overlap)" % (T, Gall))
+            return 1
+        sres, sled = set_scope(results, led, a.set, part[a.set])
+        S, G, N, D, sst = ledger_eval(sres, sled)
+        print("stubs: %d of %d game functions not in C (set %s)" % (S, G, a.set))
+        print("ledger: %d of %d non-C functions named (set %s)" % (N, D, a.set))
+        set_ok = N == D and not sst and G == len(part[a.set])
     _, tails_in = odd_tails(bins)
     if a.fixture == "libgame":  # negative control: one exe lib function flipped to game (functions.tsv untouched)
         r = results.get(EXE, {"recs": []})["recs"]
@@ -932,7 +1022,18 @@ def main(argv=None):
         print("negative control empty --only: %s (rc %d)" % ("ok" if neg_e else "FAIL", p.returncode))
         # Phase 1.8 T1: ledger control -- drop the first kind=lib row's ledger entry in memory; the check must fail
         libk = sorted((x[0], x[1]) for r in results.values() for x in r["recs"] if x[3] == "lib")
-        if libk:
+        if a.set:  # T12.c1: plant-remove the first set ledger row; must read L-1 of L
+            _, _, _, sd, _ = ledger_eval(sres, sled)
+            if sled:
+                drop = min(sled, key=lambda l: (l[0], int(l[1], 16)))
+                _, _, pn, pd_, _ = ledger_eval(sres, [l for l in sled if l is not drop])
+                neg_l = pn == sd - 1 and pd_ == sd
+                print("ledger control: %s (set %s, planted %s %s unledgered: ledger %d of %d)" % (
+                    "ok" if neg_l else "FAIL", a.set, drop[0], drop[1], pn, pd_))
+            else:
+                neg_l = a.set != "exe"
+                print("ledger control: %s (set %s, no ledger row in the set)" % ("n/a" if neg_l else "FAIL", a.set))
+        elif libk:
             plant = [l for l in led if not (l[0] == libk[0][0] and l[1] == "0x%08x" % libk[0][1])]
             _, _, pn, pd_, pst = ledger_eval(results, plant)
             neg_l = pn < pd_ or bool(pst)
@@ -943,7 +1044,7 @@ def main(argv=None):
             print("ledger control: n/a (no kind=lib row in the run)")
         if not led_ok:
             print("ledger check: FAIL (unledgered lib rows or stale ledger rows)")
-        good &= led_ok
+        good &= led_ok and set_ok
         cok &= neg_p and neg_g and neg_e and neg_l
         print("control: %s" % ("ok" if cok else "FAIL"))
         good &= cok and full
