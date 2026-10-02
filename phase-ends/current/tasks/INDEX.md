@@ -7,3 +7,4 @@ T4 | done | levers for sched-reorg, byte-proven on game fns | - | tasks/T4.md | 
 T5 | done | levers for expand-cse and loop, byte-proven on game fns | - | tasks/T5.md | logs/T5.md | R1.7-006,R1.7-007
 T6 | done | permuter pinned in the image, stored-draft run proves iteration | - | tasks/T6.md | logs/T6.md | R1.7-001
 T7 | done | plateau classifier labels the planted plateaus | - | tasks/T7.md | logs/T7.md | -
+T8 | done | cookbook symptom index with coverage assertion | - | tasks/T8.md | logs/T8.md | -
