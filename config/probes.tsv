@@ -9,3 +9,5 @@ func_800DB960	psx_bin_st9	0x800db960	0x800db9f4	tools/probes/func_800DB960.c	T4 
 func_80052634	slus_012_79	0x80052634	0x80052654	tools/probes/func_80052634.c	T5 standalone draft: scratchpad work counter ++
 func_800D2514	bin_e60	0x800d2514	0x800d2554	tools/probes/func_800D2514.c	T2 (1.8) pin proof, family E, 16 insns
 func_80129FA8	bin_kof_p60p	0x80129fa8	0x80129ff0	tools/probes/func_80129FA8.c	T2 (1.8) pin proof, family KOF, 18 insns
+func_8017FA84	bin_wep0c	0x8017fa84	0x8017facc	tools/probes/func_8017FA84.c	T2 (1.8) pin proof, family WEP, 18 insns
+func_801813F4	bin_wep_s03	0x801813f4	0x80181460	tools/probes/func_801813F4.c	T2 (1.8) pin proof, family WEP_S, 27 insns
