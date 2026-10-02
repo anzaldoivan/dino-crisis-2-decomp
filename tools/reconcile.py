@@ -23,7 +23,7 @@ Body hash (fn definition, whitespace-normalised, ladder-inserted casts stripped)
 difference = `failed <rung> body-changed`. Verdict (`banked <rung>` | `failed <rung> <reason>` | `no-verdict`) and a
 copy of the draft in .run/reconcile/<alias>_<start>/ (+ ladder.log, make.<rung>.log). Then `reconcile: K of N banked without redraft`
 and `directory gate: banked+failed+no-verdict = drafts: ok|FAIL` over every .run/reconcile/*/draft.c (a missing or
-malformed verdict is FAIL).
+malformed verdict is FAIL), then plain `directory gate: ok` when it passed.
 --check: control draft = func_80037E18's definition from src/slus_012_79/game_80037824.c + a planted
 `extern short D_800AF11C;` (the unit says `extern int`), laddered against a scratch copy of that unit where
 func_80037E18 is INCLUDE_ASM; prints `control: <verdict>` (must be `banked decl-sync`), then the gate; rc 1 on any
@@ -353,6 +353,8 @@ def gate():
     ok = len(dirs) >= 1 and b + f + nv == len(dirs)
     print(f"reconcile: {b} of {len(dirs)} banked without redraft")
     print(f"directory gate: banked+failed+no-verdict = drafts: {'ok' if ok else 'FAIL'}")
+    if ok:
+        print("directory gate: ok")  # plain verdict line for the scanner control regex
     return ok
 
 

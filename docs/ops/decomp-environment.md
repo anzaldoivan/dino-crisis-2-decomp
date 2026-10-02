@@ -90,8 +90,10 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
   basis (fail closed, C0036); bindings = each exemplar define's symbol moved by the delta its masked operands (J
   targets, lui/lo addresses) agree on; member unit written to scratch `.run/propagate/<alias>/` (copied config/ src/
   Makefile, fresh asm/ build/), `make build ONLY=<alias>` there, sha1 vs `config/check.<alias>.sha`. Needs
-  `.run/census/functions.tsv` (fn ends). Prints `member <alias>:<start>: hash-equal|FAIL …`,
-  `propagation dry run: M of N members gated`. Writes nothing outside `.run/`.
+  `.run/census/functions.tsv` (fn ends). The exemplar is gated first: its unit as it stands (must `#include`
+  `src/shared/<fn>.inc.c`, else FAIL) scratch-built the same way, sha1 vs `config/check.<alias>.sha`. Prints
+  `member <alias>:<start>: hash-equal|FAIL …` (exemplar, then members), `propagation dry run: M of N members gated`
+  (N = members + exemplar; M counts only real scratch builds hash-equal). Writes nothing outside `.run/`.
 - **Apply:** `--apply --family F` runs the dry run, then (green only) replaces each member fn's INCLUDE_ASM line with
   the instantiation (+ the exemplar's missing `#include`s). Container-written: copy the unit back with
   `dc.sh run cat <f> > <f>`.
@@ -113,7 +115,7 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
   differs → `failed <rung> body-changed`.
 - **Verdicts:** `.run/reconcile/<alias>_0x<start>/` holds `draft.c`, `verdict` (`banked <first green rung>` |
   `failed <rung> <reason>` | `no-verdict`), `ladder.log`, `make.<rung>.log`. Every run ends `reconcile: K of N banked
-  without redraft` + `directory gate: banked+failed+no-verdict = drafts: ok|FAIL` (missing verdict = FAIL).
+  without redraft` + `directory gate: banked+failed+no-verdict = drafts: ok|FAIL` (missing verdict = FAIL), then plain `directory gate: ok` when it passed (scanner control).
 - **Control** (`--check`, scanner `reconcile`): func_80037E18's body from `game_80037824.c` + planted
   `extern short D_800AF11C;` against a scratch unit where it is INCLUDE_ASM → must end `control: banked decl-sync`
   (as-is fails: `conflicting types`). Never writes src/. `--apply` output is container-written: copy the unit back
@@ -461,7 +463,8 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   `func_<ADDR>` in a unit `build/<alias>.ld` links (progress.linked_units/bodies).
 - **Lines:** `twins: T fns with >= 1 twin of G game fns`; `exact pairs reproduced: X of N` (every game pair of every
   dup.tsv exact class found at distance 0 in both directions); `random-pair control: h of 10000 (<= 2%): ok|FAIL` (seed
-  1601, game pairs with different exact keys, h = pairs in the band); `open with banked twin: k` + `open → best banked`.
+  1601, game pairs with different exact keys, h = pairs in the band), then plain `random-pair control: ok` when it
+  passed (scanner control); `open with banked twin: k` + `open → best banked`.
 - **Fixture:** `--fixture drop` drops the first exact pair's rows from the band → X = N-1 → `--check` rc 1.
 - **Fleet (T1.c1, 2026-10-01):** 2635 of 3426 game fns with a twin; exact pairs 26745 of 26745; control 71 of 10000;
   open with banked twin 16 (incl. psx_bin_st8 0x800d6ab4 → psx_bin_st6 0x800d5c40 at distance 0).

@@ -10,7 +10,8 @@
 Registry config/families.tsv `# family role alias start unit basis`: one exemplar row per family (its unit holds the
 instantiation: `#define SHARED_<X> <symbol>` lines, the signature line, `{`, `#include "../shared/func_<A>.inc.c"`,
 `}`) and member rows; basis `exact:<sha1[:16] of the exact key>`.
-Dry run per member: exemplar and member words from the retail binary (dup_census.binary_words, ends from
+Dry run gates the exemplar first: its unit as it stands (must `#include` src/shared/<fn>.inc.c) is scratch-built as
+below and its build/<alias>.bin sha1-checked; N counts it. Then per member: exemplar and member words from the retail binary (dup_census.binary_words, ends from
 .run/census/functions.tsv), masks by data-flow lui/lo pairing (dup_census.pairs, RAM range) as dup_census does for
 C-defined fns; exact keys must equal each other and the basis (fail closed, C0036). Bindings: each exemplar symbol
 owns the masked operands (J targets: exact match; lui/lo addresses: largest symbol <= address) and moves by the one
@@ -168,10 +169,23 @@ def scratch_build(alias, rel, text):
 
 
 def dry_run(fam, rows, plant):
-    """-> (members gated, members, {path: text} to apply)."""
+    """-> (fns gated, members + exemplar, {path: text} to apply)."""
     ex = next((r for r in rows if r["role"] == "exemplar"), None)
     members = [r for r in rows if r["role"] == "member"]
     ok, out = 0, {}
+    if ex is not None:  # the exemplar is gated too: its unit as it stands, scratch-built and hash-checked
+        try:
+            rel = Path(f"src/{ex['alias']}/{ex['unit']}.c")
+            em_ = block_re(ex["start"]).search((ROOT / rel).read_text())
+            if not em_:
+                raise Fail(f"{rel} does not #include a src/shared/ body for func_{ex['start']:08X}")
+            if not (ROOT / f"src/shared/{em_.group(3)}.inc.c").is_file():
+                raise Fail(f"src/shared/{em_.group(3)}.inc.c missing")
+            scratch_build(ex["alias"], rel, (ROOT / rel).read_text())
+            ok += 1
+            print(f"member {ex['alias']}:0x{ex['start']:08x}: hash-equal")
+        except Fail as e:
+            print(f"member {ex['alias']}:0x{ex['start']:08x}: FAIL {e}")
     for m in members:
         try:
             if ex is None:
@@ -194,7 +208,7 @@ def dry_run(fam, rows, plant):
             print(f"member {m['alias']}:0x{m['start']:08x}: hash-equal")
         except Fail as e:
             print(f"member {m['alias']}:0x{m['start']:08x}: FAIL {e}")
-    return ok, len(members), out
+    return ok, len(members) + (ex is not None), out
 
 
 def tree_hash():

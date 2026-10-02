@@ -14,7 +14,7 @@ both directions; sorted distance asc, twin_banked desc, alias, start, twin_alias
 the twin is a C body func_<ADDR> in a unit build/<alias>.ld links (banked/progress helpers).
 Prints `twins: T fns with >= 1 twin of G game fns`, `exact pairs reproduced: X of N` (each game pair of each dup.tsv
 exact class found at distance 0 in both directions), `random-pair control: h of 10000 (<= 2%): ok|FAIL` (seed 1601,
-game pairs with different exact keys, h = pairs the band keeps), `open with banked twin: k` + one line per open fn.
+game pairs with different exact keys, h = pairs the band keeps; then plain `random-pair control: ok` when it passed),`open with banked twin: k` + one line per open fn.
 --check: rc 1 when X < N or the control FAILs. --fixture drop: the first exact pair's rows are dropped from the band
 output (negative control: --check must rc 1). asm/ or build/*.ld missing (after dc.sh sync): runs `make -j build`
 (log .run/twins/build.log), then census + dup.tsv refresh as stale; build fails: REFUSED rc 2. Notes: docs/ops/decomp-environment.md "Twin band".
@@ -188,6 +188,8 @@ def main(argv=None):
         h += ((x["alias"], x["start"]), (y["alias"], y["start"])) in pairs
     c_ok = 100 * h <= 2 * PAIRS
     print("random-pair control: %d of %d (<= 2%%): %s" % (h, PAIRS, "ok" if c_ok else "FAIL"))
+    if c_ok:
+        print("random-pair control: ok")  # plain verdict line for the scanner control regex
     best = {}
     for d, nb, al, st, ta, ts, r in rows:  # sorted: first banked twin per open fn is its best
         if nb and (al, st) not in bset and (al, st) not in best:

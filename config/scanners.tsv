@@ -17,9 +17,9 @@ compile_only	bash tools/compile_only.sh && p=.run/harness/plant_co && rm -rf $p 
 probe	python3 tools/probe.py --selftest && set -- $(awk -F'\t' '!/^#/ && $7 != "-" && $7 != "" {split($7, t, "/"); print $1, substr(t[1], 2), substr(t[2], 2), substr(t[3], 2)}' config/toolchains.tsv) && python3 tools/probe.py --pinned --cc "$1" --aspsx "$2" -G "$3" -O "$4"	^probes identical: (\d+) of (\d+) under the pinned triple$	^controls: true ok, false ok$	yes
 loadmap	p=.run/harness/mirror && mkdir -p $p/tools && cp tools/loadmap.py $p/tools/ && ln -sfn ../../../config $p/config && ln -sfn ../../../docs $p/docs && ln -sfn ../../extracted $p/extracted && python3 $p/tools/loadmap.py --check	^rows=\d+ N=(\d+) 	negative-control: OK$	yes
 boundaries	p=.run/harness/mirror && mkdir -p $p/tools && cp tools/boundaries.py $p/tools/ && ln -sfn ../../../config $p/config && ln -sfn ../../extracted $p/extracted && python3 $p/tools/boundaries.py --check	^exe jtbl: ours=\d+ ghidra=(\d+) 	^control switch jr=0x8003500c \[0x80018624,0x800186f8\): found$	yes
-twins	python3 tools/twins.py --check	^twins: \d+ fns with >= 1 twin of (\d+) game fns$	^exact pairs reproduced: (\d+) of \1$[\s\S]*^random-pair control: .*: ok$	yes
+twins	python3 tools/twins.py --check	^twins: \d+ fns with >= 1 twin of (\d+) game fns$	^exact pairs reproduced: (\d+) of \1$[\s\S]*^random-pair control: ok$	yes
 types	python3 tools/types_check.py	^units scanned: (\d+)$	^control: planted duplicate refused, planted raw cast refused$	no
 carve	python3 tools/carve.py --check	^carves: (\d+) of (\d+) build hash-equal$	^control: ok$	yes
 propagate	python3 tools/propagate.py --dry-run	^propagation dry run: (\d+) of \1 members gated$	^fail-closed control: ok$	yes
-reconcile	python3 tools/reconcile.py --check	^reconcile: (\d+) of \1 banked without redraft$	^control: banked decl-sync$[\s\S]*^directory gate: banked\+failed\+no-verdict = drafts: ok$	yes
+reconcile	python3 tools/reconcile.py --check	^reconcile: (\d+) of \1 banked without redraft$	^control: banked decl-sync$[\s\S]*^directory gate: ok$	yes
 draw_filter	python3 tools/draw_filter.py --all	^draw: \d+ of (\d+) accepted$	^control: ok$	yes
