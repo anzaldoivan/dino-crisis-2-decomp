@@ -616,8 +616,8 @@ Working order:
 - `PY tools/codegen_map.py --write` on the HOST: `docs/codegen-map.md` derives from levers.tsv text only (no compile);
   files written inside `dc.sh run` stay in the volume. Never hand-edit the doc.
 - Scanner row `codegen_map` (game `yes`); with zero rows its denominator is 0, so the row is not ok until a lever lands.
-  Its command carries `--groups <groups proven so far>` (T3: `regalloc,combine`); each later lever task extends it, and
-  plain `--check` (all 5 groups) replaces it when the last group lands.
+  Its command carries `--groups <groups proven so far>` (T3: `regalloc,combine`; T4: `sched-reorg`); each later lever task
+  extends it, and plain `--check` (all 5 groups) replaces it when the last group lands.
 
 ## Models and effort (decomp, on PA3)
 

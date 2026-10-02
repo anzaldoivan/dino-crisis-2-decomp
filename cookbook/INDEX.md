@@ -47,3 +47,4 @@ C0044 | Run container-orchestrating verifiers on the host | verify,docker,phase-
 C0045 | Byte-field mask/shift order survives combine only when the mask fits andi | codegen-map,combine,mask,shift,andi,extraction,insn-shape | 2026-10-01 | 1.7/T3 | -
 C0046 | A late temp's v0/v1 choice follows local vs global ownership; reuse a user var to move it | codegen-map,regalloc,local-alloc,global-alloc,v0,v1,temp-reuse,reg-substitution | 2026-10-01 | 1.7/T3 | -
 C0047 | If/else arm order: jump.c swaps an early-return then-arm last; invert the test to lay it | codegen-map,jump,block-order,branch-polarity,delay-slot,dbr,sched-reorg | 2026-10-02 | 1.7/T4 | -
+C0048 | Param def sinks to its use in sched1 (birthing boost): give the pseudo a 2nd SET (++n) to keep it on top | codegen-map,sched,sched1,sched2,birthing,insn-order,param,sched-reorg | 2026-10-02 | 1.7/T4 | -

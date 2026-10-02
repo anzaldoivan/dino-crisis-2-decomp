@@ -7,6 +7,7 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 |---|---|---|---|---|
 | andi-before-srl vs srl-before-andi on a byte field | combine | mask-then-shift | C0045 | slus_012_79:0x8001b538 |
 | late pointer-bump temp in $v0 vs $v1 (3 insns after the last call) | regalloc | reuse-user-var | C0046 | slus_012_79:0x8005ed34 |
+| narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered) | sched-reorg | multi-set-param | C0048 | slus_012_79:0x8003e164 |
 | if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns) | sched-reorg | swap-returning-arm | C0047 | slus_012_79:0x8005ee58 |
 
 ## expand-cse
@@ -27,4 +28,5 @@ None yet.
 
 ## sched-reorg
 
+- `multi-set-param`: tell narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered); before plateau insn-order; game fn slus_012_79:0x8003e164; drafts `tools/probes/levers/multi-set-param.before.c` / `tools/probes/levers/multi-set-param.after.c`; cookbook C0048
 - `swap-returning-arm`: tell if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns); before plateau block-order; game fn slus_012_79:0x8005ee58; drafts `tools/probes/levers/swap-returning-arm.before.c` / `tools/probes/levers/swap-returning-arm.after.c`; cookbook C0047
