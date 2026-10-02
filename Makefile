@@ -52,7 +52,8 @@ CFLAGS      := -quiet -O2 -G0 -mips1 -fno-builtin
 MASPSXFLAGS := --aspsx-version=2.86 -G0
 
 # make print-c A=<alias> [CCDIR=dir] — the C triple and flags for one alias as shell-assignable lines (base flags +
-# the per-alias hooks); tools/compile_only.sh evals these, so no flag is re-typed outside this Makefile.
+# the per-alias hooks), plus AS/ASFLAGS; tools/compile_only.sh and tools/permuter/compile.sh eval these, so no flag is
+# re-typed outside this Makefile.
 # make print-aliases — $(ALIASES) on one line (tools/progress.py reads the fleet list from here). make progress —
 # split, then tools/progress.py: game-function denominators from the census of that split (docs/ops/decomp-environment.md).
 .PHONY: print-c print-aliases progress
@@ -64,7 +65,7 @@ progress: split
 print-c:
 	@printf "%s='%s'\n" CPP '$(CPP)' CC1 '$(CC1)' MASPSX '$(MASPSX)' \
 	  CPPFLAGS '$(strip $(CPPFLAGS) $(CPPFLAGS_$(A)))' CFLAGS '$(strip $(CFLAGS) $(CFLAGS_$(A)))' \
-	  MASPSXFLAGS '$(strip $(MASPSXFLAGS) $(MASPSXFLAGS_$(A)))'
+	  MASPSXFLAGS '$(strip $(MASPSXFLAGS) $(MASPSXFLAGS_$(A)))' AS '$(CROSS)as' ASFLAGS '$(ASFLAGS)'
 
 split: $(foreach a,$(ONLY),build/$(a)/split.stamp)
 build: $(foreach a,$(ONLY),build/$(a).bin)

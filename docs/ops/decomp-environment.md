@@ -620,6 +620,21 @@ Working order:
   ids or `untested` (unknown group/id rc 2). `--check` prints `inherited tells: k of K mapped` after `pass groups:`;
   rc 1 if k < K or a row's tell is absent from C0002. The doc lists them under `## Inherited tells (C0002)`.
 
+### Permuter (T6, Phase 1.7)
+- `dc.sh run python3 tools/permute.py <lever> [--iters N] [--seed S] [--check]` (levers.tsv row; `--check` = first
+  `regalloc` row, N 120, ~80 s). Setup `.run/permute/<lever>/` (wiped): `base.c` (before_c via cpp + CPPFLAGS; `*/`,
+  register pins, asm, `__attribute__` refused rc 1), `target.o` (split `func_<START>.s` + macro.inc via AS/ASFLAGS;
+  `make split ONLY=<alias>` when missing), `settings.toml`, `compile.sh` shim → `tools/permuter/compile.sh` (triple from
+  `make print-c`, which also prints AS/ASFLAGS). Pre-flight: base.c must compile.
+- Runs `tools/permuter/permuter_run.py` under `/opt/permuter/bin/python`, in-process, unpatched checkout: `Scorer` and
+  `Permuter` rebound; exactly N iterations, threads=1, `random.seed(S)` (default 1), PYTHONHASHSEED=0, TMPDIR in the dir.
+- Scorer: probe.py `extract` words; per index mask = OR of both sides' reloc masks; score = Levenshtein (cost 1) over
+  the masked word sequences; 0 iff same length and `probe.compare` is None. Compile/extract failure = not judged.
+- Outputs: `candidates.log` (`iter status score sha1`, iter 0 = base, flushed per line), `permuter.out`, `output-*`;
+  prints `permuter: stored draft iterated W times, D distinct candidates`, `not judged: J`, `best: S of base S0`;
+  `--check` adds the scorer control (after_c 0, before_c > 0 → `scorer control: ok`), rc 1 if W < 100 or D < 2.
+- Scanner row `permute` (game `yes`).
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything
