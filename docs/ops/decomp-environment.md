@@ -134,15 +134,24 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
 - **Reasons, in precedence (first that holds):** not-a-census-start (no start row) · lib (census kind lib) · banked
   (C body `func_<ADDR>` in a unit `build/<alias>.ld` links; progress.linked_units/bodies) · out-of-range ([start,end) not
   inside the binary's `text-end` row; no row → loadmap base..end, said in evidence) · data-in-text (overlaps a `jtbl`
-  table or `data-island`) · no-asm (no asm line at start, `dup_census.read_asm`) · switch (a `jtbl` basis `jr=` in
+  table or `data-island`) · no-asm (no asm line at start, `dup_census.read_asm`) · gte (T12: any cop2 op in [start,end):
+  mtc2/mfc2/ctc2/cfc2/lwc2/swc2 or a GTE command; evidence = first mnemonic; before handasm-marked, since marked fns
+  with cop2 ops are GTE work) · handasm-marked (T12: spimdisasm `Handwritten function` marker in the fn's asm, or the
+  BIOS A/B/C-table trampoline shape `$t2`←0xA0/0xB0/0xC0, `jr $t2`, `$t1` = call no.; evidence = `Handwritten function`
+  or `BIOS A|B|C-table trampoline`) · switch (a `jtbl` basis `jr=` in
   [start,end)) · pin-unproven (census family not the family of any probes.tsv alias; `self` ignored) · has-banked-twin
   (twins.tsv row with twin_banked 1) · open-twin-sibling (direct twin of a candidate accepted earlier; candidates sorted
   by alias, start) · none → accepted.
-- **Outputs:** `draw: A of D accepted` + `refused <reason>: n` for all ten (zeros included);
+- **Outputs:** `draw: A of D accepted` + `refused <reason>: n` for all twelve (zeros included);
   `.run/draw/{accepted,refused}.tsv` `# alias\tstart\treason\tevidence` (evidence = the concrete row/twin/absence).
-- **Control (every run, `.run/draw/control/`):** planted banked game fn + census lib fn + a game fn start+4 + two direct
-  twins that each pass every other reason → exactly banked 1, lib 1, not-a-census-start 1, open-twin-sibling 1,
-  accepted 1 (the first twin) → `control: ok`; else `control: FAIL <diff>` rc 1 (no twin pair found = FAIL).
+- **Control (every run, `.run/draw/control/`):** planted banked game fn + census lib fn + a game fn start+4 + the first
+  unbanked fn the detector flags gte and the first it flags handasm-marked + two direct twins that each pass every other
+  reason → exactly banked 1, lib 1, not-a-census-start 1, gte 1, handasm-marked 1, open-twin-sibling 1, accepted 1 (the
+  first twin) → `control: ok`; else `control: FAIL <diff>` rc 1 (no planted case found = FAIL). Scanner `draw_filter`
+  control also needs `refused handasm-marked: N` and `refused gte: N` with N ≥ 1.
+- **Fleet (T12.c2 Phase 1.8, 2026-10-02):** 1095 of 3426 accepted; refused gte 62 (ctc2 30, lwc2 15, mtc2 15, cfc2 2),
+  handasm-marked 12 (marker 10, A-table trampoline 1, B-table 1), banked 26, has-banked-twin 34, open-twin-sibling 2076,
+  switch 121, others 0. Known: slus_012_79 0x8005c608, 0x80068ca0 gte; 0x8008124c, 0x8005e160 handasm-marked.
 - **Fleet (T2.c2 Phase 1.8, 2026-10-02):** 1164 of 3426 accepted; refused banked 7, pin-unproven 0, open-twin-sibling 2116,
   switch 122, has-banked-twin 17, others 0. Pinned families = all 10 (exe, LOGO+ST, E, KOF, WEP, WEP_S, RES, misc, MAP, R2);
   14 probes. Was (T6.c1, 2026-10-01): 769 accepted, pin-unproven 1879, open-twin-sibling 635, has-banked-twin 14.
@@ -259,6 +268,14 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   tools/census.py --check` (~9 s; re-splits itself, `sync` wipes `/work/asm`). `--only ALIAS…` (empty → `REFUSED`, rc 2),
   `--fixture phantom|gap|datahead` (rc 1 each). Output `.run/census/functions.tsv` `alias start end size kind family`,
   end exclusive, sorted; two runs byte-equal.
+- **`--set exe|stage|module` (T12.c1, Phase 1.8):** full run, then `set <name>: A aliases, N game fns (X exe-headed
+  class copies)` for all three, `sets: … = N of N game fns`, and stubs/ledger/ledger control scoped to the chosen set
+  (`stubs: … (set exe)`, `ledger: … (set exe)`, `ledger control: ok (set exe, …)`). Membership (`census.set_partition`,
+  derived every run from census game rows + `.run/census/dup.tsv` exact classes; dup.tsv regenerated once on a key
+  mismatch): exe = slus_012_79 game rows + game rows of an exact class with a slus_012_79 member; stage = a class with a
+  LOGO+ST/MAP member, else own family; module = the rest. `--set` with `--only` → REFUSED rc 2. Scanner row `census_set`
+  (`--set exe`). 2026-10-02: exe 61 aliases 1332 fns (357 exe-headed copies), stage 15/448, module 69/1646 = 3426 of
+  3426; set exe stubs 1313 of 1332, ledger 485 of 485.
 - **Records:** one per `glabel` in `.section .text` + `asm/<alias>/nonmatchings/**`, one per C `func_<ADDR>` in a `c`
   subsegment gap. Text region `[first asm|c subsegment, boundaries text-end)`. Function end = last insn line before the
   next glabel/section: alignment `nop`s after `endlabel` belong to the preceding function.
@@ -797,9 +814,20 @@ Lever proof (binding):
   journal.tsv [+ routing.tsv when present]; K = header matches the plan shape and every row has its column count), then `routing: M of B buckets measured on the manual wave`, `waves: C of W closed
   with harvest`, `fleet: F of W banked batches followed by a clean fleet check`, `wave control: ok|FAIL` (planted
   unharvested wave under `.run/waves/_control/` must be refused). rc 0 iff control ok and ledger headers parse.
-  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 6 of 6 ok`
+  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 7 of 7 ok`
   (case 4: planted mismatch / cc1-error log texts → `selftest outcome map: ok`; case 5: apply cause note +
-  enclosing-unit prune; case 6: recover counts from a planted journal).
+  enclosing-unit prune; case 6: recover counts from a planted journal; case 7 (T12): a rolled usage row must not count,
+  a good one must → `selftest rolled usage row: refused ok`).
+- `usage W --before|--after [--pct P] [--resets ISO]` (host only, T12.c2): the 5h-window pct around a wave into
+  `config/usage.tsv` (`# wave	before_pct	before_resets	after_pct	after_resets	drafter_k	basis`; TAB; resets UTC ISO to
+  the minute; drafter_k `-` when unknown; basis cache|manual|rolled). Source: `~/.claude/usage-ledger/usage_api.json`
+  `windows.five_hour.pct`/`resets_at` (`PA_LEDGER_DIR` overrides the dir) under tools/status.py `_five_hour`'s
+  staleness rule (copied, status.py never imported): `ts` within 2×poll_min (config.json, default 15) min and resets in
+  the future. Stale/absent without `--pct` → `REFUSED: usage: 5h cache stale or absent` rc 2; `--pct` → basis manual
+  (resets from `--resets`, else the cache's, else `-`). `--before` writes/replaces the row; `--after` without a before
+  row → rc 2; `--after` whose resets ≠ before_resets keeps the row, basis `rolled`. `--check` then prints `usage: U of W
+  waves with a 5h before/after record` (U = rows with both pcts and equal known resets, not rolled; W = the `waves:`
+  line's W); scanner `wave_usage` (`--check && --selftest`, game yes).
 - M1 result (T5, manual wave): draw seed 1, 30 targets (5 per bucket b1-b6); gate banked 0, then `recover M1` banked
   19 of 30 (fleet 83/83, harvest done:19). Per-bucket bank rate b1-b4 0.80, b5 0.40, b6 0.20; cost_ctx_k (k tokens of
   coder context per target) b1 23.5, b2 25.3, b3 34.9, b4 36.0, b5 111.8, b6 374.1 (config/routing.tsv, basis M1).

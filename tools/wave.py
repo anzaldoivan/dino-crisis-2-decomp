@@ -35,10 +35,18 @@ container (--in-volume, cwd /work):
     wave.py strip --fn A:S --stripped PATH --in-volume   `strip: differs` rc 0 | `strip: identical` rc 1 (G45)
 anywhere: wave.py --check (ledger counts + close-refusal control); container: wave.py --selftest (scratch only).
 Notes: docs/ops/decomp-environment.md "Waves: gate, bank, fleet, harvest, close".
+
+T12 (Phase 1.8), host only:
+    wave.py usage WAVE --before|--after [--pct P] [--resets ISO]   5h-window pct into config/usage.tsv (UCOLS); the
+    pct/resets come from ~/.claude/usage-ledger/usage_api.json (status.py `_five_hour` staleness rule, copied); stale
+    or absent cache without --pct -> rc 2; --pct -> basis manual; --after whose resets differ from before_resets keeps
+    the row, basis rolled. --check prints `usage: U of W waves with a 5h before/after record` (rolled rows never count).
 """
 import argparse
 import datetime
 import hashlib
+import json
+import os
 import re
 import shutil
 import subprocess
@@ -59,6 +67,7 @@ ROUTING = ROOT / "config/routing.tsv"
 C_UNITS = ROOT / "config/c_units.tsv"
 LEVERS = ROOT / "config/levers.tsv"
 COOKBOOK = ROOT / "cookbook/INDEX.md"
+USAGE = ROOT / "config/usage.tsv"
 ACCEPTED = draw_filter.OUT / "accepted.tsv"
 RUN = ROOT / ".run/waves"
 DEFAULT_BUCKETS = ((1, 16), (17, 32), (33, 64), (65, 128), (129, 256), (257, None))  # insns, inclusive; None = open
@@ -451,6 +460,7 @@ WCOLS = ("wave", "kind", "opened", "closed", "pool", "drafted", "banked", "faile
          "propagated", "fleet", "harvest")
 JCOLS = ("alias", "start", "wave", "route", "outcome", "label", "note")
 BCOLS = ("k", "alias", "unit", "fns", "paths", "commit")
+UCOLS = ("wave", "before_pct", "before_resets", "after_pct", "after_resets", "drafter_k", "basis")
 RCOLS = ("bucket", "min_insns", "max_insns", "route", "card_cap", "attempts", "drafted", "banked", "rate", "cost_ctx_k",
          "basis")
 # a real compile/assemble/link failure in a make log; the Makefile's own `make: *** [...] Error 1` has no colon
@@ -1158,6 +1168,130 @@ def cmd_close(a):
               capture=False).returncode
 
 
+def _ledger_dir():  # copy of tools/status.py _ledger_dir (never import status.py)
+    env = os.environ.get("PA_LEDGER_DIR")
+    if env:
+        return env
+    h = os.environ.get("USERPROFILE") if os.name == "nt" else None
+    return os.path.join(os.path.abspath(h or os.path.expanduser("~")), ".claude", "usage-ledger")
+
+
+def _read_json(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+
+def _epoch(value):  # number, numeric string or ISO-8601 -> epoch seconds, else None (copy of status.py)
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    try:
+        dt = datetime.datetime.fromisoformat(text[:-1] + "+00:00" if text[-1:] in "Zz" else text)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt.timestamp()
+
+
+def five_hour(t):  # copy of tools/status.py:243-259 _five_hour: (pct, resets epoch) when fresh and live, else None
+    d = _ledger_dir()
+    cache = _read_json(os.path.join(d, "usage_api.json"))
+    if not isinstance(cache, dict):
+        return None
+    poll = ((_read_json(os.path.join(d, "config.json")) or {}).get("usage_api") or {}).get("poll_min")
+    poll = poll if isinstance(poll, (int, float)) and not isinstance(poll, bool) else 15
+    ts = _epoch(cache.get("ts"))
+    if ts is None or not (0 <= t - ts <= 2 * 60 * poll):     # pa/statusline.py freshness rule
+        return None
+    win = (cache.get("windows") or {}).get("five_hour") if isinstance(cache.get("windows"), dict) else None
+    if not isinstance(win, dict):
+        return None
+    pct, resets = win.get("pct"), _epoch(win.get("resets_at"))
+    if not isinstance(pct, (int, float)) or isinstance(pct, bool) or resets is None or resets <= t:
+        return None
+    return float(pct), resets
+
+
+def iso_min(epoch):  # resets as UTC ISO to the minute (API jitter below a minute is the same window)
+    return datetime.datetime.fromtimestamp(round(epoch / 60) * 60, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+
+
+def usage_row(data, wave, side, pct, resets, manual):
+    """Pure: -> (data, refusal|None) with WAVE's before/after record set. after with no before row -> refusal;
+    after whose resets differ from before_resets -> basis rolled (row kept)."""
+    i = wave_row(data, wave)
+    p = "%g" % pct
+    if side == "before":
+        row = [wave, p, resets, "-", "-", "-", "manual" if manual else "cache"]
+        if i is None:
+            data.append(row)
+        else:
+            data[i] = row
+        return data, None
+    if i is None:
+        return data, "REFUSED: usage --after %s: no --before row in config/usage.tsv" % wave
+    r = data[i] + ["-"] * (len(UCOLS) - len(data[i]))
+    r[3], r[4] = p, resets
+    r[6] = "rolled" if resets != r[2] else ("manual" if manual or r[6] == "manual" else "cache")
+    data[i] = r
+    return data, None
+
+
+def usage_count(path):  # U: rows with both pcts, equal (known) resets, not rolled
+    u = 0
+    for r in ledger(path)[1]:
+        r = r + ["-"] * (len(UCOLS) - len(r))
+        try:
+            float(r[1]), float(r[3])
+        except ValueError:
+            continue
+        u += r[2] == r[4] and r[2] != "-" and r[6] != "rolled"
+    return u
+
+
+def cmd_usage(a):
+    ref = host_refusal("usage")
+    if ref:
+        print(ref)
+        return 2
+    side = "before" if a.before else "after"
+    fh = five_hour(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    if a.pct is None and fh is None:
+        print("REFUSED: usage: 5h cache stale or absent (%s); pass --pct P [--resets ISO]"
+              % os.path.join(_ledger_dir(), "usage_api.json"))
+        return 2
+    if a.resets:
+        e = _epoch(a.resets)
+        if e is None:
+            print("REFUSED: usage: --resets %r is not ISO-8601" % a.resets)
+            return 2
+        resets = iso_min(e)
+    else:
+        resets = iso_min(fh[1]) if fh else "-"
+    pct = a.pct if a.pct is not None else fh[0]
+    head, data = ledger(USAGE)
+    head = head or ["# " + "\t".join(UCOLS)]
+    data, ref = usage_row(data, a.wave, side, pct, resets, a.pct is not None)
+    if ref:
+        print(ref)
+        return 2
+    write_ledger(USAGE, head, data)
+    r = data[wave_row(data, a.wave)]
+    print("usage %s %s: pct %s resets %s basis %s" % (a.wave, side, r[1] if side == "before" else r[3],
+                                                     resets, r[6]))
+    return 0
+
+
 def plant(d, wave, note):
     """A gated wave with one banked row (journal note `note`), a valid fleet and one committed bank."""
     d.mkdir(parents=True, exist_ok=True)
@@ -1198,6 +1332,11 @@ def cmd_check():
     print("waves: %d of %d closed with harvest" % (c, len(wd)))
     f = sum(1 for r in wd if len(r) >= 13 and FLEET_RE.match(r[11]))
     print("fleet: %d of %d banked batches followed by a clean fleet check" % (f, len(wd)))
+    if USAGE.exists():
+        k = header_ok(USAGE, UCOLS)
+        ok = ok and k
+        print("usage: %d of %d waves with a 5h before/after record%s" % (usage_count(USAGE), len(wd),
+                                                                         "" if k else " (FAIL: header/row shape)"))
     ctl = control()
     print("wave control: %s" % ("ok" if ctl else "FAIL"))
     if not ok:
@@ -1298,14 +1437,26 @@ def cmd_selftest():
         ok.append(wave_counts("s6", tg, JOURNAL) == (1, 1, 1, 4))
         if ok[-1]:
             print("selftest recover counts: ok")
+        # (7) T12: an --after whose resets rolled keeps the row as basis rolled and does not count; a good row counts
+        up = sroot / "usage.tsv"
+        ud = []
+        for w, rb, ra in (("u1", "2026-01-01T05:00Z", "2026-01-01T10:00Z"), ("u2", "2026-01-01T05:00Z", None)):
+            ud = usage_row(ud, w, "before", 10, rb, False)[0]
+            ud = usage_row(ud, w, "after", 40, ra or rb, False)[0]
+        write_ledger(up, ["# " + "\t".join(UCOLS)], ud)
+        nob = usage_row([], "u3", "after", 5, "-", True)[1]
+        ok.append(usage_count(up) == 1 and ud[0][6] == "rolled" and ud[1][6] == "cache" and header_ok(up, UCOLS)
+                  and bool(nob))
+        if ok[-1]:
+            print("selftest rolled usage row: refused ok")
     finally:
         WAVES, JOURNAL, RUN = saved
     same = cfg_hash() == before
     if not same:
         print("FAIL: config/ changed during the selftest")
     n = sum(ok) if same else 0
-    print("selftest: %d of 6 ok" % n)
-    return 0 if n == 6 else 1
+    print("selftest: %d of 7 ok" % n)
+    return 0 if n == 7 else 1
 
 
 def main(argv=None):
@@ -1341,6 +1492,13 @@ def main(argv=None):
     c = sub.add_parser("cards")
     c.add_argument("wave", nargs="?")
     c.add_argument("--dry-run", action="store_true")
+    u = sub.add_parser("usage", help="host: 5h-window pct before/after a wave into config/usage.tsv")
+    u.add_argument("wave")
+    g = u.add_mutually_exclusive_group(required=True)
+    g.add_argument("--before", action="store_true")
+    g.add_argument("--after", action="store_true")
+    u.add_argument("--pct", type=float, help="manual pct (basis manual); required when the cache is stale")
+    u.add_argument("--resets", help="ISO-8601 reset time of the 5h window (default: the cache's, else -)")
     a = ap.parse_args(argv)
     if a.check:
         return cmd_check()
@@ -1352,7 +1510,7 @@ def main(argv=None):
         ap.error("wave id must match [A-Za-z0-9_]+")
     return {"draw": cmd_draw, "cards": cmd_cards, "gate": cmd_gate, "recover": cmd_recover, "fleet": cmd_fleet,
             "harvest": cmd_harvest,
-            "strip": cmd_strip, "close": cmd_close}[a.cmd](a)
+            "strip": cmd_strip, "close": cmd_close, "usage": cmd_usage}[a.cmd](a)
 
 
 if __name__ == "__main__":
