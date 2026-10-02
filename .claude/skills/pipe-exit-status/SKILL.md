@@ -1,0 +1,36 @@
+---
+name: pipe-exit-status
+description: A check piped into tail reports tail's exit; read FAIL lines or run without a pipe (zsh has pipestatus, not PIPESTATUS)
+---
+
+# Pipe Exit Status
+
+Captured 2026-10-01 from phase-ends/current/tasks/T6.md.
+
+## When to use
+reading the exit code of a gate or check whose output is piped
+
+## Steps
+# T6 — load map generator with control rows
+Status: done | expert: expert-opus55 | ctx-at-completion: n/a | commit: see COMMIT | coder runs: c1 opus55 done (37e4b1b)
+Done: `tools/loadmap.py` regenerates `config/loadmap.tsv` (106 rows, N = 83) deterministically from the manifest + evidence ledger; `--check` asserts row set, classes, controls against docs/memory-map.md, staleness, and runs a built-in negative control.
+Files:
+- tools/loadmap.py — generate (`--ledger`, `--out`), `--check`
+- config/loadmap.tsv — generated; header comment carries N; `#` line every <= 50 rows
+- docs/memory-map.md — `## Load map` (#load-map): commands, N definition, N = 83 · rows 106
+- docs/ops/decomp-environment.md — Tooling inventory row for loadmap.py (H7)
+Decisions:
+- binding: N = rows with class exe|code (83); rows = every manifest .BIN + SLUS_012.79 (106).
+- binding: end = t_addr + t_size for the exe (header), base + manifest size otherwise; `-` when base is `-`.
+- binding: control rows = exe + every `status=proven` row; expected base/end are parsed from the anchor section in docs/memory-map.md, never from the ledger; the section must cite >= 3 datapoints or a diff.
+- binding: `--check` plants a wrong base on a scratch ledger copy (.run/t6/ledger.neg.tsv) and fails unless that copy fails the control check.
+Deviations:
+- The default run fails only on row-set or t_addr mismatch; class/N/control checks run under `--check` (coder choice, accepted).
+Findings:
+- Controls reproduce: SLUS_012.79 0x80018000/0x800a8000, ST1 0x800d5800/0x800d96c8, WEP01 0x8017e500/0x80180760, OPTION 0x801c1500/0x801c4a38.
+Gotchas:
+- workflow: when a check pipes into `tail`, `$?` is tail's; read FAIL lines or use PIPESTATUS for the exit.
+Research: none
+Next task needs: T7 reads config/loadmap.tsv (base/end per code row) for boundaries; a newly proven overlay = ledger status proven + a memory-map anchor with base/end lines + datapoints, then rerun loadmap.py.
+Verified: PY tools/loadmap.py && PY tools/loadmap.py --check && PY tools/audit_public.py → exit 0 (rows=106 N=83 unclassified: 0 controls: OK negative-control: OK; audit OK 0 offenders / 328); two runs cmp equal; bad ledger (ST1 base moved) → FAIL control lines
+Full log: phase-ends/current/logs/T6.md

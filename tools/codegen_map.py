@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+"""tools/codegen_map.py -- lever registry byte-proof checker and codegen-map generator (T2, Phase 1.7).
+
+Each row of config/levers.tsv (`lever group tell label alias start end before_c after_c cookbook`, TAB, end exclusive)
+names a game fn and two drafts of our C under tools/probes/levers/. Both drafts are compiled under the pinned triple
+(config/toolchains.tsv `pinned`) through tools/probe.py and compared (relocation-masked) with the game bytes, read at
+run time only (G12). Classification, first hit wins: compile-error (either draft) · identical-drafts (cpp outputs
+byte-equal) · not-matching (after != target) · before-matches (inert lever, G45) · else proven.
+
+  codegen_map.py                 report; rc 1 only on a control FAIL
+  codegen_map.py --check         rc 1 on any refusal, uncovered required group, stale doc or control FAIL
+  codegen_map.py --groups a,b    required groups for --check (default all five)
+  codegen_map.py --selftest      inert, not-matching and proven controls only; reads no levers.tsv rows
+  codegen_map.py --write         regenerate docs/codegen-map.md from levers.tsv text (no compile; host-safe)
+config/inherited_tells.tsv (`tell group levers`) maps each tell of the cookbook/C0002.md table (column 1, verbatim)
+to a group and levers.tsv ids or `untested`; unknown group or lever id is rc 2. --check prints `inherited tells: k of K
+mapped` (K = C0002 rows, k = those with an exact row) and fails when k < K or a row names a tell absent from C0002;
+the doc gains `## Inherited tells (C0002)`.
+Inert control every compiling run: planted drafts in .run/codegen_map/control/ must classify before-matches.
+Compiles run in the image (dc.sh run); files written there stay in the volume, so --write runs on the host.
+Exit 0 ok, 1 check/control failure, 2 usage/config error.
+"""
+import argparse
+import os
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+LEVERS = ROOT / "config/levers.tsv"
+INHERITED = ROOT / "config/inherited_tells.tsv"
+TRIAGE = ROOT / "cookbook/C0002.md"
+DOC = ROOT / "docs/codegen-map.md"
+SCRATCH = ROOT / ".run/codegen_map"
+DRAFT_DIR = "tools/probes/levers/"
+COLS = ("lever", "group", "tell", "label", "alias", "start", "end", "before_c", "after_c", "cookbook")
+GROUPS = ("expand-cse", "loop", "combine", "regalloc", "sched-reorg")
+REASONS = ("not-matching", "before-matches", "identical-drafts", "compile-error")
+
+# Controls: our C, modelled on tools/probes/func_80052634.c; target slus_012_79 [0x80052634, 0x80052654).
+CTL_TARGET = ("slus_012_79", "0x80052634", "0x80052654")
+CTL_SRC = """typedef struct {
+    char pad0[0x228];
+    int x228;
+} Work;
+
+#define WORK (*(Work **)0x1F800000)
+
+void func_80052634(void)
+{
+    %s
+}
+"""
+CONTROLS = (  # name, before stmt, after stmt, expected verdict
+    ("inert", "WORK->x228 += 1;", "WORK->x228++;", "before-matches"),
+    ("not-matching", "WORK->x228 += 3;", "WORK->x228 += 2;", "not-matching"),
+    ("proven", "WORK->x228 += 2;", "WORK->x228++;", "proven"),
+)
+
+
+def fail(msg):
+    print(f"codegen_map: {msg}", file=sys.stderr)
+    return 2
+
+
+def read_rows():
+    """Parse and validate config/levers.tsv; return rows or an error string."""
+    rows, seen = [], set()
+    for n, line in enumerate(LEVERS.read_text().splitlines(), 1):
+        if not line or line.startswith("#"):
+            continue
+        f = line.split("\t")
+        if len(f) != len(COLS):
+            return f"config/levers.tsv:{n}: {len(f)} fields, want {len(COLS)}"
+        r = dict(zip(COLS, f))
+        if r["group"] not in GROUPS:
+            return f"config/levers.tsv:{n}: unknown group {r['group']!r} (one of {', '.join(GROUPS)})"
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", r["lever"]):
+            return f"config/levers.tsv:{n}: bad lever id {r['lever']!r}"
+        if r["lever"] in seen:
+            return f"config/levers.tsv:{n}: duplicate lever id {r['lever']!r}"
+        seen.add(r["lever"])
+        for k in ("start", "end"):
+            if not re.fullmatch(r"0x[0-9A-Fa-f]{1,8}", r[k]):
+                return f"config/levers.tsv:{n}: bad hex {k} {r[k]!r}"
+        if int(r["end"], 16) <= int(r["start"], 16):
+            return f"config/levers.tsv:{n}: end <= start"
+        for k in ("before_c", "after_c"):
+            p = os.path.normpath(r[k])
+            if not (p + "/").startswith(DRAFT_DIR) or p.startswith("..") or os.path.isabs(p) or p == DRAFT_DIR[:-1]:
+                return f"config/levers.tsv:{n}: {k} {r[k]!r} outside {DRAFT_DIR}"
+        rows.append(r)
+    return sorted(rows, key=lambda r: (GROUPS.index(r["group"]), r["lever"]))
+
+
+def read_inherited(rows):
+    """Parse and validate config/inherited_tells.tsv against levers rows; return rows or an error string."""
+    ids, out, seen = {r["lever"] for r in rows}, [], set()
+    for n, line in enumerate(INHERITED.read_text().splitlines(), 1):
+        if not line or line.startswith("#"):
+            continue
+        f = line.split("\t")
+        if len(f) != 3:
+            return f"config/inherited_tells.tsv:{n}: {len(f)} fields, want 3"
+        t, g, lv = f
+        if g not in GROUPS:
+            return f"config/inherited_tells.tsv:{n}: unknown group {g!r} (one of {', '.join(GROUPS)})"
+        if t in seen:
+            return f"config/inherited_tells.tsv:{n}: duplicate tell {t!r}"
+        seen.add(t)
+        levers = [] if lv == "untested" else lv.split(",")
+        bad = [x for x in levers if x not in ids]
+        if bad or (lv != "untested" and not levers):
+            return f"config/inherited_tells.tsv:{n}: unknown lever id(s) {bad} (levers.tsv ids or `untested`)"
+        out.append({"tell": t, "group": g, "levers": levers})
+    return out
+
+
+def triage_tells():
+    """Column 1 of the cookbook/C0002.md table (rows after the `|---|` separator)."""
+    tells, on = [], False
+    for line in TRIAGE.read_text().splitlines():
+        if line.startswith("|---"):
+            on = True
+        elif on and line.startswith("|"):
+            tells.append(line.split("|")[1].strip())
+        elif on:
+            break
+    return tells
+
+
+def gfn(r):
+    return f"{r['alias']}:0x{int(r['start'], 16):08x}"
+
+
+def render(rows, inherited):
+    """docs/codegen-map.md text from rows (sorted by group index, lever id) and inherited tells; no bytes, no asm."""
+    esc = lambda s: s.replace("|", "\\|")
+    out = ["# Codegen map",
+           "",
+           "Generated by `tools/codegen_map.py --write` from `config/levers.tsv`; never hand-edited.",
+           "Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, drafts in `tools/probes/levers/`).",
+           "",
+           "| Tell | Group | Lever | Cookbook | Game fn |",
+           "|---|---|---|---|---|"]
+    out += [f"| {esc(r['tell'])} | {r['group']} | {esc(r['lever'])} | {esc(r['cookbook'])} | {gfn(r)} |" for r in rows]
+    for g in GROUPS:
+        out += ["", f"## {g}", ""]
+        mine = [r for r in rows if r["group"] == g]
+        out += [f"- `{r['lever']}`: tell {r['tell']}; before plateau {r['label']}; game fn {gfn(r)}; "
+                f"drafts `{r['before_c']}` / `{r['after_c']}`; cookbook {r['cookbook']}" for r in mine] or ["None yet."]
+    cb = {r["lever"]: r["cookbook"] for r in rows}
+    out += ["", "## Inherited tells (C0002)", "",
+            "From `config/inherited_tells.tsv`: each tell of the `cookbook/C0002.md` triage table, its pass group and levers.", ""]
+    out += [f"- {t['tell']} → {t['group']} → "
+            + (", ".join(f"`{x}` ({cb[x]})" for x in t["levers"]) or "untested") for t in inherited]
+    return "\n".join(out) + "\n"
+
+
+class Ctx:
+    """Compile context: probe.py module, cc kinds, pinned triple, fleet by alias. Imported lazily (container only)."""
+
+    def __init__(self):
+        sys.path.insert(0, str(ROOT / "tools"))
+        import probe
+        import splat_gen
+        self.probe = probe
+        if probe.ensure_extracted():
+            raise SystemExit(2)
+        tcs = probe.toolchains()
+        self.kind = {r["name"]: r["kind"] for r in tcs}
+        pins = [(r["name"], r.get("pinned", "-")) for r in tcs if r.get("pinned", "-") not in ("-", "", None)]
+        if len(pins) != 1:
+            raise SystemExit(fail(f"{len(pins)} rows of config/toolchains.tsv carry a pinned value; exactly one allowed"))
+        cc, v = pins[0]
+        av, gv, ov = v.split("/")
+        self.t = (cc, av[1:], int(gv[1:]), int(ov[1:]))
+        self.fleet = {a["alias"]: a for a in splat_gen.fleet()[0]}
+
+    def build(self, lever, side, rel, sym):
+        p = self.probe.Probe({"name": sym, "c_path": rel}, self.kind, scratch=SCRATCH / lever / side)
+        cc, _, g, o = self.t
+        p.asm(cc, g, o)
+        return p, p.obj(self.t)
+
+
+def classify(ctx, r):
+    """Return (verdict, diff word index or None); verdict = proven or one of REASONS."""
+    sym = f"func_{int(r['start'], 16):08X}"
+    try:
+        pb, ob = ctx.build(r["lever"], "before", r["before_c"], sym)
+        pa, oa = ctx.build(r["lever"], "after", r["after_c"], sym)
+    except RuntimeError:
+        return "compile-error", None
+    if (pb.dir / "probe.i").read_bytes() == (pa.dir / "probe.i").read_bytes():
+        return "identical-drafts", None
+    tgt = ctx.probe.target_of({"name": r["lever"], "alias": r["alias"], "start": r["start"], "end": r["end"]}, ctx.fleet)
+    d = ctx.probe.compare(oa, tgt)
+    if d is not None:
+        return "not-matching", d
+    d = ctx.probe.compare(ob, tgt)
+    if d is None:
+        return "before-matches", None
+    return "proven", d
+
+
+def control(ctx, name, before, after, want):
+    """Plant one control's drafts under .run/codegen_map/control/ and classify them like a real row."""
+    d = SCRATCH / "control"
+    d.mkdir(parents=True, exist_ok=True)
+    rel = {}
+    for side, stmt in (("before", before), ("after", after)):
+        f = d / f"{name}.{side}.c"
+        f.write_text(f"/* planted control `{name}` ({side}), tools/codegen_map.py; our C */\n" + CTL_SRC % stmt)
+        rel[side] = str(f.relative_to(ROOT))
+    alias, start, end = CTL_TARGET
+    r = {"lever": f"control-{name}", "alias": alias, "start": start, "end": end,
+         "before_c": rel["before"], "after_c": rel["after"]}
+    got, _ = classify(ctx, r)
+    return got == want
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--write", action="store_true")
+    ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--groups")
+    a = ap.parse_args()
+
+    if a.selftest:
+        ctx = Ctx()
+        oks = [control(ctx, *c) for c in CONTROLS]
+        for c, ok in zip(CONTROLS, oks):
+            print(f"{c[0]} control: {'ok' if ok else 'FAIL'}")
+        return 0 if all(oks) else 1
+
+    req = list(GROUPS)
+    if a.groups is not None:
+        req = [g for g in a.groups.split(",") if g]
+        bad = [g for g in req if g not in GROUPS]
+        if bad or not req:
+            return fail(f"unknown group(s) {bad} in --groups (one of {', '.join(GROUPS)})" if bad else "empty --groups")
+        req = [g for g in GROUPS if g in req]
+    rows = read_rows()
+    if isinstance(rows, str):
+        return fail(rows)
+    inherited = read_inherited(rows)
+    if isinstance(inherited, str):
+        return fail(inherited)
+    tells = triage_tells()
+    mapped = {t["tell"] for t in inherited}
+    stray = [t["tell"] for t in inherited if t["tell"] not in tells]
+    for t in stray:
+        print(f"codegen_map: inherited tell {t!r} absent from cookbook/C0002.md", file=sys.stderr)
+    n_mapped = sum(t in mapped for t in tells)
+    doc = render(rows, inherited)
+    if a.write:
+        DOC.write_text(doc)
+        print(f"doc: written {DOC.relative_to(ROOT)} ({len(rows)} levers)")
+        return 0
+
+    ctx = Ctx()
+    count = dict.fromkeys(REASONS, 0)
+    covered = set()
+    for r in rows:
+        v, d = classify(ctx, r)
+        tail = f" diff@{d}" if d is not None else ""  # proven: before vs target; not-matching: after vs target
+        if v == "proven":
+            covered.add(r["group"])
+        else:
+            count[v] += 1
+        print(f"lever {r['lever']} {r['group']} {gfn(r)}: " + ("proven" if v == "proven" else f"refused {v}") + tail)
+    proven = len(rows) - sum(count.values())
+    print(f"levers: {proven} of {len(rows)} byte-proven")
+    print(f"pass groups: {len(covered)} of {len(GROUPS)} covered")
+    print(f"inherited tells: {n_mapped} of {len(tells)} mapped")
+    if a.groups is not None:
+        print(f"required groups: {len(covered & set(req))} of {len(req)} covered")
+    ctl_ok = control(ctx, *CONTROLS[0])
+    print(f"inert control: {'ok' if ctl_ok else 'FAIL'}")
+    for k in REASONS:
+        print(f"refused {k}: {count[k]}")
+    if not a.check:
+        return 0 if ctl_ok else 1
+    current = DOC.is_file() and DOC.read_text() == doc
+    print(f"doc: {'current' if current else 'stale'}")
+    ok = ctl_ok and current and not sum(count.values()) and set(req) <= covered and n_mapped == len(tells) and not stray
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,172 @@
+# config/c_units.tsv -- C units cut by tools/splat_gen.py (T6): one splat `c` subsegment per row, [start, next existing cut); start = a game-code function start (outside every lib-object of config/boundaries.tsv). src/<alias>/<unit>.c. end (optional, T3): exclusive closing cut, empty = next cut; rows written by tools/carve.py.
+# alias	start	unit	notes	end
+slus_012_79	0x80037824	game_80037824	T6 probes func_80037824 + func_80037E18
+psx_bin_st2	0x800d7ae4	game_800D7AE4	T6 probe func_800D7AE4
+psx_bin_st6	0x800d5c40	game_800D5C40	T6 probe func_800D5C40
+psx_bin_st9	0x800db960	game_800DB960	T6 probe func_800DB960
+psx_bin_st8	0x800d6ab4	game_800D6AB4	T3 carve	0x800d6b14
+psx_bin_st1	0x800d5990	game_800D5990	T3 carve	0x800d5b24
+psx_bin_st1	0x800d9000	game_800D9000	T3 carve
+psx_bin_st8	0x800da040	game_800DA040	T3 carve	0x800da0d4
+slus_012_79	0x80039978	game_80039978	T5.c32 carve remainder of game_80037824
+slus_012_79	0x80039654	game_80039654	T3 carve
+slus_012_79	0x8003dd34	game_8003DD34	T5.c32 carve remainder of game_80039978
+slus_012_79	0x8003d58c	game_8003D58C	T3 carve
+slus_012_79	0x8003d2d4	game_8003D2D4	T3 carve
+slus_012_79	0x800458f0	game_800458F0	T5.c32 carve remainder of game_8003DD34
+slus_012_79	0x8004587c	game_8004587C	T3 carve
+slus_012_79	0x8004b8e8	game_8004B8E8	T5.c32 carve remainder of game_800458F0
+slus_012_79	0x8004b7b8	game_8004B7B8	T3 carve
+slus_012_79	0x80057f48	game_80057F48	T5.c32 carve remainder of game_8004B8E8
+slus_012_79	0x80057a8c	game_80057A8C	T3 carve
+slus_012_79	0x8002204c	game_8002204C	T3 carve
+slus_012_79	0x8002219c	game_8002219C	T3 carve	0x800223bc
+slus_012_79	0x8002be20	game_8002BE20	T3 carve	0x8002bf8c
+slus_012_79	0x80034d14	game_80034D14	T3 carve	0x80034d60
+slus_012_79	0x80036e94	game_80036E94	T3 carve	0x80037068
+slus_012_79	0x800662b8	game_800662B8	T5.c32 carve remainder of game_80057F48
+slus_012_79	0x800661fc	game_800661FC	T3 carve
+slus_012_79	0x8001b530	game_8001B530	T3 carve	0x8001b538
+slus_012_79	0x8001ea54	game_8001EA54	T3 carve	0x8001ea74
+slus_012_79	0x80021f78	game_80021F78	T3 carve
+slus_012_79	0x800264ac	game_800264AC	T3 carve
+slus_012_79	0x80026504	game_80026504	T3 carve	0x80026680
+slus_012_79	0x80026a50	game_80026A50	T3 carve	0x80026a7c
+slus_012_79	0x8002b3e0	game_8002B3E0	T3 carve	0x8002b41c
+slus_012_79	0x8002d78c	game_8002D78C	T3 carve	0x8002d820
+slus_012_79	0x8002e18c	game_8002E18C	T3 carve
+slus_012_79	0x8002e920	game_8002E920	T3 carve	0x8002e9a4
+slus_012_79	0x800786b4	game_800786B4	T3 carve	0x80078734
+bin_e10	0x800d1954	game_800D1954	T3 carve	0x800d3a6c
+bin_e20	0x800d0bb8	game_800D0BB8	T3 carve	0x800d31f4
+bin_e30	0x800d1da4	game_800D1DA4	T3 carve	0x800d1dac
+bin_e31	0x800d10f4	game_800D10F4	T3 carve	0x800d2e4c
+bin_e32	0x800d0a5c	game_800D0A5C	T3 carve	0x800d4800
+bin_e40	0x800d2a78	game_800D2A78	T3 carve	0x800d4044
+bin_e50	0x800d1074	game_800D1074	T3 carve	0x800d3288
+bin_e60	0x800d1558	game_800D1558	T3 carve	0x800d43fc
+bin_e70	0x800d1368	game_800D1368	T3 carve	0x800d2468
+bin_e80	0x800d1174	game_800D1174	T3 carve	0x800d3044
+bin_e90	0x800d0cb8	game_800D0CB8	T3 carve	0x800d2130
+bin_ea0	0x800d03e4	game_800D03E4	T3 carve	0x800d049c
+bin_kof_p10p	0x80128bb8	game_80128BB8	T3 carve	0x8012a6f8
+bin_kof_p11p	0x800d0bb8	game_800D0BB8	T3 carve	0x800d26f8
+bin_kof_p50p	0x80128914	game_80128914	T3 carve	0x80129a60
+bin_kof_p51p	0x800d0914	game_800D0914	T3 carve	0x800d1a60
+bin_kof_p60p	0x80128924	game_80128924	T3 carve	0x8012abec
+bin_kof_p61p	0x800d0924	game_800D0924	T3 carve	0x800d2bec
+bin_kof_p70p	0x801288a0	game_801288A0	T3 carve	0x80129a14
+bin_kof_p71p	0x800d08a0	game_800D08A0	T3 carve	0x800d1a14
+bin_kof_pa0p	0x8012895c	game_8012895C	T3 carve	0x801295fc
+bin_kof_pa1p	0x800d095c	game_800D095C	T3 carve	0x800d15fc
+bin_wep00	0x8017fce4	game_8017FCE4	T3 carve	0x8017fd48
+bin_wep01	0x801800ec	game_801800EC	T3 carve	0x801800f4
+bin_wep02	0x80180164	game_80180164	T3 carve	0x8018016c
+bin_wep03	0x801800e0	game_801800E0	T3 carve	0x801800e8
+bin_wep04	0x8017ff48	game_8017FF48	T3 carve	0x8017ff50
+bin_wep05	0x8017fdf0	game_8017FDF0	T3 carve	0x8017fdf8
+bin_wep06	0x801801e8	game_801801E8	T3 carve	0x801801f0
+bin_wep07	0x801802f8	game_801802F8	T3 carve	0x80180300
+bin_wep08	0x801800c0	game_801800C0	T3 carve	0x801800c8
+bin_wep09	0x80180510	game_80180510	T3 carve	0x80180518
+bin_wep0a	0x8017fc58	game_8017FC58	T3 carve	0x8017fc60
+bin_wep0b	0x8017fdec	game_8017FDEC	T3 carve	0x8017fdf4
+bin_wep0c	0x8017fbc4	game_8017FBC4	T3 carve	0x8017fbd4
+bin_wep0d	0x801225c4	game_801225C4	T3 carve	0x801225d4
+bin_wep0e	0x80122348	game_80122348	T3 carve	0x80122358
+bin_wep0f	0x80120b2c	game_80120B2C	T3 carve	0x80123018
+bin_wep10	0x80120dc0	game_80120DC0	T3 carve	0x801229c0
+bin_wep11	0x80120aa8	game_80120AA8	T3 carve	0x80121c3c
+bin_wep12	0x80120b78	game_80120B78	T3 carve	0x80121c04
+bin_wep13	0x80120b1c	game_80120B1C	T3 carve	0x80121c88
+bin_wep_s05	0x80180f10	game_80180F10	T3 carve	0x801810b0
+psx_bin_logo	0x800d5b84	game_800D5B84	T3 carve	0x800d5b8c
+psx_bin_st1	0x800d6ec8	game_800D6EC8	T3 carve	0x800d8404
+psx_bin_st1	0x800d9070	game_800D9070	T3 carve	0x800d9078
+psx_bin_st2	0x800d5f00	game_800D5F00	T3 carve	0x800d71a8
+psx_bin_st3	0x800d7214	game_800D7214	T3 carve	0x800d7e7c
+psx_bin_st4	0x800d85fc	game_800D85FC	T3 carve	0x800d8604
+psx_bin_st5	0x800d5fa8	game_800D5FA8	T3 carve	0x800d5fb0
+psx_bin_st7	0x800d7434	game_800D7434	T3 carve
+psx_bin_st8	0x800d66d4	game_800D66D4	T3 carve
+psx_bin_st8	0x800d76c4	game_800D76C4	T3 carve	0x800d99e4
+psx_bin_st8	0x800da550	game_800DA550	T3 carve
+slus_012_79	0x800205ec	game_800205EC	T3 carve	0x80020628
+slus_012_79	0x80023e54	game_80023E54	T3 carve	0x80023e5c
+slus_012_79	0x800266d4	game_800266D4	T3 carve	0x800266dc
+slus_012_79	0x8002b378	game_8002B378	T3 carve	0x8002b380
+slus_012_79	0x8002b7d8	game_8002B7D8	T3 carve	0x8002b7e0
+slus_012_79	0x8002ec30	game_8002EC30	T3 carve	0x8002ec38
+bin_e00	0x800d0b0c	game_800D0B0C	T3 carve	0x800d1e1c
+bin_e10	0x800d0860	game_800D0860	T3 carve	0x800d0880
+bin_e20	0x800d0068	game_800D0068	T3 carve	0x800d06bc
+bin_e30	0x800d06b8	game_800D06B8	T3 carve	0x800d142c
+bin_e31	0x800d00b8	game_800D00B8	T3 carve	0x800d0758
+bin_e32	0x800d0088	game_800D0088	T3 carve	0x800d0718
+bin_e40	0x800d074c	game_800D074C	T3 carve	0x800d076c
+bin_e50	0x800d0750	game_800D0750	T3 carve	0x800d0770
+bin_e60	0x800d07b8	game_800D07B8	T3 carve	0x800d07d8
+bin_e70	0x800d0818	game_800D0818	T3 carve	0x800d0838
+bin_e80	0x800d0698	game_800D0698	T3 carve	0x800d06b8
+bin_e90	0x800d098c	game_800D098C	T3 carve	0x800d09ac
+bin_ea0	0x800d02b4	game_800D02B4	T3 carve	0x800d02d4
+bin_wep0c	0x8017fa64	game_8017FA64	T3 carve	0x8017fa84
+psx_bin_st4	0x800d766c	game_800D766C	T3 carve	0x800d768c
+psx_bin_st4	0x800d8a38	game_800D8A38	T3 carve	0x800d8d3c
+psx_bin_st7	0x800d7a84	game_800D7A84	T3 carve	0x800d7aa4
+psx_bin_st8	0x800da560	game_800DA560	T3 carve	0x800da580
+slus_012_79	0x80026be0	game_80026BE0	T3 carve	0x80026c0c
+bin_e10	0x800d07e8	game_800D07E8	T3 carve
+bin_e30	0x800d0640	game_800D0640	T3 carve
+bin_e40	0x800d06d4	game_800D06D4	T3 carve
+bin_e50	0x800d06d8	game_800D06D8	T3 carve
+bin_e60	0x800d0740	game_800D0740	T3 carve
+bin_e70	0x800d07a0	game_800D07A0	T3 carve
+bin_e80	0x800d0620	game_800D0620	T3 carve
+bin_ea0	0x800d023c	game_800D023C	T3 carve
+bin_kof_p00p	0x8012899c	game_8012899C	T3 carve	0x801289d8
+bin_kof_p01p	0x800d099c	game_800D099C	T3 carve	0x800d09d8
+bin_kof_p10p	0x8012866c	game_8012866C	T3 carve	0x801286e4
+bin_kof_p11p	0x800d066c	game_800D066C	T3 carve	0x800d06e4
+bin_kof_p50p	0x801284e4	game_801284E4	T3 carve	0x8012855c
+bin_kof_p51p	0x800d04e4	game_800D04E4	T3 carve	0x800d055c
+bin_kof_p60p	0x801284c0	game_801284C0	T3 carve	0x80128538
+bin_kof_p61p	0x800d04c0	game_800D04C0	T3 carve	0x800d0538
+bin_kof_p70p	0x80128480	game_80128480	T3 carve	0x801284f8
+bin_kof_p71p	0x800d0480	game_800D0480	T3 carve	0x800d04f8
+bin_kof_p90p	0x801289ec	game_801289EC	T3 carve	0x80128a28
+bin_kof_p91p	0x800d09ec	game_800D09EC	T3 carve	0x800d0a28
+bin_kof_pa0p	0x80128540	game_80128540	T3 carve	0x801285b8
+bin_kof_pa1p	0x800d0540	game_800D0540	T3 carve	0x800d05b8
+bin_wep0d	0x80120a94	game_80120A94	T3 carve	0x80120ad0
+bin_wep0e	0x80120ad8	game_80120AD8	T3 carve	0x80120b14
+bin_wep0f	0x801206c8	game_801206C8	T3 carve	0x80120740
+bin_wep10	0x80120874	game_80120874	T3 carve	0x801208ec
+bin_wep11	0x80120688	game_80120688	T3 carve	0x80120700
+bin_wep12	0x8012075c	game_8012075C	T3 carve	0x801207d4
+bin_wep13	0x801206ec	game_801206EC	T3 carve	0x80120764
+psx_bin_st1	0x800d5fd0	game_800D5FD0	T3 carve	0x800d600c
+psx_bin_st4	0x800d5cb4	game_800D5CB4	T3 carve	0x800d7168
+psx_bin_st4	0x800d83e8	game_800D83E8	T3 carve	0x800d8424
+psx_bin_st7	0x800d743c	game_800D743C	T3 carve	0x800d76ac
+bin_wep01	0x8017e520	game_8017E520	T3 carve	0x8017e5b4
+bin_wep02	0x8017e540	game_8017E540	T3 carve	0x8017e5d4
+bin_wep06	0x8017e544	game_8017E544	T3 carve	0x8017e5d8
+bin_wep07	0x8017e55c	game_8017E55C	T3 carve	0x8017e5f0
+bin_wep08	0x8017e53c	game_8017E53C	T3 carve	0x8017e5d0
+bin_wep09	0x8017e528	game_8017E528	T3 carve	0x8017e5bc
+bin_wep0b	0x8017e518	game_8017E518	T3 carve	0x8017e5ac
+bin_wep_s05	0x80180d04	game_80180D04	T3 carve	0x80180d98
+psx_bin_st6	0x800d5868	game_800D5868	T3 carve	0x800d58fc
+psx_bin_st7	0x800d5868	game_800D5868	T3 carve	0x800d58fc
+psx_bin_st8	0x800d66dc	game_800D66DC	T3 carve	0x800d6770
+slus_012_79	0x8002dba0	game_8002DBA0	T3 carve	0x8002dc34
+slus_012_79	0x8002e1d4	game_8002E1D4	T3 carve	0x8002e268
+slus_012_79	0x8002e6cc	game_8002E6CC	T3 carve	0x8002e714
+psx_bin_st4	0x800d89b4	game_800D89B4	T3 carve
+psx_bin_st1	0x800d68dc	game_800D68DC	T3 carve	0x800d68e4
+psx_bin_st4	0x800d9480	game_800D9480	T3 carve	0x800d9488
+psx_bin_st7	0x800d6094	game_800D6094	T3 carve	0x800d609c
+psx_bin_st8	0x800d5e50	game_800D5E50	T3 carve	0x800d5e58
+bin_title2	0x800d659c	game_800D659C	T3 carve	0x800d65cc
+psx_bin_st5	0x800d6148	game_800D6148	T3 carve	0x800d6204

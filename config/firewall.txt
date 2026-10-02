@@ -1,0 +1,43 @@
+# config/firewall.txt — the ROM audit's sources, in ONE file (installed by decomp-architect, install.py S2).
+# The audit (tools/audit_public.py) derives everything it forbids from the lines below; it never carries a typed list.
+#
+#   purge:    <prefix-or-glob>   a path that may never be tracked (the rewrite's purge set reads the same lines, so the
+#                                audit and any future history rewrite can never disagree about what is forbidden)
+#   required: <path>             a hash source that MUST exist: a `.jsonl` manifest (one object per line with a `sha1`
+#                                key) or a checksum file (`<sha1>  <name>` lines, sha1sum format). Missing = the audit FAILS.
+#   pending:  <path>             a hash source a later phase creates; missing = a loud warning, never a pass on its own.
+#                                Promote it to `required:` in the phase that creates it (the phase ladder names which).
+#   fixture:  <path>             the planted-fixture control's sha1 (install.py S2); counts as a required source.
+#   allow:    <exact path>       a tracked file exempt from the purge/glob path rules ONLY (exact string equality, never a
+#                                prefix or glob); the hash, 50 MiB and disassembly checks still apply to it.
+#
+# The audit refuses to run with zero resolvable hash sources or zero purge rules (a tool must refuse, never pass vacuously).
+
+# ---- purge rules: the nine classes of the ROM firewall (mirror .gitignore's paths) ----
+purge: disks/
+purge: SLUS_012.79
+purge: extracted/
+glob:  extracted/**
+purge: asm/
+purge: assets/
+purge: build/
+purge: expected/
+purge: dumps/
+glob:  dumps/**/*.bin
+purge: ghidra/
+purge: tools/psyq/
+purge: session-archive/
+purge: datasets/
+purge: models/
+glob:  **/*.gguf
+glob:  **/*.safetensors
+
+# ---- exact-path exemptions from the purge rules (hashes, size and disasm checks still apply) ----
+allow: extracted/retail/manifest.jsonl
+allow: extracted/retail/manifest.sha1
+
+# ---- hash sources ----
+fixture:  config/firewall-fixture.sha1
+required: extracted/retail/manifest.jsonl        # the extraction manifest (T3)
+required: config/medium.sha1                     # the medium's own track/image hash (T3)
+required: config/check.*.sha                     # the per-binary contracts (a glob; rom_hashes expands it, a non-match fails) (T5)

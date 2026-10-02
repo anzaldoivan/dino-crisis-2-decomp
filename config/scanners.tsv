@@ -1,0 +1,33 @@
+# config/scanners.tsv -- scanner registry for `tools/harness.py --scanners` (T6, Phase 1.5). One row per scanner, TAB-separated.
+# command: run with `bash -c` at the repo root (stdout+stderr captured to .run/harness/scanner_<name>.txt). A row is ok iff rc 0,
+# denominator_regex matches (re.M, first match) with its last group an integer >= 1 (G27/G28), and control_regex matches
+# (re.M) a line of a control that actually ran: the tool's own every-run control verdict, or a chained planted negative
+# (`cmd && ! <cmd on a planted input>`) whose failure line it names. game: yes = needs the game data (asm/, build/,
+# extracted retail); `--no-game` runs only game=no rows (decided by a dry run on a tree without game data, T6.c2 log).
+# Mirrors (loadmap, boundaries, cc_fingerprint, compile_only plant) are tool copies + symlinks under .run/harness/: the tools
+# hard-code repo-root paths and are not edited; .run/extracted is fleet_check's extract.
+# name	command	denominator_regex	control_regex	game
+census	python3 tools/census.py --check	^stubs: (\d+) of (\d+) game functions not in C\nledger: (\d+) of (\d+) non-C functions named$	^ledger control: ok[\s\S]*^control: ok$	yes
+oracle_diff	python3 tools/oracle_diff.py	^oracle: (\d+) of (\d+) binaries compared	^control: planted start detected ok$[\s\S]*^control: stale hash detected ok$	yes
+dup_census	python3 tools/dup_census.py --check	^exact tier: \d+ classes, (\d+) of (\d+) functions	^relocation control: .*: ok$[\s\S]*^near control: .*: ok$	yes
+banked	python3 tools/banked.py --quiet	^banked: (\d+) of (\d+)$	^control: 1 of 2 ok$	yes
+progress	python3 tools/progress.py && ! python3 tools/progress.py --fixture functions	^progress: (\d+) of (\d+) game functions in C, \d+ of \d+ bytes \(fleet	^fixture functions: dropped [\s\S]*^denominator from build: FAIL 	yes
+cc_fingerprint	python3 tools/cc_fingerprint.py && p=.run/harness/plant_fp && rm -rf $p && mkdir -p $p/tools $p/config && cp tools/cc_fingerprint.py $p/tools/ && ln -s ../../../asm $p/asm && ln -s ../../../../config/loadmap.tsv $p/config/loadmap.tsv && awk -F'\t' '$2 != "lib-object"' config/boundaries.tsv > $p/config/boundaries.tsv && ! python3 $p/tools/cc_fingerprint.py	^aliases: (\d+)$	^cc_fingerprint: expected 83 aliases and a non-empty lib band$	yes
+compile_only	bash tools/compile_only.sh && p=.run/harness/plant_co && rm -rf $p && mkdir -p $p/.run && cp -r src $p/src && echo '#error harness planted unit' > $p/src/slus_012_79/zz_harness_plant.c && for d in tools config include Makefile; do ln -s ../../../$d $p/$d; done && ln -s ../../../.run/cc $p/.run/cc && ! bash $p/tools/compile_only.sh	^compiled: (\d+) of (\d+) units$	^FAILED src/slus_012_79/zz_harness_plant\.c$	no
+probe	python3 tools/probe.py --selftest && set -- $(awk -F'\t' '!/^#/ && $7 != "-" && $7 != "" {split($7, t, "/"); print $1, substr(t[1], 2), substr(t[2], 2), substr(t[3], 2)}' config/toolchains.tsv) && python3 tools/probe.py --pinned --cc "$1" --aspsx "$2" -G "$3" -O "$4"	^probes identical: (\d+) of (\d+) under the pinned triple$	^controls: true ok, false ok$	yes
+loadmap	p=.run/harness/mirror && mkdir -p $p/tools && cp tools/loadmap.py $p/tools/ && ln -sfn ../../../config $p/config && ln -sfn ../../../docs $p/docs && ln -sfn ../../extracted $p/extracted && python3 $p/tools/loadmap.py --check	^rows=\d+ N=(\d+) 	negative-control: OK$	yes
+boundaries	p=.run/harness/mirror && mkdir -p $p/tools && cp tools/boundaries.py $p/tools/ && ln -sfn ../../../config $p/config && ln -sfn ../../extracted $p/extracted && python3 $p/tools/boundaries.py --check	^exe jtbl: ours=\d+ ghidra=(\d+) 	^control switch jr=0x8003500c \[0x80018624,0x800186f8\): found$	yes
+twins	python3 tools/twins.py --check	^twins: \d+ fns with >= 1 twin of (\d+) game fns$	^exact pairs reproduced: (\d+) of \1$[\s\S]*^random-pair control: ok$	yes
+types	python3 tools/types_check.py	^units scanned: (\d+)$	^control: planted duplicate refused, planted raw cast refused$	no
+carve	python3 tools/carve.py --check	^carves: (\d+) of (\d+) build hash-equal$	^control: ok$	yes
+propagate	python3 tools/propagate.py --dry-run	^propagation dry run: (\d+) of \1 members gated$	^fail-closed control: ok$	yes
+reconcile	python3 tools/reconcile.py --check	^reconcile: (\d+) of \1 banked without redraft$	^control: banked decl-sync$[\s\S]*^directory gate: ok$	yes
+draw_filter	python3 tools/draw_filter.py --all	^draw: \d+ of (\d+) accepted$	^refused handasm-marked: [1-9]\d*\nrefused gte: [1-9]\d*$[\s\S]*^control: ok$	yes
+compiler_source	python3 tools/compiler_source.py --check	^version sources: (\d+) of (\d+) agree$	^version control: ok$	yes
+codegen_map	python3 tools/codegen_map.py --check	^levers: \d+ of (\d+) byte-proven$	^inert control: ok$	yes
+permute	python3 tools/permute.py --check	^permuter: stored draft iterated \d+ times, (\d+) distinct candidates$	^scorer control: ok$	yes
+plateau	python3 tools/plateau.py --check	^plateau: \d+ of (\d+) planted labelled$	^match control: ok$	yes
+cookbook_index	python3 tools/cookbook_index.py --check	^cookbook-index: \d+ of (\d+) entries indexed$	^control: ok$	no
+wave	python3 tools/wave.py --check	^routing: (\d+) of \1 buckets measured on the manual wave$	^wave control: ok$	no
+census_set	python3 tools/census.py --check --set exe	^set exe: \d+ aliases, \d+ game fns.*$[\s\S]*^stubs: \d+ of (\d+) game functions not in C \(set exe\)\nledger: \d+ of \d+ non-C functions named \(set exe\)$	^ledger control: ok \(set exe[\s\S]*^control: ok$	yes
+wave_usage	python3 tools/wave.py --check && python3 tools/wave.py --selftest	^usage: \d+ of (\d+) waves with a 5h before/after record$	^selftest rolled usage row: refused ok$[\s\S]*^selftest: 7 of 7 ok$	yes

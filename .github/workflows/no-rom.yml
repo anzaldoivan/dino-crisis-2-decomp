@@ -1,0 +1,57 @@
+# .github/workflows/no-rom.yml — the ROM-free CI (installed by decomp-architect, install.py S2).
+#
+# What CI can and cannot prove here: the project's contract is BYTE-IDENTITY of every binary against the original
+# medium, which needs the game and is therefore never in CI. CI proves everything that does NOT need the game:
+#   * audits       — the tracked tree is public-clean (tools/audit_public.py: no game-derived bytes, no purge path,
+#                    nothing over the size threshold, no pasted disassembly), and any text-only self-checks the
+#                    project adds (a cookbook index freshness check, a symbol-reference lint, decoder unit tests).
+#   * compile-only — every src/**/*.c still compiles (cpp → cc1 → maspsx, no `as`) with the pinned psyq4.6 triple and
+#                    the build's exact flags (tools/compile_only.sh; toolchain fetched and sha256-checked from
+#                    config/toolchains.tsv); every unit on every trigger.
+# Byte-identity is verified locally with the game and RECORDED in the tracked verification log.
+name: no-rom
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"        # weekly: audits + compile-only + tools/harness.py --no-game (pairs, scanners, selftest)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audits:
+    name: public-clean audit (no game bytes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: audit_public — no game-derived bytes, no purge path, nothing > 50 MiB, no pasted disassembly
+        run: python tools/audit_public.py
+      # game-free self-checks run in the compile-only job: tools/harness.py --no-game (config/scanners.tsv game=no rows).
+
+  compile-only:
+    name: compile-only (pinned triple, no game bytes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: false
+      - name: install mipsel cpp
+        run: sudo apt-get update && sudo apt-get install -y binutils-mipsel-linux-gnu cpp-mipsel-linux-gnu
+      - name: compile_only — every src/**/*.c, cpp → cc1 → maspsx
+        run: bash tools/compile_only.sh
+      - name: harness --no-game — compiles pair, game-free scanners, planted-disagreement selftest
+        run: |
+          python3 tools/harness.py --no-game
+          python3 tools/harness.py --no-game --scanners
+          python3 tools/harness.py --no-game --selftest

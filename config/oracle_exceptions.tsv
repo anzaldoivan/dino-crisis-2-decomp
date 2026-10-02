@@ -1,0 +1,112 @@
+# config/oracle_exceptions.tsv -- accepted census/Ghidra-oracle disagreements, read by tools/oracle_diff.py.
+# kind (T2.c5) = data-span (ghidra-only start inside a census data-in-text span) | unreferenced (census-only start with
+# no jal / outside j-branch / pointer word / s4 cross-program / Ghidra reference, previous census function ending in an
+# unconditional transfer + delay slot, zero padding skipped (T2.c7), or following the census text start / a census
+# data-in-text span end (T2.c8)) | switch-case (T2.c6; ghidra-only start, or end-ghidra-shorter ghidra_end, equal
+# to a target of a config/boundaries.tsv jtbl table whose jr lies in the census function) | data-head (T2.c7; census-only
+# start, first after a Ghidra start on n1 bytes or in a census data span) | lib-patch-blob (T2.c8; start or
+# end-ghidra-shorter ghidra_end inside an exe psyq_objects.tsv row whose obj begins PATCH, 0 jal words to it); the
+# predicate is re-checked every run, a false one leaves the disagreement counted. Rows copied only from predicate-true rows of `oracle_diff.py --propose-exceptions`
+# (.run/oracle/proposed_exceptions.tsv). A row missing basis or instrument, or of another kind, is ignored and counted
+# `exceptions invalid`.
+# alias	start	kind	basis	instrument
+bin_e30	0x800d002c	data-span	in census dlabel-head span [0x800d0000,0x800d0370)	tools/census.py data spans
+bin_e50	0x800d150c	switch-case	jtbl 0x800d002c-0x800d0040	tools/boundaries.py jtbl
+bin_e50	0x800d1604	switch-case	jtbl 0x800d002c-0x800d0040	tools/boundaries.py jtbl
+bin_e50	0x800d1660	switch-case	jtbl 0x800d002c-0x800d0040	tools/boundaries.py jtbl
+bin_e50	0x800d16dc	switch-case	jtbl 0x800d002c-0x800d0040	tools/boundaries.py jtbl
+bin_e50	0x800d17bc	switch-case	jtbl 0x800d002c-0x800d0040	tools/boundaries.py jtbl
+bin_e50	0x800d192c	switch-case	jtbl 0x800d002c-0x800d0040	tools/boundaries.py jtbl
+bin_kof_p70p	0x80128014	data-span	in census dlabel-head span [0x80128000,0x80128238)	tools/census.py data spans
+bin_kof_p90p	0x80128024	data-head	g 0x80128004 n1	tools/oracle_diff.py:220
+bin_kof_p91p	0x800d0024	data-head	g 0x800d0004 n1	tools/oracle_diff.py:220
+bin_load	0x801c4170	unreferenced	prev 0x801c4054 ends j; refs 0	tools/oracle_diff.py:198
+bin_m_title	0x800d5844	data-span	in census dlabel-head span [0x800d5800,0x800d5e5c)	tools/census.py data spans
+bin_m_title	0x800d58e4	data-span	in census dlabel-head span [0x800d5800,0x800d5e5c)	tools/census.py data spans
+bin_res00	0x80150000	data-span	in census invalid-insn span [0x80150000,0x80150004)	tools/census.py data spans
+bin_res00	0x80150004	data-head	g 0x80150000 in census invalid-insn span	tools/oracle_diff.py:220
+bin_res01	0x80150034	unreferenced	follows text start 0x80150034; refs 0	tools/oracle_diff.py:198
+bin_res02	0x80150034	unreferenced	prev 0x80150004 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_save	0x801c16ec	data-head	g 0x801c16e4 n1	tools/oracle_diff.py:220
+bin_save	0x801c4244	unreferenced	prev 0x801c413c ends j; refs 0	tools/oracle_diff.py:198
+bin_title2	0x800d5848	data-span	in census dlabel-head span [0x800d5830,0x800d58fc)	tools/census.py data spans
+bin_title2	0x800d58a4	data-span	in census dlabel-head span [0x800d5830,0x800d58fc)	tools/census.py data spans
+bin_wep04	0x8017e504	data-span	in census invalid-insn span [0x8017e500,0x8017e598)	tools/census.py data spans
+bin_wep05	0x8017e950	unreferenced	prev 0x8017e67c ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0c	0x8017fbc4	unreferenced	prev 0x8017fba4 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0c	0x8017fbcc	unreferenced	prev 0x8017fbc4 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0d	0x801225c4	unreferenced	prev 0x801225b4 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0d	0x801225cc	unreferenced	prev 0x801225c4 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0e	0x80120004	data-span	in census dlabel-head span [0x80120000,0x801201e0)	tools/census.py data spans
+bin_wep0e	0x80122348	unreferenced	prev 0x80122338 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0e	0x80122350	unreferenced	prev 0x80122348 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0f	0x80123008	unreferenced	prev 0x80122ff8 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep0f	0x80123010	unreferenced	prev 0x80123008 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep10	0x801229b0	unreferenced	prev 0x801229a0 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep10	0x801229b8	unreferenced	prev 0x801229b0 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep11	0x80121c2c	unreferenced	prev 0x80121c1c ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep11	0x80121c34	unreferenced	prev 0x80121c2c ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep12	0x80121bf4	unreferenced	prev 0x80121be4 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep12	0x80121bfc	unreferenced	prev 0x80121bf4 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep13	0x80121c78	unreferenced	prev 0x80121c68 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep13	0x80121c80	unreferenced	prev 0x80121c78 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep_s01	0x80180d04	data-span	in census invalid-insn span [0x80180d00,0x80180e1c)	tools/census.py data spans
+bin_wep_s02	0x80180d04	data-span	in census invalid-insn span [0x80180d00,0x80180d98)	tools/census.py data spans
+bin_wep_s03	0x80180d04	data-span	in census invalid-insn span [0x80180d00,0x80180d74)	tools/census.py data spans
+bin_wep_s07	0x8017c504	unreferenced	follows text start 0x8017c504; refs 0	tools/oracle_diff.py:198
+bin_wep_s07	0x8017c630	unreferenced	prev 0x8017c504 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep_s07	0x8017c97c	unreferenced	prev 0x8017c630 ends jr ra; refs 0	tools/oracle_diff.py:198
+bin_wep_s08	0x80180d04	data-span	in census invalid-insn span [0x80180d00,0x80180d98)	tools/census.py data spans
+bin_wep_s09	0x80180d04	data-span	in census invalid-insn span [0x80180d00,0x80180d98)	tools/census.py data spans
+psx_bin_logo	0x800d5920	unreferenced	follows text start 0x800d5920; refs 0	tools/oracle_diff.py:198
+psx_bin_logo	0x800d6308	unreferenced	prev 0x800d6284 ends jr ra; refs 0	tools/oracle_diff.py:198
+psx_bin_logo	0x800d6374	unreferenced	prev 0x800d6308 ends jr ra; refs 0	tools/oracle_diff.py:198
+psx_bin_logo	0x800d63bc	switch-case	jtbl 0x800d5830-0x800d5880	tools/boundaries.py jtbl
+psx_bin_st3	0x800d7f8c	unreferenced	prev 0x800d7e7c ends jr ra; refs 0	tools/oracle_diff.py:198
+psx_bin_st4	0x800d72d8	unreferenced	prev 0x800d7224 ends jr ra; refs 0	tools/oracle_diff.py:198
+psx_bin_st6	0x800d5800	data-span	in census invalid-insn span [0x800d5800,0x800d5804)	tools/census.py data spans
+psx_bin_st6	0x800d5804	data-head	g 0x800d5800 in census invalid-insn span	tools/oracle_diff.py:220
+psx_bin_st7	0x800d5800	data-span	in census invalid-insn span [0x800d5800,0x800d5804)	tools/census.py data spans
+psx_bin_st7	0x800d5804	data-head	g 0x800d5800 in census invalid-insn span	tools/oracle_diff.py:220
+psx_bin_st7	0x800d6564	unreferenced	prev 0x800d6520 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001b530	unreferenced	prev 0x8001b4c8 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001ce18	unreferenced	prev 0x8001cde4 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001cf2c	unreferenced	prev 0x8001ced4 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001cf58	unreferenced	prev 0x8001cf2c ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001cf84	unreferenced	prev 0x8001cf58 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001d028	unreferenced	prev 0x8001cf84 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001d93c	unreferenced	prev 0x8001d900 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8001ea74	unreferenced	prev 0x8001ea54 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80022400	unreferenced	prev 0x800223bc ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80025b44	unreferenced	prev 0x80025780 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8002a77c	unreferenced	prev 0x8002a284 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80031d44	unreferenced	prev 0x80031968 ends j; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x800323ec	unreferenced	prev 0x80031f70 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80033c70	unreferenced	prev 0x80033b14 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80034afc	unreferenced	prev 0x800348d0 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80037fd4	unreferenced	prev 0x80037ed8 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x800404d4	unreferenced	prev 0x80040444 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80043a2c	unreferenced	prev 0x80043958 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80043b60	unreferenced	prev 0x80043b24 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x800490ac	unreferenced	prev 0x80048ff0 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80049134	unreferenced	prev 0x800490ac ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8004a464	unreferenced	prev 0x8004a378 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8004a9e4	unreferenced	prev 0x8004a9a4 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80050a40	unreferenced	prev 0x800509c8 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80052654	unreferenced	prev 0x80052634 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8005c608	unreferenced	prev 0x8005bfc8 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8005cbe8	unreferenced	prev 0x8005cb10 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8005d0cc	unreferenced	prev 0x8005ce28 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8005dce0	unreferenced	prev 0x8005da50 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8005def0	unreferenced	prev 0x8005dce0 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8005e844	unreferenced	prev 0x8005e7d8 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80064238	unreferenced	prev 0x800640b8 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x80065ec0	unreferenced	prev 0x80065d0c ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8006d7f4	unreferenced	prev 0x8006cd30 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8007ae60	lib-patch-blob	libgte PATCHGTE.OBJ: code copied to RAM at runtime	config/ghidra/SLUS_012.79.psyq_objects.tsv
+slus_012_79	0x8007ae90	lib-patch-blob	libgte PATCHGTE.OBJ: code copied to RAM at runtime	config/ghidra/SLUS_012.79.psyq_objects.tsv
+slus_012_79	0x8007df04	unreferenced	prev 0x8007dedc ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8007e408	lib-patch-blob	libcard PATCH.OBJ: code copied to RAM at runtime	config/ghidra/SLUS_012.79.psyq_objects.tsv
+slus_012_79	0x8007e434	unreferenced	prev 0x8007e408 ends jr ra; refs 0	tools/oracle_diff.py:198
+slus_012_79	0x8007e478	lib-patch-blob	libcard PATCH.OBJ: code copied to RAM at runtime	config/ghidra/SLUS_012.79.psyq_objects.tsv
+slus_012_79	0x8007e48c	lib-patch-blob	libcard PATCH.OBJ: code copied to RAM at runtime	config/ghidra/SLUS_012.79.psyq_objects.tsv

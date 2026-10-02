@@ -1,0 +1,34 @@
+name: Bug
+description: The build, a tool, or a matched function behaves wrongly.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never attach game files**: no disc images, executables, extracted data, memory dumps, or pasted disassembly.
+        Describe the medium by its file name and SHA-1 only. Leaked game data goes through the
+        [security policy](https://github.com/anzaldoivan/dino-crisis-2-decomp/security/policy), not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The commit, the exact commands, and the relevant output (text, not screenshots).
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Host OS, and whether you used the Docker image or a host toolchain.
+  - type: input
+    id: medium
+    attributes:
+      label: Medium SHA-1
+      description: Output of the medium check, if the issue involves the disc. Hash only, never the file.
