@@ -15,8 +15,8 @@ build/<alias>.bin sha1 vs config/check.<alias>.sha); the verdict names the first
   canon-sig    prototypes of fns declared in include/dc2.h are taken from dc2.h
   self-decl    draft typedefs / struct tags / #defines that dc2.h or the unit already define are removed
   carve        no INCLUDE_ASM line anywhere, or every rung above failed: `carve.py`-equivalent (carve.carve, alias
-               start --end <census end>) gives the fn its own unit (common.h + dc2.h); --apply only (writes config/
-               and src/), restored on failure
+               start --end <census end>) gives the fn its own unit (common.h + the draft's preamble; then common.h +
+               dc2.h + self-decl, T5.c32); --apply only (writes config/ and src/), restored on failure
   real-unit    --apply only: the unit is written in-tree, `make build ONLY=<alias>` + `sha1sum -c
                config/check.<alias>.sha`; failure restores the unit
 Body hash (fn definition, whitespace-normalised, ladder-inserted casts stripped) before vs after every rung: any
@@ -294,17 +294,28 @@ def carve_rung(alias, start, pre, fndef, name, before, apply, log):
         log(f"rung carve: refused {e}")
         return "failed carve refused"
     path = ROOT / f"src/{alias}/{unit}.c"
-    text = path.read_text()
-    if '#include "dc2.h"' not in text:
-        text = text.replace('#include "common.h"\n', '#include "common.h"\n#include "dc2.h"\n', 1)
-    cur, fd, casts, notes = rung_state("self-decl", [dict(i) for i in pre], fndef, text)
-    out = compose(text, name, cur, fd)
-    err = "body-changed" if placed_hash(out, name, casts) != before else None
-    if err is None:
-        path.write_text(out)
-        err = carve.build(alias) or None
+    base = path.read_text()
+    # T5.c32: the draft's own preamble first (as plateau.py compiles it); dc2.h + self-decl only as the fallback,
+    # since self-decl drops a draft typedef/tag that dc2.h defines differently (`structure has no member`).
+    variants = [("draft-decls", base, "as-is"),
+                ("dc2", base if '#include "dc2.h"' in base else
+                 base.replace('#include "common.h"\n', '#include "common.h"\n#include "dc2.h"\n', 1), "self-decl")]
+    err, tried, notes, tag = None, set(), [], None
+    for tag, text, rung in variants:
+        cur, fd, casts, notes = rung_state(rung, [dict(i) for i in pre], fndef, text)
+        out = compose(text, name, cur, fd)
+        if out in tried:
+            continue
+        tried.add(out)
+        err = "body-changed" if placed_hash(out, name, casts) != before else None
+        if err is None:
+            path.write_text(out)
+            err = carve.build(alias) or None
+        if err is None:
+            break
+        log(f"rung carve ({tag}): FAIL {err}")
     if err:
-        for p in set(snap) | {path}:
+        for p in set(snap) | {path} | set((ROOT / "src" / alias).glob("*.c")):
             if p in snap:
                 p.write_bytes(snap[p])
             else:
@@ -313,7 +324,7 @@ def carve_rung(alias, start, pre, fndef, name, before, apply, log):
                        stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         log(f"rung carve: FAIL {err}; carve reverted")
         return "failed carve body-changed" if err == "body-changed" else f"failed carve {short(err)}"
-    log(f"rung carve: {path.relative_to(ROOT)} carved, {', '.join(notes) or 'no change'}; build + sha1 ok")
+    log(f"rung carve ({tag}): {path.relative_to(ROOT)} carved, {', '.join(notes) or 'no change'}; build + sha1 ok")
     return "banked carve"
 
 

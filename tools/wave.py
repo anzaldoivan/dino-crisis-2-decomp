@@ -24,6 +24,8 @@ Exit 0 ok / 1 fail / 2 refused. Notes: docs/ops/decomp-environment.md "Waves: dr
 
 T4 (Phase 1.8), spec .run/briefs/T4.c1.md; host drivers (commit / write tracked config; refused rc 2 in the container):
     wave.py gate WAVE            clean tree, unGated row -> sync, push the wave dir, inner gate, pull, commit banks + ledgers
+    wave.py recover WAVE         (T5.c32) gated wave: as gate, re-scores only targets with no banked journal row; appends
+                                 journal rows route `recover`, recounts the waves row from the journal; re-runnable
     wave.py fleet WAVE           sync + fleet_check.sh (tee .run/waves/WAVE/fleet.log); green -> fleet 83/83@<HEAD>
     wave.py harvest WAVE --fn A:S --note TEXT [--lever ID --stripped PATH]   note `strip:ok:<ID> TEXT` | `strip:none TEXT`
     wave.py close WAVE           refusals (gate, fleet ancestry, unharvested) -> closed + harvest done:<n> notes, commit
@@ -552,8 +554,9 @@ def word(s, n=120):
     return " ".join(str(s).split())[:n] or "-"
 
 
-def score(wave, targets):
-    """1a: -> (refusal lines, {(alias, start): score dict}). Directory-gated (G50/G47)."""
+def score(wave, targets, keys=None):
+    """1a: -> (refusal lines, {(alias, start): score dict}). Directory-gated (G50/G47) over every target; keys (recover):
+    only those (alias, start) are scored."""
     import json
     wd = RUN / wave
     names = {tdir(t[0], t[1]) for t in targets}
@@ -569,6 +572,8 @@ def score(wave, targets):
         return bad, {}
     out = {}
     for al, st, en, ins, bk in targets:
+        if keys is not None and (al, st) not in keys:
+            continue
         d = wd / tdir(al, st)
         claim = {}
         try:
@@ -603,6 +608,30 @@ def score(wave, targets):
     return [], out
 
 
+def restore(al, snap):
+    """Write back the tree_snapshot snap (changed paths rewritten, new ones removed); resplit-config when config/ moved."""
+    now = tree_snapshot()
+    ks = sorted(k for k in set(snap) | set(now) if snap.get(k) != now.get(k))
+    for k in ks:
+        if k in snap:
+            (ROOT / k).parent.mkdir(parents=True, exist_ok=True)
+            (ROOT / k).write_bytes(snap[k])
+        else:
+            (ROOT / k).unlink()
+    if any(k.startswith("config/") for k in ks):
+        sh([sys.executable, "tools/splat_gen.py", "--force", "--only", al])
+    return ks
+
+
+def apply_note(verdict, ladder):
+    """Pure (T5.c32): journal note for a reconcile --apply that did not bank: the verdict and the ladder's last rung
+    line, hashes and the make-log path dropped (the gate logged a bare `apply-failed` before)."""
+    last = [x.strip() for x in ladder.splitlines() if x.strip().startswith("rung")]
+    why = last[-1] if last else "no rung line"
+    why = re.sub(r"sha1 \S+ != config/check\.\S+ [0-9a-f]{40} \(make rc \d+: |\b[0-9a-f]{40}\b|; \.run/\S+", "", why)
+    return word("apply-failed %s; %s" % (verdict, why))
+
+
 def bank(wave, targets, scores):
     """1b: per destination unit, splice every candidate (reconcile --apply) then ONE scratch build + sha1."""
     import propagate
@@ -621,22 +650,33 @@ def bank(wave, targets, scores):
     bpath = wd / "banks.tsv"
     head, brows = ledger(bpath)
     head = head or ["# " + "\t".join(BCOLS)]
-    for (al, unit), sts in sorted(groups.items()):
+    for (al, unit), all_sts in sorted(groups.items()):
         snap = tree_snapshot()
-        note = None
-        for st in sts:
-            p = sh([sys.executable, "tools/reconcile.py", str(wd / tdir(al, st) / "draft.c"), "--target",
-                    "%s:0x%08x" % (al, st), "--apply"])
-            vf = ROOT / ".run/reconcile" / tdir(al, st) / "verdict"
-            if p.returncode or not (vf.is_file() and vf.read_text().startswith("banked")):
-                note = "apply-failed"
-                break
-            scores[(al, st)]["rung"] = vf.read_text().split()[1]
+        note, sts = None, []
+        for st in all_sts:  # T5.c32: a fn whose apply fails is restored and dropped alone, not its whole unit
+            pre = tree_snapshot()
+            sh([sys.executable, "tools/reconcile.py", str(wd / tdir(al, st) / "draft.c"), "--target",
+                "%s:0x%08x" % (al, st), "--apply"])  # rc also reflects other dirs' verdicts (reconcile gate): unused
+            rd = ROOT / ".run/reconcile" / tdir(al, st)
+            v = (rd / "verdict").read_text().strip() if (rd / "verdict").is_file() else "no-verdict"
+            if not v.startswith("banked"):
+                restore(al, pre)
+                lg = (rd / "ladder.log").read_text(errors="replace") if (rd / "ladder.log").is_file() else ""
+                vv = v.split()
+                scores[(al, st)].update(outcome="plateau", rung=vv[1] if len(vv) > 1 else "-",
+                                        reason=" ".join(vv[2:]) or "-", note=apply_note(v, lg))
+                print("  apply %s:0x%08x: %s" % (al, st, scores[(al, st)]["note"]))
+                continue
+            scores[(al, st)]["rung"] = v.split()[1]
+            sts.append(st)
+        if not sts:
+            print("bank %s/%s: no fn applied (%d tried)" % (al, unit, len(all_sts)))
+            continue
         now = tree_snapshot()
         changed = sorted(k for k in now if snap.get(k) != now[k])
         gone = sorted(k for k in snap if k not in now)
-        if note is None and (gone or not changed):
-            note = "apply-failed"
+        if gone or not changed:
+            note = "apply-failed: %s" % ("paths removed" if gone else "no tree change")
         if note is None:
             rel = next((k for k in changed if not k.startswith("include/")), None)
             try:
@@ -647,14 +687,7 @@ def bank(wave, targets, scores):
                 print("  bank %s/%s: %s" % (al, unit, word(e, 200)))
                 note = "bank-hash %s" % al
         if note:
-            for k in set(changed) | set(gone):
-                if k in snap:
-                    (ROOT / k).parent.mkdir(parents=True, exist_ok=True)
-                    (ROOT / k).write_bytes(snap[k])
-                else:
-                    (ROOT / k).unlink()
-            if any(k.startswith("config/") for k in set(changed) | set(gone)):
-                sh([sys.executable, "tools/splat_gen.py", "--force", "--only", al])
+            restore(al, snap)
             for st in sts:
                 scores[(al, st)].update(outcome="plateau", note=note)
             print("bank %s/%s: red (%s), %d fns restored" % (al, unit, note, len(sts)))
@@ -806,6 +839,108 @@ def cmd_gate(a):
         return rc
     r = ledger(WAVES)[1][wave_row(ledger(WAVES)[1], a.wave)]
     msg = "gate: banked %s + failed %s + no-verdict %s = %s drafted" % (r[6], r[7], r[8], r[5])
+    return sh(["bash", "tools/commit_task.sh", a.wave, msg, "config/journal.tsv", "config/waves.tsv"],
+              capture=False).returncode
+
+
+def wave_counts(wave, targets, journal):
+    """Pure (T5.c32): (B, F, V, insns banked) of a wave from its journal rows: banked = any banked row; else the latest
+    row's outcome (no-verdict -> V, rest -> F); a target without a row counts F."""
+    last, bk = {}, set()
+    for r in ledger(journal)[1]:
+        if len(r) >= 5 and r[2] == wave and r[1].startswith("0x"):
+            last[(r[0], int(r[1], 16))] = r[4]
+            if r[4] == "banked":
+                bk.add((r[0], int(r[1], 16)))
+    keys = [(t[0], t[1]) for t in targets]
+    B = sum(1 for k in keys if k in bk)
+    V = sum(1 for k in keys if k not in bk and last.get(k) == "no-verdict")
+    return B, len(keys) - B - V, V, sum(t[3] for t in targets if (t[0], t[1]) in bk)
+
+
+def recover_inner(wave):
+    """T5.c32, in the volume: re-score every target with no banked journal row (fixed scorer), bank per unit, append
+    journal rows (route `recover`), recount the waves row from the journal. -> rc."""
+    import json
+    targets = read_targets(wave)
+    if not targets:
+        print("REFUSED: no targets in %s" % (RUN / wave / "targets.tsv"))
+        return 2
+    done = {(r[0], int(r[1], 16)) for r in ledger(JOURNAL)[1]
+            if len(r) >= 5 and r[2] == wave and r[4] == "banked" and r[1].startswith("0x")}
+    todo = [t for t in targets if (t[0], t[1]) not in done]
+    print("recover %s: %d of %d targets not banked" % (wave, len(todo), len(targets)))
+    bad, scores = score(wave, targets, {(t[0], t[1]) for t in todo})
+    if bad:
+        print("REFUSED: recover %s: %d dirs without an agent run" % (wave, len(bad)))
+        print("\n".join(bad))
+        return 2
+    if any(s["outcome"] == "candidate" for s in scores.values()):
+        msg = draw_filter.ensure()
+        if msg:
+            print(msg)
+            return 2
+    bank(wave, todo, scores)
+    plateau_labels(wave, todo, scores)
+    if any(s["outcome"] == "candidate" for s in scores.values()):
+        print("FAIL: a candidate left unbanked and unscored")
+        return 1
+    banked = [(t[0], t[1]) for t in todo if scores[(t[0], t[1])]["outcome"] == "banked"]
+    prop = after_banks(banked) if banked else 0
+    jh, jd = ledger(JOURNAL)
+    for al, st, en, ins, bk in todo:
+        s = scores[(al, st)]
+        (RUN / wave / tdir(al, st) / "recover.json").write_text(
+            json.dumps({k: s[k] for k in ("alias", "start", "outcome", "rung", "reason", "label")}) + "\n")
+        jd.append([al, "0x%08x" % st, wave, "recover", s["outcome"], s["label"], word(s["note"])])
+    write_ledger(JOURNAL, jh, jd)
+    B, F, V, ins = wave_counts(wave, targets, JOURNAL)
+    wh, wd = ledger(WAVES)
+    i = wave_row(wd, wave)
+    if i is not None:
+        r = wd[i] + ["-"] * (13 - len(wd[i]))
+        p0 = int(r[10]) if r[10].isdigit() else 0
+        r[5:11] = [str(len(targets)), str(B), str(F), str(V), str(ins), str(p0 + prop)]
+        wd[i] = r[:13]
+        write_ledger(WAVES, wh, wd)
+    print("recover: banked %d of %d re-scored" % (len(banked), len(todo)))
+    print("gate: banked %d + failed %d + no-verdict %d = %d drafted" % (B, F, V, len(targets)))
+    return 0
+
+
+def cmd_recover(a):
+    """Host driver (T5.c32): as gate, on a gated wave: sync, push, recover --in-volume, pull, commit banks + ledgers."""
+    if a.in_volume:
+        msg = volume_refusal("recover")
+        if msg:
+            print(msg)
+            return 2
+        return recover_inner(a.wave)
+    msg = host_refusal("recover") or (None if clean_tree() else "REFUSED: working tree not clean (git status --porcelain)")
+    i = wave_row(ledger(WAVES)[1], a.wave)
+    if msg is None and (i is None or ledger(WAVES)[1][i][5] == "-"):
+        msg = "REFUSED: wave %s not gated (config/waves.tsv drafted -); run gate first" % a.wave
+    if msg:
+        print(msg)
+        return 2
+    rel = ".run/waves/%s" % a.wave
+    for cmd in (DC + ["sync"], DC + ["push", rel]):
+        rc = sh(cmd, capture=False).returncode
+        if rc:
+            print("FAIL: %s rc %d" % (" ".join(cmd[1:]), rc))
+            return rc
+    rc = sh(DC + ["run", "python3", "tools/wave.py", "recover", a.wave, "--in-volume"], capture=False).returncode
+    if rc:
+        return rc
+    rc = pull([rel, "config/journal.tsv", "config/waves.tsv"])
+    if rc:
+        print("FAIL: pull rc %d" % rc)
+        return 1
+    rc = commit_banks(a.wave)
+    if rc:
+        return rc
+    r = ledger(WAVES)[1][wave_row(ledger(WAVES)[1], a.wave)]
+    msg = "recover: banked %s + failed %s + no-verdict %s = %s drafted" % (r[6], r[7], r[8], r[5])
     return sh(["bash", "tools/commit_task.sh", a.wave, msg, "config/journal.tsv", "config/waves.tsv"],
               capture=False).returncode
 
@@ -1137,14 +1272,38 @@ def cmd_selftest():
                   == "compile-error")
         if ok[-1]:
             print("selftest outcome map: ok")
+        # (5) T5.c32: an apply that does not bank names its cause (M1 gate: bare `apply-failed`, cause logged nowhere);
+        # a carve inside an enclosing unit prunes that unit's text to its range (M1: INCLUDE_ASM of moved .s files)
+        lad = ("body hash before: 0123\nrung carve: refused make build ONLY=x rc 2: make: *** No rule to make target "
+               "'asm/x/x_1f.s'\n")
+        an = apply_note("failed carve refused", lad)
+        import carve
+        unit = ('#include "common.h"\nINCLUDE_ASM("asm/x/nonmatchings/u", func_80000000);\n\nvoid func_80000010(void)'
+                ' {\n}\n\nINCLUDE_ASM("asm/x/nonmatchings/u", func_80000020);\n')
+        lo_t, hi_t = carve.prune(unit, 0x80000000, 0x80000010), carve.prune(unit, 0x80000020, 0x80000030)
+        ok.append(an.startswith("apply-failed failed carve refused; rung carve: refused") and "No rule" in an
+                  and len(an) <= 120 and apply_note("no-verdict", "") == "apply-failed no-verdict; no rung line"
+                  and "func_80000000" in lo_t and "func_80000010" not in lo_t and "func_80000020" not in lo_t
+                  and "func_80000020" in hi_t and "func_80000010" not in hi_t and "common.h" in hi_t)
+        if ok[-1]:
+            print("selftest apply cause + enclosing-unit prune: ok")
+        # (6) T5.c32: recover recounts the waves row from the journal (a later banked row wins over the gate's plateau)
+        write_ledger(JOURNAL, ["# " + "\t".join(JCOLS)],
+                     [[A[0], "0x%08x" % A[1], "s6", "draft", "plateau", "MATCH", "apply-failed"],
+                      [B[0], "0x%08x" % B[1], "s6", "draft", "no-verdict", "-", "-"],
+                      [A[0], "0x%08x" % A[1], "s6", "recover", "banked", "MATCH", "rung carve"]])
+        tg = [A + (A[1] + 16, 4, "1-16"), B + (B[1] + 16, 4, "1-16"), (A[0], 0x80000020, 0x80000030, 4, "1-16")]
+        ok.append(wave_counts("s6", tg, JOURNAL) == (1, 1, 1, 4))
+        if ok[-1]:
+            print("selftest recover counts: ok")
     finally:
         WAVES, JOURNAL, RUN = saved
     same = cfg_hash() == before
     if not same:
         print("FAIL: config/ changed during the selftest")
     n = sum(ok) if same else 0
-    print("selftest: %d of 4 ok" % n)
-    return 0 if n == 4 else 1
+    print("selftest: %d of 6 ok" % n)
+    return 0 if n == 6 else 1
 
 
 def main(argv=None):
@@ -1152,10 +1311,10 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true", help="ledger counts + close-refusal control (tracked config only)")
     ap.add_argument("--selftest", action="store_true", help="scratch-only refusals under .run/waves/_selftest/")
     sub = ap.add_subparsers(dest="cmd")
-    for n in ("gate", "fleet", "close"):
+    for n in ("gate", "recover", "fleet", "close"):
         s = sub.add_parser(n)
         s.add_argument("wave")
-        if n == "gate":
+        if n in ("gate", "recover"):
             s.add_argument("--in-volume", action="store_true")
     h = sub.add_parser("harvest")
     h.add_argument("wave")
@@ -1189,7 +1348,8 @@ def main(argv=None):
         ap.error("a subcommand, --check or --selftest is required")
     if getattr(a, "wave", None) and not WAVE_ID.match(a.wave):
         ap.error("wave id must match [A-Za-z0-9_]+")
-    return {"draw": cmd_draw, "cards": cmd_cards, "gate": cmd_gate, "fleet": cmd_fleet, "harvest": cmd_harvest,
+    return {"draw": cmd_draw, "cards": cmd_cards, "gate": cmd_gate, "recover": cmd_recover, "fleet": cmd_fleet,
+            "harvest": cmd_harvest,
             "strip": cmd_strip, "close": cmd_close}[a.cmd](a)
 
 

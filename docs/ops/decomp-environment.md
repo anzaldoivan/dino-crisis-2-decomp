@@ -761,6 +761,20 @@ Lever proof (binding):
   group snapshot src/ config/ include/, `reconcile.py --apply` per member, ONE `propagate.scratch_build` ONLY=<alias>
   (scratch `.run/waves/_scratch/`) + sha1. Green → `.run/waves/W/banks/<k>.tar` + `banks.tsv` (`k alias unit fns paths
   commit`); red → files restored (splat_gen when config/ changed), members plateau `bank-hash <alias>`/`apply-failed`.
+  T5.c32: a member whose `--apply` verdict is not `banked` is restored and dropped alone (it no longer reds its whole
+  group); its note is `apply-failed <verdict>; <last ladder rung line>` (hashes dropped; pure `apply_note`). The
+  reconcile rc is ignored (it also reflects other dirs' verdicts); the verdict file decides.
+- Carve fixes (T5.c32): `carve.build` runs `make split` then `make build` (one make listed the pre-resplit asm/ files
+  as prerequisites → `No rule to make target asm/...s` after every carve); a carve inside an existing unit E keeps E
+  on [E.lo, start) and moves E's fns at/after the cut to a continuation row `game_<end>` (E's text pruned per range,
+  `carve.prune`); the reconcile carve rung composes with the draft's own preamble first, dc2.h + self-decl second
+  (self-decl dropped a draft typedef dc2.h defines differently: `structure has no member`).
+- `recover W` (host, T5.c32; inner `recover W --in-volume`): wave gated (drafted ≠ `-`) and tree clean, then as `gate`
+  (sync, push, inner, pull, one commit per bank, commit `recover: banked B + failed F + no-verdict V = D drafted`).
+  Inner: targets with no `banked` journal row in W are re-scored, banked and labelled as in gate; journal rows
+  appended with route `recover`, `<dir>/recover.json`; the waves row drafted…insns_banked recounted from the journal
+  (`wave_counts`: any banked row → B; else the latest row's outcome, no-verdict → V, rest → F; propagated adds).
+  Re-runnable: banked fns are skipped.
   After ≥ 1 bank: `census.py --check` (`check:` line), `twins.py` (`twins:` line), `propagate.py --dry-run --family`
   per banked family exemplar (sum = propagated), `propagation candidate: A:S (n members) unregistered` for exact-dup
   heads without a families.tsv row. Each dir gets `gate.json` (alias start outcome rung reason label, final outcome);
@@ -781,8 +795,9 @@ Lever proof (binding):
   journal.tsv [+ routing.tsv when present]; K = header matches the plan shape and every row has its column count), then `routing: M of B buckets measured on the manual wave`, `waves: C of W closed
   with harvest`, `fleet: F of W banked batches followed by a clean fleet check`, `wave control: ok|FAIL` (planted
   unharvested wave under `.run/waves/_control/` must be refused). rc 0 iff control ok and ledger headers parse.
-  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 4 of 4 ok`
-  (case 4: planted mismatch / cc1-error log texts → `selftest outcome map: ok`).
+  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 6 of 6 ok`
+  (case 4: planted mismatch / cc1-error log texts → `selftest outcome map: ok`; case 5: apply cause note +
+  enclosing-unit prune; case 6: recover counts from a planted journal).
 - Gotcha: the Makefile's sha1 check renames a mismatching bin `build/<alias>.bin.bad` and make exits 2, so "make rc 0"
   alone does not identify a hash mismatch (strip checks the `.bad` file).
 

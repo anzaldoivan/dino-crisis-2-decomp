@@ -5,8 +5,10 @@
       add or narrow the config/c_units.tsv row (alias, start); regenerate that alias only
       (`splat_gen.py --force --only <alias>`); write src/<alias>/<unit>.c (`#include "common.h"` + one INCLUDE_ASM
       per census fn in the unit's range, no stub bodies, C0028) or, when it exists, drop the INCLUDE_ASM lines
-      outside the range; `make build ONLY=<alias>` + `sha1sum -c config/check.<alias>.sha`. Any failure restores
-      c_units.tsv, the yaml, the sha and the unit byte-exactly and exits 1.
+      outside the range; `make split` then `make build ONLY=<alias>` + `sha1sum -c config/check.<alias>.sha`.
+      A new start inside an existing unit E (T5.c32): E keeps [E.lo, start), its fns at/after --end move to a
+      continuation row game_<end> (E's text pruned to each range; a C body left in no unit is refused).
+      Any failure restores c_units.tsv, the yaml, the sha and the units byte-exactly and exits 1.
   carve.py --check
       every c_units row: `splat_gen.py --check --only`, unit present, relink + sha1 → `carves: C of C build
       hash-equal`; control: a planted carve at a lib-object start (config/boundaries.tsv) must be refused with
@@ -58,11 +60,35 @@ def run(cmd, log):
 def build(alias):
     """Relink alias (resplit when its yaml changed) and sha1-check it; return '' or the failure."""
     (ROOT / f"build/{alias}.bin").unlink(missing_ok=True)
+    # T5.c32: resplit in its own make first; in one `make build` the .bin prerequisites are the asm/ files listed at
+    # parse time, which a resplit deletes -> `No rule to make target asm/...s` rc 2 after every carve.
+    rc, tail = run(["make", "split", f"ONLY={alias}"], f"split_{alias}.log")
+    if rc:
+        return f"make split ONLY={alias} rc {rc}: {' | '.join(tail)}"
     rc, tail = run(["make", "build", f"ONLY={alias}"], f"make_{alias}.log")
     if rc:
         return f"make build ONLY={alias} rc {rc}: {' | '.join(tail)}"
     rc, tail = run(["sh", "-c", f"cd build && sha1sum -c ../config/check.{alias}.sha"], f"sha_{alias}.log")
     return f"sha1 {alias}: {' | '.join(tail)}" if rc else ""
+
+
+def prune(text, lo, hi):
+    """text without the INCLUDE_ASM lines and func_<ADDR> C bodies outside [lo, hi) (T5.c32: enclosing-unit split)."""
+    s, cut = banked.strip(text), []
+    for m in banked.HEAD.finditer(s):
+        f = FUNC.match(m.group(1))
+        if not f or lo <= int(f.group(1), 16) < hi:
+            continue
+        depth, i = 0, m.end() - 1
+        while i < len(s):
+            depth += {"{": 1, "}": -1}.get(s[i], 0)
+            if depth == 0:
+                break
+            i += 1
+        cut.append((m.start(), i + 1 + (s[i + 1:i + 2] == "\n")))
+    for a, b in reversed(cut):
+        text = text[:a] + text[b:]
+    return INC.sub(lambda m: m.group(0) if lo <= int(m.group(1), 16) < hi else "", text)
 
 
 def rows_text():
@@ -77,7 +103,16 @@ def carve(alias, start, end, unit):
         raise Refused(f"{alias}: 0x{start:08x} is not a census function start")
     if end is not None and (end not in {e for s, e in fns if s >= start} or any(s < end < e for s, e in fns)):
         raise Refused(f"{alias}: --end 0x{end:08x} is not a census function end")
-    lines, hit = rows_text(), None
+    yaml, sha = ROOT / f"config/splat/{alias}.yaml", ROOT / f"config/check.{alias}.sha"
+    row = next(r for r in sg.fleet()[0] if r["alias"] == alias)
+    addr = (lambda o: o - sg.EXE_HDR + sg.EXE_BASE) if row["class"] == "exe" else (lambda o: o + row["base"])
+
+    def rng(u):  # [lo, hi) of unit u's c piece in the yaml as it stands, or None
+        pieces = sg.parse(yaml.read_text())[0]
+        k = next((i for i, p in enumerate(pieces) if p[1] == "c" and p[2] == u), None)
+        return None if k is None else (addr(pieces[k][0]), addr(pieces[k + 1][0] if k + 1 < len(pieces) else row["size"]))
+
+    lines, hit, encl = rows_text(), None, None
     for i, line in enumerate(lines):
         f = line.rstrip("\n").split("\t")
         if not line.startswith("#") and len(f) >= 3 and f[0] == alias and int(f[1], 16) == start:
@@ -85,27 +120,49 @@ def carve(alias, start, end, unit):
     endf = "" if end is None else f"0x{end:08x}"
     if hit is None:
         unit = unit or f"game_{start:08X}"
+        # T5.c32: start inside an existing unit E: E keeps [E.lo, start); E's fns at/after the closing cut go to a
+        # continuation unit game_<end> (E's text, pruned) so no C body or INCLUDE_ASM points at a moved .s file.
+        for i, line in enumerate(lines):
+            f = (line.rstrip("\n").split("\t") + ["", ""])[:5]
+            r = None if line.startswith("#") or f[0] != alias else rng(f[2])
+            if r and r[0] < start < r[1]:
+                encl = (f[2], r, f[4])
+                if f[4]:
+                    f[4] = f"0x{start:08x}"
+                    lines[i] = "\t".join(f) + "\n"
+        cont = None
+        if encl and end is not None and end < encl[1][1] and any(end <= s < encl[1][1] for s, _ in fns):
+            cont = f"game_{end:08X}"
+            lines.append(f"{alias}\t0x{end:08x}\t{cont}\tT5.c32 carve remainder of {encl[0]}"
+                         + (f"\t{encl[2]}" if encl[2] else "") + "\n")
         lines.append(f"{alias}\t0x{start:08x}\t{unit}\tT3 carve" + (f"\t{endf}" if endf else "") + "\n")
     else:
         f = (lines[hit].rstrip("\n").split("\t") + ["", ""])[:5]
         f[2] = unit or f[2]
         unit, f[4] = f[2], endf
         lines[hit] = "\t".join(f if endf else f[:4]) + "\n"
-    yaml, sha = ROOT / f"config/splat/{alias}.yaml", ROOT / f"config/check.{alias}.sha"
     src = ROOT / f"src/{alias}/{unit}.c"
-    snap = {p: (p.read_bytes() if p.exists() else None) for p in (sg.C_UNITS, yaml, sha, src)}
+    esrc = ROOT / f"src/{alias}/{encl[0]}.c" if encl else None
+    csrc = ROOT / f"src/{alias}/{cont}.c" if encl and cont else None
+    snap = {p: (p.read_bytes() if p.exists() else None) for p in (sg.C_UNITS, yaml, sha, src, esrc, csrc) if p}
+    if csrc is not None and snap[csrc] is not None:
+        raise Refused(f"{csrc.relative_to(ROOT)} exists; continuation unit name taken")
     try:
         sg.C_UNITS.write_text("".join(lines))
         rc, tail = run([sys.executable, "tools/splat_gen.py", "--force", "--only", alias], f"splat_gen_{alias}.log")
         if rc:
             raise Refused(f"splat_gen --only {alias} rc {rc}: {' | '.join(tail)}")
-        row = next(r for r in sg.fleet()[0] if r["alias"] == alias)
-        pieces = sg.parse(yaml.read_text())[0]
-        k = next(i for i, p in enumerate(pieces) if p[1] == "c" and p[2] == unit)
-        addr = (lambda o: o - sg.EXE_HDR + sg.EXE_BASE) if row["class"] == "exe" else (lambda o: o + row["base"])
-        lo = addr(pieces[k][0])
-        hi = addr(pieces[k + 1][0] if k + 1 < len(pieces) else row["size"])
+        lo, hi = rng(unit)
         inside = [s for s, _ in fns if lo <= s < hi]
+        if esrc is not None and snap[esrc] is not None:
+            etext = snap[esrc].decode()
+            kept = [(esrc, rng(encl[0]))] + ([(csrc, rng(cont))] if csrc else [])
+            for name, _ in banked.functions(etext):
+                m = FUNC.match(name)
+                if m and not any(a <= int(m.group(1), 16) < b for _, (a, b) in kept):
+                    raise Refused(f"{esrc.relative_to(ROOT)}: C body {name} would leave every unit")
+            for p, (a, b) in kept:  # the continuation's .s files split under nonmatchings/<cont>/
+                p.write_text(prune(etext, a, b).replace(f'/nonmatchings/{encl[0]}"', f'/nonmatchings/{p.stem}"'))
         if snap[src] is None:
             body = "".join(f'\nINCLUDE_ASM("asm/{alias}/nonmatchings/{unit}", func_{s:08X});\n' for s in inside)
             src.parent.mkdir(parents=True, exist_ok=True)
