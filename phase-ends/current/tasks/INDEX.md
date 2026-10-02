@@ -8,3 +8,4 @@ T5 | done | levers for expand-cse and loop, byte-proven on game fns | - | tasks/
 T6 | done | permuter pinned in the image, stored-draft run proves iteration | - | tasks/T6.md | logs/T6.md | R1.7-001
 T7 | done | plateau classifier labels the planted plateaus | - | tasks/T7.md | logs/T7.md | -
 T8 | done | cookbook symptom index with coverage assertion | - | tasks/T8.md | logs/T8.md | -
+T9 | done | wiring, card row, clean milestone run | - | tasks/T9.md | logs/T9.md | R1.7-001
