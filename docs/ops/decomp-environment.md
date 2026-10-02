@@ -48,12 +48,14 @@ target is absolute; O1 differs on every probe. No per-module variation seen.
 |---|---|---|
 | EXE (slus_012_79) | pinned | probes func_80037824, func_80037E18; T2 85,453 insns / 973 funcs, 84 low-field trap-7 breaks, 0 gp-rel |
 | ST (psx_bin_st*) | pinned | probes func_800D7AE4 (st2), func_800D5C40 (st6), func_800DB960 (st9); T2 31,542 / 487, 45 breaks, 0 gp-rel |
-| E | pinned (assumed, unprobed) | T2 46,684 / 618, 4 breaks, 0 gp-rel |
-| KOF | pinned (assumed, unprobed) | T2 29,621 / 483, 4 breaks, 0 gp-rel |
-| WEP | pinned (assumed, unprobed) | T2 42,205 / 458, 2 breaks, 0 gp-rel |
-| WEP_S | pinned (assumed, unprobed) | T2 3,426 / 42, 0 breaks, 0 gp-rel |
-| RES | pinned (assumed, unprobed) | T2 3,297 / 28, 3 breaks, 0 gp-rel |
-| MISC | pinned (assumed, unprobed) | T2 41,158 / 317, 29 breaks, 0 gp-rel |
+| E | pinned | probe func_800D2514 (bin_e60:0x800d2514, T2.c1 Phase 1.8); T2 46,684 / 618, 4 breaks, 0 gp-rel |
+| KOF | pinned | probe func_80129FA8 (bin_kof_p60p:0x80129fa8, T2.c1 Phase 1.8); T2 29,621 / 483, 4 breaks, 0 gp-rel |
+| WEP | pinned | probe func_8017FA84 (bin_wep0c:0x8017fa84, T2.c1 Phase 1.8); T2 42,205 / 458, 2 breaks, 0 gp-rel |
+| WEP_S | pinned | probe func_801813F4 (bin_wep_s03:0x801813f4, T2.c1 Phase 1.8); T2 3,426 / 42, 0 breaks, 0 gp-rel |
+| RES | pinned | probe func_80150D90 (bin_res01:0x80150d90, T2.c1 Phase 1.8); T2 3,297 / 28, 3 breaks, 0 gp-rel |
+| misc | pinned | probe func_800D627C (bin_ending:0x800d627c, T2.c1 Phase 1.8); T2 (old MISC group = misc+MAP+R2) 41,158 / 317, 29 breaks, 0 gp-rel |
+| MAP | pinned | probe func_801C1F88 (psx_data_map:0x801c1f88, T2.c1 Phase 1.8); T2 stats in the misc row |
+| R2 | pinned | probe func_801C1950 (bin_subscr6:0x801c1950, T2.c1 Phase 1.8); T2 stats in the misc row |
 | lib band | not ours | psyq470 archive code, G56; T2 23,836 / 480 |
 
 Build use (T5.c1, Phase 1.4): `Makefile` vars `CPP CC1 MASPSX CPPFLAGS CFLAGS MASPSXFLAGS` carry this triple (cpp adds
@@ -141,8 +143,9 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
 - **Control (every run, `.run/draw/control/`):** planted banked game fn + census lib fn + a game fn start+4 + two direct
   twins that each pass every other reason → exactly banked 1, lib 1, not-a-census-start 1, open-twin-sibling 1,
   accepted 1 (the first twin) → `control: ok`; else `control: FAIL <diff>` rc 1 (no twin pair found = FAIL).
-- **Fleet (T6.c1, 2026-10-01):** 769 of 3426 accepted; refused banked 7, pin-unproven 1879, open-twin-sibling 635,
-  switch 122, has-banked-twin 14, others 0. Pinned families = exe, LOGO+ST.
+- **Fleet (T2.c2 Phase 1.8, 2026-10-02):** 1164 of 3426 accepted; refused banked 7, pin-unproven 0, open-twin-sibling 2116,
+  switch 122, has-banked-twin 17, others 0. Pinned families = all 10 (exe, LOGO+ST, E, KOF, WEP, WEP_S, RES, misc, MAP, R2);
+  14 probes. Was (T6.c1, 2026-10-01): 769 accepted, pin-unproven 1879, open-twin-sibling 635, has-banked-twin 14.
 - **Verify count slot (T9, Phase 1.6):** in a milestone expectation, `<X> of <Y>` with X, Y standalone capitals makes
   both letters `\d+` placeholders, `A`/`I` included (`draw: A of D accepted`); elsewhere `a`/`A`/`I` stay literal
   (`phaseend_index.match_expects`, `verify --help`). `plan_edit.py lint` (and `approve`) WARNs on `A`/`I` in such a slot.

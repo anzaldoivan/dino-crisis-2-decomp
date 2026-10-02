@@ -909,7 +909,8 @@ def main(argv=None):
             print("fixture libgame: %s 0x%08x lib -> game" % (EXE, r[i][1]))
     cok, nprobe = controls(bins, results)
     if full:
-        cok &= nprobe == 6  # was 5; T5.c1 added the func_80052634 probe row
+        # was == 6 (hard-coded); T2.c2 derives it from config/probes.tsv
+        cok &= nprobe == sum(1 for r in rows(PROBES) if r[1] != "self")
     good = cok and tot["P"] == 0 and tot["T"] == 0 and tails_in == 0
     if a.check:
         good &= unk == 0
