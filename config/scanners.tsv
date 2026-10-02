@@ -27,3 +27,4 @@ compiler_source	python3 tools/compiler_source.py --check	^version sources: (\d+)
 codegen_map	python3 tools/codegen_map.py --check	^levers: \d+ of (\d+) byte-proven$	^inert control: ok$	yes
 permute	python3 tools/permute.py --check	^permuter: stored draft iterated \d+ times, (\d+) distinct candidates$	^scorer control: ok$	yes
 plateau	python3 tools/plateau.py --check	^plateau: \d+ of (\d+) planted labelled$	^match control: ok$	yes
+cookbook_index	python3 tools/cookbook_index.py --check	^cookbook-index: \d+ of (\d+) entries indexed$	^control: ok$	no

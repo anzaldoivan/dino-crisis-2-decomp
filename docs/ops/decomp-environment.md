@@ -654,6 +654,17 @@ Working order:
   labelled`, `match control: ok|FAIL` (every after_c MATCH), `unknown: U`; rc 1 on any mislabel or control FAIL.
 - Scanner row `plateau` (game `yes`).
 
+### Cookbook symptom index (T8, Phase 1.7)
+- `PY tools/cookbook_index.py [--write]` regenerates `docs/cookbook-symptoms.md` (generated; never hand-edit): tells by
+  pass group (entries with a `tell:` header line; group from the levers.tsv row citing the entry, else a group tag),
+  inherited C0002 tells (`untested` for TODO), every other entry by tag. Stdlib only; host PY or container python3.
+- Regenerate after `tools/cookbook_add.sh`, a levers.tsv change, or a C0002 table / inherited_tells.tsv change.
+- `--check`: one INDEX.md line per entry file and vice versa, every entry rendered, levers `cookbook` and C0002 Entries
+  ids resolve, TODO rows agree with inherited_tells.tsv `untested`, doc not stale; prints `cookbook-index: k of N
+  entries indexed`, `refs: r of R resolve`, `control: ok|FAIL` (planted C9999 without INDEX line, planted levers row
+  citing a missing id, scratch roots under `.run/cookbook_index/`); rc 1 on any finding. Read-only on cookbook/.
+- Scanner row `cookbook_index` (game `no`).
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything
