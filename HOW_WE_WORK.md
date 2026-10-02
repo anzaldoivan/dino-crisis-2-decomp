@@ -50,9 +50,10 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->
-- docker-vm-no-privileged — Never probe the Docker VM with --privileged or --pid=host; the classifier treats it as containment escape
-- pipe-exit-status — A check piped into tail reports tail's exit; read FAIL lines or run without a pipe (zsh has pipestatus, not PIPESTATUS)
-- ghidra-mcp-scratch-copy — Run MCP smoke tests on a scratch copy of the Ghidra project so a live headless job never hits the project lock
+- docker-vm-no-privileged — Never probe the Docker VM with --privileged/--pid=host
+- pipe-exit-status — A check piped into tail reports tail's exit; read FAIL lines (zsh: pipestatus)
+- ghidra-mcp-scratch-copy — MCP smoke tests use a scratch copy of the Ghidra project (a live job holds the lock)
+- dc2-volume-runs — One fleet-check owner per volume; re-sync before checks; own scratch dir; host-written docs
 
 ## Paths <!-- roles: expert coder router planner review critic discuss auditor curator -->
 - Oracles (X3): the byte gate; Ghidra project `ghidra/dc2` (ignored); PCSX-Redux API: docs/ops/decomp-environment.md "The oracles"
