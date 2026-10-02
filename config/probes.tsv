@@ -14,3 +14,4 @@ func_801813F4	bin_wep_s03	0x801813f4	0x80181460	tools/probes/func_801813F4.c	T2 
 func_800D627C	bin_ending	0x800d627c	0x800d62bc	tools/probes/func_800D627C.c	T2 (1.8) pin proof, family misc, 16 insns
 func_801C1F88	psx_data_map	0x801c1f88	0x801c1fd8	tools/probes/func_801C1F88.c	T2 (1.8) pin proof, family MAP, 20 insns
 func_801C1950	bin_subscr6	0x801c1950	0x801c19a8	tools/probes/func_801C1950.c	T2 (1.8) pin proof, family R2, 22 insns
+func_80150D90	bin_res01	0x80150d90	0x80150de4	tools/probes/func_80150D90.c	T2 (1.8) pin proof, family RES, 21 insns
