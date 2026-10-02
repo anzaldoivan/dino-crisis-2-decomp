@@ -715,6 +715,14 @@ Lever proof (binding):
   order; refused rc 2 if the dir exists) + an `open` waves.tsv row; `--dry-run` → `.run/waves/_dry/targets.tsv` only.
   Prints `wave:`, `pool:`, `targets: n (insns S of W)`, `bucket <lo>-<hi>: k`, `twin-skipped:`, `validated: n of n`,
   `open control: ok`, `dry-run: nothing tracked written`.
+- Draw flags (T5.c1): `--per-bucket N` (manual: a bucket stops taking once it holds N; weight stays a cap);
+  `--family F[,F...]` (pool ∩ census `family` column; unknown family → `REFUSED: unknown family …` rc 2); `--id ID`
+  (`[A-Za-z0-9_]+`, replaces `w<NN>`; refused rc 2 when ID is in waves.tsv or `.run/waves/<ID>/` exists, checked on
+  `--dry-run` too, which still writes `_dry`). M1 shape: `--kind manual --weight 1000000 --per-bucket 5 --seed 1`.
+- `config/routing.tsv` (T5.c1 seed): `bucket min_insns max_insns route card_cap attempts drafted banked rate
+  cost_ctx_k basis`; rows b1 1-15, b2 16-50, b3 51-100, b4 101-200, b5 201-400, b6 401-`-` (open), each `draft 8 1`
+  and `-` measurements until the manual wave fills them (basis = its wave id). `card_cap` = max plateau.py compile runs
+  per drafting coder; `attempts` = coder attempts per target (H7). Cards print `route: … card_cap: … attempts: …`.
 - Files written in the container stay in the volume; pull to the host (dc.sh run has no -t, stdout binary-safe):
   `bash tools/docker/dc.sh run tar -cf - .run/waves/<id> config/waves.tsv | tar -xf -` (printed as `pull:`).
 - cards: re-validates targets.tsv (empty → rc 2; missing census/twins/asm → draw_filter build-or-refuse), writes
@@ -745,6 +753,10 @@ Lever proof (binding):
   `.bin.bad` and no compiler/assembler/link error (`error:`, `Error:`, `undefined reference`, …) → plateau note
   `hash-mismatch <rung>`, else compile-error (T4.c2); other failed → plateau; none → no-verdict. Prints
   `claims: k of D agree with the score` (verdict.json status is a claim, never the score).
+- Plateau label (T5.c1): after bank, every target with a draft.c whose outcome is plateau or compile-error (not
+  `verbatim`) runs `tools/plateau.py <draft.c> --target A:S:E` (E from targets.tsv; serial, scratch
+  `.run/plateau/draft/draft/`); its `label:` value replaces the agent's claimed label in gate.json and the journal;
+  no label line / rc ≠ 0 (draft does not compile) → `UNCOMPILED`. Banked, no-verdict and verbatim keep their label.
 - Bank (DK-36): candidates grouped by destination unit (as cards; none → own carve group), (alias, unit) order; per
   group snapshot src/ config/ include/, `reconcile.py --apply` per member, ONE `propagate.scratch_build` ONLY=<alias>
   (scratch `.run/waves/_scratch/`) + sha1. Green → `.run/waves/W/banks/<k>.tar` + `banks.tsv` (`k alias unit fns paths

@@ -2,6 +2,7 @@
 """wave.py -- draw a wave of targets and write their cards (T3, Phase 1.8); stdlib only, run in the container:
     dc.sh run python3 tools/wave.py draw --kind {manual,family,exe,overlay,hard} --weight INSNS
                                          [--binary ALIAS] [--seed S] [--dry-run]
+                                         [--per-bucket N] [--family F[,F...]] [--id ID]   (T5.c1)
     dc.sh run python3 tools/wave.py cards [WAVE] [--dry-run]
 
 draw: runs tools/draw_filter.py --all (rc != 0 -> rc 2), pool = .run/draw/accepted.tsv ∩ census kind=game (--binary:
@@ -13,7 +14,8 @@ start+end, asm on disk, not banked, accepted) -> failures listed, rc 1; empty dr
 Open guard (dry-run too): a config/waves.tsv row with harvest `open` or fleet `-`/empty -> `REFUSED: wave <id> ...`
 rc 2; an in-memory control plants one of each and must refuse both (`open control: ok|FAIL`, FAIL rc 1).
 Writes .run/waves/<wNN>/targets.tsv + appends an open config/waves.tsv row (refused rc 2 when the dir exists);
---dry-run: .run/waves/_dry/targets.tsv only.
+--dry-run: .run/waves/_dry/targets.tsv only. --per-bucket N (manual): a bucket stops at N; --family: pool ∩ census
+family; --id ID replaces wNN (refused rc 2 when in waves.tsv or its dir exists; checked on --dry-run too).
 cards: re-validates .run/waves/<WAVE>/targets.tsv (WAVE defaults to _dry with --dry-run), writes
 <alias>_<start>/card.md per target; G44: every lever id resolves in config/levers.tsv and every C-id in
 cookbook/INDEX.md, else the card fails (not written, listed, rc 1); a control card with a planted C9999 must fail
@@ -145,6 +147,13 @@ def cmd_draw(a):
         print(msg)
         print("open control: %s" % ("ok" if ctl else "FAIL"))
         return 2 if ctl else 1
+    if a.id is not None:
+        if not WAVE_ID.match(a.id):
+            print("REFUSED: --id %s must match [A-Za-z0-9_]+" % a.id)
+            return 2
+        if any(r and r[0] == a.id for r in wrows) or (RUN / a.id).exists():
+            print("REFUSED: wave id %s already in config/waves.tsv or .run/waves/%s/ exists" % (a.id, a.id))
+            return 2
     p = subprocess.run([sys.executable, str(ROOT / "tools/draw_filter.py"), "--all"], cwd=ROOT,
                        capture_output=True, text=True)
     if p.returncode:
@@ -156,7 +165,12 @@ def cmd_draw(a):
     if a.binary and a.binary not in census.load_fleet():
         print("REFUSED: unknown binary %s" % a.binary)
         return 2
-    pool = sorted(k for k in acc if k in ev.fn and ev.fn[k][1] == "game" and (not a.binary or k[0] == a.binary))
+    fams = set(a.family.split(",")) if a.family else None
+    if fams and fams - {v[2] for v in ev.fn.values()}:
+        print("REFUSED: unknown family %s" % ",".join(sorted(fams - {v[2] for v in ev.fn.values()})))
+        return 2
+    pool = sorted(k for k in acc if k in ev.fn and ev.fn[k][1] == "game" and (not a.binary or k[0] == a.binary)
+                  and (not fams or ev.fn[k][2] in fams))
     bks = buckets()
     per = {b[2]: [] for b in bks}
     keyed = []
@@ -188,20 +202,22 @@ def cmd_draw(a):
     if a.kind == "manual":
         qs = [sorted(per[b[2]]) for b in bks]
         idx = [0] * len(qs)
+        held = [0] * len(qs)
         progress = True
         while progress:
             progress = False
             for i, q in enumerate(qs):
-                while idx[i] < len(q):
+                while idx[i] < len(q) and (a.per_bucket is None or held[i] < a.per_bucket):
                     c = q[idx[i]]
                     idx[i] += 1
                     if take(c):
+                        held[i] += 1
                         progress = True
                         break
     else:
         for c in sorted(keyed):
             take(c)
-    wave = "_dry" if a.dry_run else "w%02d" % (1 + max([int(m.group(1)) for r in wrows
+    wave = "_dry" if a.dry_run else a.id or "w%02d" % (1 + max([int(m.group(1)) for r in wrows
                                                           for m in [re.match(r"w(\d+)$", r[0])] if m] or [0]))
     print("wave: %s kind %s seed %s" % (wave, a.kind, a.seed))
     print("pool: %d accepted" % len(pool))
@@ -683,6 +699,19 @@ def after_banks(banked):
     return prop
 
 
+def plateau_labels(wave, targets, scores):
+    """T5.c1: unbanked drafts (plateau / compile-error, not verbatim) get tools/plateau.py's `label:` value, replacing
+    the agent's claim; no label line (draft does not compile) -> UNCOMPILED. Serial: plateau scratch is per draft stem."""
+    for al, st, en, ins, bk in targets:
+        s = scores[(al, st)]
+        dc = RUN / wave / tdir(al, st) / "draft.c"
+        if s["outcome"] not in ("plateau", "compile-error") or s["reason"] == "verbatim" or not dc.is_file():
+            continue
+        p = sh([sys.executable, "tools/plateau.py", str(dc), "--target", "%s:0x%08x:0x%08x" % (al, st, en)])
+        lab = [x.split(":", 1)[1].strip() for x in p.stdout.splitlines() if x.startswith("label:")]
+        s["label"] = word(lab[-1], 40) if p.returncode == 0 and lab else "UNCOMPILED"
+
+
 def gate_inner(wave):
     """1a + 1b in the volume: score, bank per unit, journal + waves row. -> rc."""
     import json
@@ -708,6 +737,7 @@ def gate_inner(wave):
             print(msg)
             return 2
     bank(wave, targets, scores)
+    plateau_labels(wave, targets, scores)
     out = Counter(s["outcome"] for s in scores.values())
     B, V = out["banked"], out["no-verdict"]
     F = D - B - V
@@ -1144,6 +1174,9 @@ def main(argv=None):
     d.add_argument("--binary")
     d.add_argument("--seed", default="0")
     d.add_argument("--dry-run", action="store_true")
+    d.add_argument("--per-bucket", type=int, help="manual: a bucket stops taking once it holds N (weight stays a cap)")
+    d.add_argument("--family", help="F[,F...]: pool restricted to these census family values (unknown -> rc 2)")
+    d.add_argument("--id", help="wave id (default w<NN>); refused rc 2 if in config/waves.tsv or its dir exists")
     c = sub.add_parser("cards")
     c.add_argument("wave", nargs="?")
     c.add_argument("--dry-run", action="store_true")
