@@ -27,25 +27,26 @@ PY = /opt/homebrew/opt/python@3.14/bin/python3.14
 | Name | Command | Purpose |
 |---|---|---|
 | launch | `PY tools/launch.py --seed-only` | pa-session state detector → `.run/seed.md` |
-| plan_edit | `PY tools/plan_edit.py` | the only writer of `PHASE_PLAN.md` (status, Changes, add/reopen) |
-| status | `PY tools/status.py` | `.run/status.json` for the statusline; INBOX consume; waiting flags |
-| task_log | `PY tools/task_log.py` | lint and finish a task summary (`Verified:` required) |
-| research_add | `PY tools/research_add.py` | allocate a report id, write the index line |
-| rules_add | `PY tools/rules_add.py` | add, supersede, promote, retire a rule |
-| skill_add | `PY tools/skill_add.py` | turn a `workflow:` gotcha into `.claude/skills/<name>/SKILL.md` |
-| cookbook_add | `bash tools/cookbook_add.sh` | add a cookbook entry and its index line |
-| phaseend_index | `PY tools/phaseend_index.py` | assemble, lint, verify, archive a PhaseEnd; verify binds `K of K` letters + bounds |
-| genend_index | `PY tools/genend_index.py` | assemble and lint a GenerationEnd |
-| commit_task | `bash tools/commit_task.sh` | the only commit path; explicit paths, no trailers, never pushes |
-| run | `bash tools/run.sh` | any command that may print >40 lines; `--bg` / `--wait` for long compute |
-| dc | `bash tools/docker/dc.sh` | amd64 build host: `build`, `sync` (tree → volume `dc2-work`), `run <cmd>` in `/work` |
-| extract | `make extract [OUT=…]` | own disc extractor → files/ + manifest |
-| census | `dc.sh run python3 tools/census.py --check` | function census → `.run/census/functions.tsv` |
+| plan_edit | `PY tools/plan_edit.py` | sole `PHASE_PLAN.md` writer (status, Changes, add/reopen) |
+| status | `PY tools/status.py` | statusline `.run/status.json`, INBOX consume, waiting flags |
+| task_log | `PY tools/task_log.py` | lint/finish a task summary (`Verified:` needed) |
+| research_add | `PY tools/research_add.py` | allocate report id + index line |
+| rules_add | `PY tools/rules_add.py` | add/supersede/promote/retire a rule |
+| skill_add | `PY tools/skill_add.py` | `workflow:` gotcha → `.claude/skills/*/SKILL.md` |
+| cookbook_add | `bash tools/cookbook_add.sh` | add entry + index line |
+| phaseend_index | `PY tools/phaseend_index.py` | assemble/lint/verify (`K of K` letters + bounds)/archive a PhaseEnd |
+| genend_index | `PY tools/genend_index.py` | assemble, lint a GenerationEnd |
+| commit_task | `bash tools/commit_task.sh` | only commit path; explicit paths, no trailers, no push |
+| run | `bash tools/run.sh` | output >40 lines; `--bg`/`--wait` long compute |
+| dc | `bash tools/docker/dc.sh` | amd64 host: `build`, `sync` (→ `dc2-work`), `run <cmd>` in `/work` |
+| extract | `make extract [OUT=…]` | disc extractor → files/ + manifest |
+| census | `dc.sh run python3 tools/census.py --check` | functions → `.run/census/functions.tsv` |
 | oracle_diff | `dc.sh run python3 tools/oracle_diff.py` | census vs Ghidra cache `config/ghidra/` |
 | dup_census | `dc.sh run python3 tools/dup_census.py --check` | dup tiers, reach → `.run/census/dup.tsv` |
-| progress | `dc.sh run make progress` | game functions in C, denominators from build |
+| progress | `dc.sh run make progress` | game fns in C; denominators from build |
 | harness | `dc.sh run python3 tools/harness.py [--scanners]` | 6 pairs (fleet_check runs it); `config/scanners.tsv` |
 | multipliers | `dc.sh run python3 tools/{twins,draw_filter,probe,reconcile,propagate,carve,types_check}.py` | order, records: decomp-environment.md "The multipliers" |
+| codegen | `tools/{compiler_source,codegen_map,permute,plateau,cookbook_index}.py` | order, records, lever proof: decomp-environment.md "The codegen map…" |
 
 ## Skills <!-- roles: expert planner -->
 <!-- one line per captured workflow; the SKILL.md is the canonical text -->

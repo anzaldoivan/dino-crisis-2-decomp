@@ -574,6 +574,26 @@ Working order:
 5. **fleet:** `dc.sh sync && dc.sh run bash tools/fleet_check.sh`, then `dc.sh run python3 tools/harness.py --scanners`
    (fleet_check prints no scanner lines); `census.py --check` after every bank.
 
+## The codegen map and the permuter (Phase 1.7)
+Tools (details in the `###` subsections below):
+- **compiler_source** (host PY; + `tools/cc1_dumps.sh`): `config/compiler_source.tsv`; tree `.run/compiler-src/gcc-2.95.2/`; dumps `.run/dumps/<name>/`.
+- **codegen_map** (container): `config/levers.tsv`, `config/inherited_tells.tsv`, drafts `tools/probes/levers/`; generates `docs/codegen-map.md` (`--write` on host).
+- **permute** (container): `.run/permute/<lever>/` (`candidates.log`, `output-<score>-<n>/`).
+- **plateau** (container): stdout evidence/label/bucket/levers; `levers.tsv` `label` column (12-label vocabulary).
+- **cookbook_index** (host or container): reads `cookbook/INDEX.md` + entries; generates `docs/cookbook-symptoms.md`.
+
+Working order:
+1. Symptom (a diff tell) → triage: `docs/cookbook-symptoms.md`, `docs/codegen-map.md` (incl. inherited C0002 tells) → lever = the cookbook entry's spelling.
+2. Plateau (draft stuck) → `plateau.py` label + bucket → bucket `permuter`: `permute.py`; `redraft`/`structural`: redraft.
+3. A score-0 permuter candidate is a waypoint; banked only via `reconcile.py` + clean fleet check (G61).
+
+Lever proof (binding):
+- A `levers.tsv` row names a game fn (alias, start, end).
+- `before` compiles under the pinned triple and differs from the game bytes with the row's tell.
+- `after` differs from `before` only by the lever and is byte-identical to the game fn (relocation-masked, `probe.py compare`).
+- Checked by `codegen_map.py --check`; refuses an inert lever (`before` also matches, G45).
+- Reproducer and the dump line attributing the tell to its pass live in the lever's cookbook entry.
+
 ### Compiler source and dumps (T1, Phase 1.7)
 - Source: `config/compiler_source.tsv` `# name version url sha256 dest`, one row gcc 2.95.2 from ftp.gnu.org
   (sha256 `064e1cb0…72482`, same bytes from mirrors.kernel.org/gnu). Scratch only (G12): tarball
