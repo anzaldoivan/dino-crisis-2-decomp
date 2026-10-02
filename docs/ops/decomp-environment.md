@@ -804,6 +804,13 @@ Lever proof (binding):
   19 of 30 (fleet 83/83, harvest done:19). Per-bucket bank rate b1-b4 0.80, b5 0.40, b6 0.20; cost_ctx_k (k tokens of
   coder context per target) b1 23.5, b2 25.3, b3 34.9, b4 36.0, b5 111.8, b6 374.1 (config/routing.tsv, basis M1).
   Cliff at b6 (401+ insns): route `draft+permute`; b1-b5 `draft`.
+- Wave size (T6): one wave = one Pro usage window = 1000k drafter tokens (+0.235 tooling overhead, M1's c32+c33 /
+  drafters). Basis: M1 drafted 30 (1077k) + c32/c33 (253k) inside 05:16-08:44 on 2026-10-02 with no limit hit, so a
+  window holds >= 1330k; no absolute figure exists (calibrate from the statusline 5h pct per wave). Weight: draft
+  waves 2500 insns, b6 (draft+permute) waves 8000 insns; per-draft cost = rate * cost_ctx_k (b1 18.8k .. b6 74.8k),
+  so a small-fn draw (b1 1.9k tokens/insn) overshoots: `draw --dry-run`, sum rate*cost_ctx_k per target, lower
+  `--weight` until <= 1000k. Projection (tasks/T6.md): ~104 windows of drafting for the 3400 stubs after exact-dup
+  dedup (exe 40, stage overlays 13, module overlays 51).
 - Scanner changes after M1 (T5.c33, H7): `reconcile` gates only its registered corpus (`.run/reconcile/`: direct
   runs + the `--check` control); wave scoring writes `reconcile.py --out .run/waves/W/_reconcile` (a `_` dir, so the
   stray-dir check skips it). `types`: M1's banked units canonicalised, not the scanner: shared shapes (SVECTOR,
