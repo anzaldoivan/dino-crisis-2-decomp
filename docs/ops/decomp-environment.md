@@ -698,6 +698,34 @@ Lever proof (binding):
   labelled`, `match control: ok|FAIL` (every after_c MATCH), `unknown: U`; rc 1 on any mislabel or control FAIL.
 - Scanner row `plateau` (game `yes`).
 
+### Waves: draw and cards (T3, Phase 1.8)
+- `dc.sh run python3 tools/wave.py draw --kind {manual,family,exe,overlay,hard} --weight INSNS [--binary ALIAS]
+  [--seed S] [--dry-run]` · `dc.sh run python3 tools/wave.py cards [WAVE] [--dry-run]` (WAVE defaults to `_dry` only
+  with --dry-run). Exit 0 ok / 1 fail / 2 refused. Ledgers: `config/waves.tsv`, `config/journal.tsv` (headers only
+  until a wave is pulled).
+- draw: runs `tools/draw_filter.py --all` first (rc ≠ 0 → rc 2); pool = `.run/draw/accepted.tsv` ∩ census kind=game
+  (`--binary` unknown → rc 2; pin-unproven → empty); insns = size/4. Buckets = `config/routing.tsv` rows, else insns
+  1-16, 17-32, 33-64, 65-128, 129-256, 257-inf. Key: sha256(`seed:alias:start`) hex, alias, int(start). manual =
+  round-robin over buckets ascending (each bucket's next candidate that fits); other kinds = one merged list. Greedy:
+  add iff sum + insns ≤ weight. A twins.tsv twin (either direction) of a drawn target is skipped (`twin-skipped`).
+- G49: every target re-checked (census game start+end, asm on disk, not banked, accepted) → failures listed, rc 1;
+  empty → `REFUSED: empty draw` rc 2. Open guard (dry-run too): a waves.tsv row with harvest `open` or fleet `-`/empty
+  → `REFUSED: wave <id> …` rc 2; in-memory control plants one of each → `open control: ok|FAIL` (FAIL rc 1).
+- Outputs: wave `w<NN>` (1 + max in waves.tsv) → `.run/waves/<id>/targets.tsv` (`alias start end insns bucket`, draw
+  order; refused rc 2 if the dir exists) + an `open` waves.tsv row; `--dry-run` → `.run/waves/_dry/targets.tsv` only.
+  Prints `wave:`, `pool:`, `targets: n (insns S of W)`, `bucket <lo>-<hi>: k`, `twin-skipped:`, `validated: n of n`,
+  `open control: ok`, `dry-run: nothing tracked written`.
+- Files written in the container stay in the volume; pull to the host (dc.sh run has no -t, stdout binary-safe):
+  `bash tools/docker/dc.sh run tar -cf - .run/waves/<id> config/waves.tsv | tar -xf -` (printed as `pull:`).
+- cards: re-validates targets.tsv (empty → rc 2; missing census/twins/asm → draw_filter build-or-refuse), writes
+  `.run/waves/<WAVE>/<alias>_<start>/card.md`: target, insns, bucket, asm path; destination unit = the c_units unit
+  whose `asm/<alias>/nonmatchings/<unit>/` holds the fn (else `none — carve: tools/carve.py <alias> <start>`); best
+  banked twin (distance asc, ratio desc); unit's top-level `#include`/`typedef`/`extern`/prototype lines;
+  `jal` callee names with the most frequent normalised declaration in src/ + include/ `(k of n)` or `undeclared`;
+  journal rows; route from routing.tsv; every levers.tsv row (journal labels first). G44: unresolvable lever id or
+  C-id → card not written, rc 1; control card with planted `C9999` must fail → `card control: ok|FAIL`.
+  Deterministic (no timestamps); no asm text/operands/encodings (G12). Prints `cards: n of n written (<WAVE>)`.
+
 ### Cookbook symptom index (T8, Phase 1.7)
 - `PY tools/cookbook_index.py [--write]` regenerates `docs/cookbook-symptoms.md` (generated; never hand-edit): tells by
   pass group (entries with a `tell:` header line; group from the levers.tsv row citing the entry, else a group tag),

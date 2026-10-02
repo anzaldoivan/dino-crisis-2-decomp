@@ -1,0 +1,2 @@
+# config/journal.tsv -- per-attempt journal (T3, Phase 1.8): one row per drafted target attempt, keyed alias+start (hex, as in census). TAB-separated; outcome in banked|plateau|compile-error|no-verdict.
+# alias	start	wave	route	outcome	label	note
