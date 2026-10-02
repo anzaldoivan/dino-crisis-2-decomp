@@ -33,5 +33,7 @@ segments:
       - [0x7c, asm, psx_bin_st8_7c]
       - [0x12b4, c, game_800D6AB4]
       - [0x1314, asm, psx_bin_st8_1314]
+      - [0x4840, c, game_800DA040]
+      - [0x48d4, asm, psx_bin_st8_48d4]
       - [0x4e64, data, psx_bin_st8_4e64]  # data-island text-end..loadmap end
   - [0x5680]
