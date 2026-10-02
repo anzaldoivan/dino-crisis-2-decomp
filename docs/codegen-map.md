@@ -6,6 +6,7 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 | Tell | Group | Lever | Cookbook | Game fn |
 |---|---|---|---|---|
 | andi-before-srl vs srl-before-andi on a byte field | combine | mask-then-shift | C0045 | slus_012_79:0x8001b538 |
+| late pointer-bump temp in $v0 vs $v1 (3 insns after the last call) | regalloc | reuse-user-var | C0046 | slus_012_79:0x8005ed34 |
 
 ## expand-cse
 
@@ -21,7 +22,7 @@ None yet.
 
 ## regalloc
 
-None yet.
+- `reuse-user-var`: tell late pointer-bump temp in $v0 vs $v1 (3 insns after the last call); before plateau reg-substitution; game fn slus_012_79:0x8005ed34; drafts `tools/probes/levers/reuse-user-var.before.c` / `tools/probes/levers/reuse-user-var.after.c`; cookbook C0046
 
 ## sched-reorg
 

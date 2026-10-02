@@ -45,3 +45,4 @@ C0042 | Derive check counts from the config, never hard-code them | harness,cens
 C0043 | Overlapping refusal reasons need a fixed first-match order | draw,filter,counts | 2026-10-01 | 1.6/T6 | phase-ends/current/tasks/T6.md
 C0044 | Run container-orchestrating verifiers on the host | verify,docker,phase-end | 2026-10-01 | 1.6/T9 | phase-ends/current/tasks/T9.md
 C0045 | Byte-field mask/shift order survives combine only when the mask fits andi | codegen-map,combine,mask,shift,andi,extraction,insn-shape | 2026-10-01 | 1.7/T3 | -
+C0046 | A late temp's v0/v1 choice follows local vs global ownership; reuse a user var to move it | codegen-map,regalloc,local-alloc,global-alloc,v0,v1,temp-reuse,reg-substitution | 2026-10-01 | 1.7/T3 | -
