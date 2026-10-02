@@ -1,8 +1,8 @@
 # config/routing.tsv -- route per instruction-count bucket (T5, Phase 1.8): `tools/wave.py draw` buckets by min/max insns (max - = open); cards carry route/card_cap/attempts. TAB-separated; route in draft|draft+permute|hard; card_cap = max plateau.py compile runs per drafting coder; attempts = coder attempts per target (H7); drafted/banked/rate/cost_ctx_k measured on the manual wave named in basis.
 # bucket	min_insns	max_insns	route	card_cap	attempts	drafted	banked	rate	cost_ctx_k	basis
-b1	1	15	draft	8	1	-	-	-	-	-
-b2	16	50	draft	8	1	-	-	-	-	-
-b3	51	100	draft	8	1	-	-	-	-	-
-b4	101	200	draft	8	1	-	-	-	-	-
-b5	201	400	draft	8	1	-	-	-	-	-
-b6	401	-	draft	8	1	-	-	-	-	-
+b1	1	15	draft	8	1	5	4	0.80	23.5	M1
+b2	16	50	draft	8	1	5	4	0.80	25.3	M1
+b3	51	100	draft	8	1	5	4	0.80	34.9	M1
+b4	101	200	draft	8	1	5	4	0.80	36.0	M1
+b5	201	400	draft	8	1	5	2	0.40	111.8	M1
+b6	401	-	draft+permute	8	1	5	1	0.20	374.1	M1
