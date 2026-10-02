@@ -175,3 +175,5 @@ G69 | The compiler triple and its flags are defined once, in the Makefile | deco
 G70 | A scanner's control must be able to fail | decomp,instruments,scanners | active | phase 1.5 T6
 
 G71 | Source units change only through their gated tool (carve, propagate, reconcile) | decomp,carve,propagation,reconcile | active | phase 1.6 T3/T4/T5
+
+G72 | A task checks its own milestone clause with the verifier's matching rules | verify,milestone,process | active | phase 1.6 T8/T9
