@@ -1,3 +1,3 @@
 # config/waves.tsv -- wave ledger (T3, Phase 1.8): `tools/wave.py draw` appends one open row per wave; harvest/close fill the rest. TAB-separated; fleet = 83/83@<commit>; harvest = done:<n> notes | open.
 # wave	kind	opened	closed	pool	drafted	banked	failed	no_verdict	insns_banked	propagated	fleet	harvest
-M1	manual	2026-10-02	-	30	30	0	30	0	0	0	-	open
+M1	manual	2026-10-02	-	30	30	19	11	0	1989	0	-	open
