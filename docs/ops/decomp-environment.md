@@ -736,6 +736,16 @@ Lever proof (binding):
   `--family F[,F...]` (pool ∩ census `family` column; unknown family → `REFUSED: unknown family …` rc 2); `--id ID`
   (`[A-Za-z0-9_]+`, replaces `w<NN>`; refused rc 2 when ID is in waves.tsv or `.run/waves/<ID>/` exists, checked on
   `--dry-run` too, which still writes `_dry`). M1 shape: `--kind manual --weight 1000000 --per-bucket 5 --seed 1`.
+- `--kind family` (T7): own pool, one target per `.run/census/dup.tsv` exact class with ≥ 1 slus_012_79 kind=game
+  member (missing dup.tsv → rc 2); target = its lowest-start slus game member. Skipped: any slus game member in C
+  (`in-C`); target refused by draw_filter for any reason except `open-twin-sibling`/`has-banked-twin` (`refused`; the
+  exe member is the exemplar over its overlay twins, so G49 and cards accept those two); target bucket route ≠ `draft`
+  (`above-cliff`); any slus game member with ≥ `attempts` journal rows from distinct waves, route ≠ `recover`
+  (`budget`). Order copies × insns descending, ties (alias, start); no seed; same greedy and twin skip. Prints
+  `family classes: E eligible of C exe-headed (in-C a, refused b, above-cliff c, budget d)` (C = classes with an slus
+  game member) before `wave:`.
+- Every kind prints `cost: K k drafter tokens` after `twin-skipped:` = Σ routing `rate × cost_ctx_k` over the drawn
+  targets (H7 dry-run guard: lower `--weight` until ≤ 1000k).
 - `config/routing.tsv` (T5.c1 seed): `bucket min_insns max_insns route card_cap attempts drafted banked rate
   cost_ctx_k basis`; rows b1 1-15, b2 16-50, b3 51-100, b4 101-200, b5 201-400, b6 401-`-` (open), each `draft 8 1`
   and `-` measurements until the manual wave fills them (basis = its wave id). `card_cap` = max plateau.py compile runs

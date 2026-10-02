@@ -150,6 +150,69 @@ def twin_map():
     return tw
 
 
+EXE = "slus_012_79"
+TWIN_EXEMPT = ("open-twin-sibling", "has-banked-twin")  # family: the exe member is the exemplar over its overlay twins
+
+
+def refused():
+    return {(r[0], int(r[1], 16)): r[2] for r in rows(draw_filter.OUT / "refused.tsv") if len(r) >= 3}
+
+
+def twin_exempt():
+    """(alias, start) refused only as a twin (TWIN_EXEMPT): drawable as a family exemplar."""
+    return {k for k, why in refused().items() if why in TWIN_EXEMPT}
+
+
+def num(r, i):
+    try:
+        return float(r[i])
+    except (TypeError, IndexError, ValueError):
+        return 0.0
+
+
+def family_pool(ev, acc, bks):
+    """family: -> candidates (key, alias, start, end, insns, bucket) ordered copies*insns desc, (alias, start); one per
+    exact dup.tsv class with an EXE kind=game member (target = lowest start), or None without dup.tsv. Prints the
+    `family classes:` line."""
+    if not dup_census.OUT.exists():
+        return None
+    cls = {}
+    for r in rows(dup_census.OUT):
+        if len(r) >= 6 and r[3] == "exact":
+            cls.setdefault(r[4], []).append((r[0], int(r[1], 16), int(r[5])))
+    ref = refused()
+    ok = acc | {k for k, why in ref.items() if why in TWIN_EXEMPT}
+    tries = {}
+    for r in rows(JOURNAL):
+        if len(r) >= 4 and r[3] != "recover":
+            tries.setdefault((r[0], int(r[1], 16)), set()).add(r[2])
+    n = Counter()
+    out = []
+    for cid in sorted(cls):
+        exe = sorted(st for al, st, _ in cls[cid] if al == EXE and ev.fn.get((al, st), (0, ""))[1] == "game")
+        if not exe:
+            continue
+        n["C"] += 1
+        st = exe[0]
+        end = ev.fn[(EXE, st)][0]
+        ins = (end - st) // 4
+        b = bucket_of(bks, ins)
+        if any((EXE, s) in ev.banked for s in exe):
+            n["a"] += 1
+        elif (EXE, st) not in ok:
+            n["b"] += 1
+        elif b is None or (b[3] is not None and (len(b[3]) < 4 or b[3][3] != "draft")):
+            n["c"] += 1
+        elif b[3] is not None and any(len(tries.get((EXE, s), ())) >= int(num(b[3], 5)) for s in exe):
+            n["d"] += 1
+        else:
+            copies = max(c for _, _, c in cls[cid])
+            out.append(((-copies * ins, EXE, st), EXE, st, end, ins, b[2]))
+    print("family classes: %d eligible of %d exe-headed (in-C %d, refused %d, above-cliff %d, budget %d)"
+          % (len(out), n["C"], n["a"], n["b"], n["c"], n["d"]))
+    return sorted(out)
+
+
 def cmd_draw(a):
     wrows = rows(WAVES)
     ctl = open_control()
@@ -225,6 +288,13 @@ def cmd_draw(a):
                         held[i] += 1
                         progress = True
                         break
+    elif a.kind == "family":
+        fam = family_pool(ev, acc, bks)
+        if fam is None:
+            print("REFUSED: %s missing; run tools/dup_census.py" % dup_census.OUT.relative_to(ROOT))
+            return 2
+        for c in fam:
+            take(c)
     else:
         for c in sorted(keyed):
             take(c)
@@ -239,7 +309,9 @@ def cmd_draw(a):
     for b in bks:
         print("bucket %s: %d" % (b[2], sum(1 for c in drawn if c[5] == b[2])))
     print("twin-skipped: %d" % skipped)
-    bad = validate(ev, acc, [(c[1], c[2], c[3]) for c in drawn])
+    rr = {b[2]: b[3] for b in bks}
+    print("cost: %.1fk drafter tokens" % sum(num(rr[c[5]], 8) * num(rr[c[5]], 9) for c in drawn))
+    bad = validate(ev, acc | twin_exempt(), [(c[1], c[2], c[3]) for c in drawn])
     print("validated: %d of %d" % (len(drawn) - len(bad), len(drawn)))
     for line in bad:
         print(line)
@@ -331,7 +403,7 @@ class Ctx:
 
     def __init__(self):
         self.ev = draw_filter.Evidence()
-        self.acc = accepted()
+        self.acc = accepted() | twin_exempt()  # family exemplars may be twin-refused (T7)
         self.asm = Asm()
         self.units = {}
         for r in rows(C_UNITS):
