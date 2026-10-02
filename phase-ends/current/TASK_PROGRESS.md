@@ -70,7 +70,7 @@ Expert: expert-opus55 (attempt 1). Handoff at context threshold, mid-drafting of
   c19 slus_012_79:0x80068ca0 401-inf 49554 LENGTH-DRIFT runs=1 (GTE)
   c23 psx_bin_st1:0x800d5990 101-200 31936 MATCH runs=5
   c30 slus_012_79:0x80057a8c 201-400 26935 MATCH runs=1
-  c13 slus_012_79:0x8003d58c 401-inf n/a(tokens not received before handoff) MATCH runs=5
+  c13 slus_012_79:0x8003d58c 401-inf 57306 MATCH runs=5
 - Commits: 40ef454, 5cf1d28 (c1), 9371ec1 (M1 open). waves.tsv M1 row: `M1 manual 2026-10-02 - 30 - … - open`.
 - Drafter brief invariant: self-contained draft.c, one fn `func_<START>`, no asm()/INCLUDE_ASM/#include, ≤ 8 plateau runs, verdict.json first.
 
