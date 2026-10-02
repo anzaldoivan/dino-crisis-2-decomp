@@ -574,6 +574,35 @@ Working order:
 5. **fleet:** `dc.sh sync && dc.sh run bash tools/fleet_check.sh`, then `dc.sh run python3 tools/harness.py --scanners`
    (fleet_check prints no scanner lines); `census.py --check` after every bank.
 
+### Compiler source and dumps (T1, Phase 1.7)
+- Source: `config/compiler_source.tsv` `# name version url sha256 dest`, one row gcc 2.95.2 from ftp.gnu.org
+  (sha256 `064e1cb0…72482`, same bytes from mirrors.kernel.org/gnu). Scratch only (G12): tarball
+  `.run/compiler-src/gcc-2.95.2.tar.gz`, tree `.run/compiler-src/gcc-2.95.2/`; re-fetchable, never committed.
+- `PY tools/compiler_source.py --fetch` (host): stdlib download, sha256 fail-closed, extract; then the same fetch inside
+  the container into `/work/.run/compiler-src/` (curl + `sha256sum -c` + tar via `dc.sh run`; `dc.sh sync` never
+  carries `.run/`). Run once per machine and after a volume reset.
+- `PY tools/compiler_source.py --check` (host or container) → `compiler source: gcc 2.95.2 sha256 ok`,
+  `version sources: 3 of 3 agree` (`gcc/version.c` `2.95.2 19991024`, the pinned cc1 banner read live via
+  `make print-c` CC1 `-version`: `GNU C version 2.95.2 19991024 BUILD 4.0.0030 (PSX)`, config/toolchains.tsv pinned
+  row `2.95.2`), `version control: ok` (planted `2.95.3` in `.run/compiler-src/plant/version.c` refused); rc 1 on any
+  failure. Host reads the banner via `dc.sh run`, the container directly (C0044). Scanner row `compiler_source`
+  (game `yes`: needs the machine-local staged tree).
+- Dumps: `dc.sh run bash tools/cc1_dumps.sh <alias> <src.c> [name]` → `.run/dumps/<name>/<name>.i.<pass>` (name =
+  src stem by default). Flags from `make print-c A=<alias>` (G69) plus `-da`; the pinned CC1PSX.EXE under wibo accepts
+  `-da` and writes every dump (no fallback cc1 needed). Control: `.s` with `-da` byte-equals `.s` without (both
+  compiled from their own dir so the `.file` line matches).
+- Run on `src/slus_012_79/game_80037824.c` (-O2 -G0 -mips1), 19 dump files:
+  - expand-cse: rtl cse gcse cse2 present
+  - loop: loop present
+  - combine: combine regmove present
+  - regalloc: lreg greg present
+  - sched-reorg: sched sched2 dbr jump jump2 present
+  - also written: addressof flow flow2 bp mach.
+- Passes proven off at -O2 -mips1: none by absence (every group dump exists; gcse runs, its dump reads
+  `GCSE pass 1`). A present dump proves the pass ran, not that it changed anything: read the dump body.
+- Caveat (DK-52, research R1.7-001): the pinned cc1 is Sony-patched (`BUILD 4.0.0030`); no patch source exists. The tree
+  is vanilla 2.95.2, so cites say "vanilla 2.95.2"; a lever's byte proof, not the source cite, is the authority.
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything
