@@ -12,10 +12,10 @@ Expert: expert-opus55 (attempt 1). Handoff at context threshold, mid-drafting of
 - T5.c1 (opus55) done, commits 40ef454 (code) + 5cf1d28 (log): wave.py draw `--per-bucket N`, `--family F[,F]`, `--id ID`; gate runs plateau.py on every non-banked draft and journals its label (UNCOMPILED if no compile); config/routing.tsv seeded (6 rows b1..b6: 1-15, 16-50, 51-100, 101-200, 201-400, 401-open; route draft, card_cap 8, attempts 1, rest `-`); env.md waves docs. Verified: dry draw 30/30 5-per-bucket, cards 30/30, selftest 4/4, --check rc0 `routing: 0 of 6`, scanners 22/22, audit ok.
 - Real draw: `dc.sh run python3 tools/wave.py draw --kind manual --weight 1000000 --per-bucket 5 --family exe,LOGO+ST --seed 1 --id M1` (run.sh t5-draw) → pool 721, targets 30 (insns 5668), 5 per bucket ×6, twin-skipped 0, validated 30/30. `cards M1` (run.sh t5-cards) → 30 of 30, card control ok. Pulled to host. Commit 9371ec1 (waves.tsv open M1 row + router's PHASE_PLAN.md/DISCUSSION_INDEX.md edits, which were dirty and would block gate's clean-tree check).
 - Card cap definition (identical for all 30): card_cap = 8 plateau.py compile runs per drafting coder; attempts = 1 coder per target. Every drafter got the identical brief (only TARGET/DIR/k differ); brief text = any of the T5.c<k> briefs (see logs/T5.c<k>.md for each coder's own log).
-- Drafters c2..c31 = targets.tsv data rows in order (c<k> = line k of .run/waves/M1/targets.tsv). 26 of 30 returned (see State).
+- Drafters c2..c31 = targets.tsv data rows in order (c<k> = line k of .run/waves/M1/targets.tsv). 27 of 30 returned (see State).
 
 ## In flight
-- Background drafters still running when attempt 1 ended: c13 slus_012_79:0x8003d58c (401-inf), c24 slus_012_79:0x8006c78c (201-400), c25 psx_bin_st9:0x800da16c (401-inf), c31 slus_012_79:0x80054c58 (401-inf).
+- Background drafters still running when attempt 1 ended: c24 slus_012_79:0x8006c78c (201-400), c25 psx_bin_st9:0x800da16c (401-inf), c31 slus_012_79:0x80054c58 (401-inf).
 - Their hand-backs/notifications go to attempt 1, which is gone. The respawn sees completion only through the files: a target is finished when its `.run/waves/M1/<alias>_<start>/verdict.json` status != `no-verdict` AND `phase-ends/current/logs/T5.c<k>.md` exists. Their token cost (subagent_tokens) is lost unless the router relays the notifications; if lost, record cost for those 4 as `n/a` and compute per-bucket cost_ctx_k from the known coders only, saying so in basis/Deviations (never invent numbers).
 
 ## Hypotheses rejected
@@ -70,6 +70,7 @@ Expert: expert-opus55 (attempt 1). Handoff at context threshold, mid-drafting of
   c19 slus_012_79:0x80068ca0 401-inf 49554 LENGTH-DRIFT runs=1 (GTE)
   c23 psx_bin_st1:0x800d5990 101-200 31936 MATCH runs=5
   c30 slus_012_79:0x80057a8c 201-400 26935 MATCH runs=1
+  c13 slus_012_79:0x8003d58c 401-inf n/a(tokens not received before handoff) MATCH runs=5
 - Commits: 40ef454, 5cf1d28 (c1), 9371ec1 (M1 open). waves.tsv M1 row: `M1 manual 2026-10-02 - 30 - … - open`.
 - Drafter brief invariant: self-contained draft.c, one fn `func_<START>`, no asm()/INCLUDE_ASM/#include, ≤ 8 plateau runs, verdict.json first.
 
