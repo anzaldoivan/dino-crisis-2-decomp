@@ -34,3 +34,12 @@
 1.5 | T4 | done | Sony library objects census across the fleet | - | phase-1.5/tasks/T4.md | phase-1.5/logs/T4.md | -
 1.5 | T5 | done | progress denominators read from the build; banked.py honest | - | phase-1.5/tasks/T5.md | phase-1.5/logs/T5.md | -
 1.5 | T6 | done | differential harness, ≥ 5 pairs on a schedule, scanner registry | - | phase-1.5/tasks/T6.md | phase-1.5/logs/T6.md | -
+1.6 | T1 | done | twin band reproduces every exact pair | - | phase-1.6/tasks/T1.md | phase-1.6/logs/T1.md | R1.6-001
+1.6 | T2 | done | canonical type layer and its check | - | phase-1.6/tasks/T2.md | phase-1.6/logs/T2.md | -
+1.6 | T3 | done | carve chain with closing cuts, revert on fail | - | phase-1.6/tasks/T3.md | phase-1.6/logs/T3.md | -
+1.6 | T4 | done | propagation registry, fail-closed dry run, e322 banked | - | phase-1.6/tasks/T4.md | phase-1.6/logs/T4.md | -
+1.6 | T5 | done | reconcile ladder banks a standalone match | - | phase-1.6/tasks/T5.md | phase-1.6/logs/T5.md | -
+1.6 | T6 | done | draw filter prints every refusal | - | phase-1.6/tasks/T6.md | phase-1.6/logs/T6.md | -
+1.6 | T7 | done | wiring, card row, clean fleet and scanners gate | - | phase-1.6/tasks/T7.md | phase-1.6/logs/T7.md | -
+1.6 | T8 | done | milestone clauses 3,4,5: exemplar gated in dry run, plain control lines | - | phase-1.6/tasks/T8.md | phase-1.6/logs/T8.md | -
+1.6 | T9 | done | verifier: single capital letter in a count slot is a placeholder (clause 7) | - | phase-1.6/tasks/T9.md | phase-1.6/logs/T9.md | -
