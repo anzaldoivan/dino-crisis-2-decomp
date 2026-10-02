@@ -5,6 +5,7 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 
 | Tell | Group | Lever | Cookbook | Game fn |
 |---|---|---|---|---|
+| andi-before-srl vs srl-before-andi on a byte field | combine | mask-then-shift | C0045 | slus_012_79:0x8001b538 |
 
 ## expand-cse
 
@@ -16,7 +17,7 @@ None yet.
 
 ## combine
 
-None yet.
+- `mask-then-shift`: tell andi-before-srl vs srl-before-andi on a byte field; before plateau insn-shape; game fn slus_012_79:0x8001b538; drafts `tools/probes/levers/mask-then-shift.before.c` / `tools/probes/levers/mask-then-shift.after.c`; cookbook C0045
 
 ## regalloc
 

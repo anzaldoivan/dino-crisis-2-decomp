@@ -4,3 +4,4 @@
 # self-contained, defining func_<START>. cookbook: C<nnnn>. Checked by `tools/codegen_map.py --check`; docs/codegen-map.md is
 # generated from this file by `tools/codegen_map.py --write`. No game bytes or asm here (G12).
 # lever	group	tell	label	alias	start	end	before_c	after_c	cookbook
+mask-then-shift	combine	andi-before-srl vs srl-before-andi on a byte field	insn-shape	slus_012_79	0x8001b538	0x8001b56c	tools/probes/levers/mask-then-shift.before.c	tools/probes/levers/mask-then-shift.after.c	C0045
