@@ -726,6 +726,49 @@ Lever proof (binding):
   C-id → card not written, rc 1; control card with planted `C9999` must fail → `card control: ok|FAIL`.
   Deterministic (no timestamps); no asm text/operands/encodings (G12). Prints `cards: n of n written (<WAVE>)`.
 
+### Waves: gate, bank, fleet, harvest, close (T4, Phase 1.8)
+- Order per wave: draw → cards → agents draft (`<alias>_<start>/verdict.json` first, then `draft.c`) → `gate` →
+  `fleet` → `harvest` (one per banked fn) → `close`. Exit 0 ok / 1 fail / 2 refused.
+- Host vs volume: `/work` has no .git and `dc.sh run` no stdin, so drivers that commit or write tracked config run on
+  the HOST (`python3 tools/wave.py gate|fleet|harvest|close W`) and drive the container; inside the container they
+  refuse rc 2. Build work runs in the container with `--in-volume` (`gate W --in-volume`, `strip … --in-volume`).
+  Host scratch reaches the volume with `dc.sh push .run/…` (docs/ops/docker-host.md).
+- `gate W` (host): tree clean and waves row drafted `-` (else rc 2: no double journal) → `dc.sh sync`, push
+  `.run/waves/W`, inner gate, pull `.run/waves/W config/journal.tsv config/waves.tsv`, one commit per bank
+  (`bank <alias>/<unit>: <n> fns, sha1 ok`; hash into `banks.tsv` commit column), then
+  `gate: banked B + failed F + no-verdict V = D drafted` with the ledgers. Inner rc ≠ 0 → nothing committed.
+- Inner scoring (G50/G47): a target dir with neither draft.c nor verdict.json, or a non-target dir (except `_*`,
+  `banks`) → whole gate refused rc 2 (`missing verdict: <dir>` / `stray dir: <dir>`). No draft.c → no-verdict. G11
+  verbatim (`asm(`, `__asm__`, `INCLUDE_ASM`, `glabel`, `.word`, `.set noreorder`) → plateau, label `verbatim`. Else
+  `reconcile.py <draft> --target A:S` probe: `banked <rung>` or `failed carve needs-apply` → bank candidate; `failed
+  <rung> build-error` → compile-error; other failed → plateau; none → no-verdict. Prints
+  `claims: k of D agree with the score` (verdict.json status is a claim, never the score).
+- Bank (DK-36): candidates grouped by destination unit (as cards; none → own carve group), (alias, unit) order; per
+  group snapshot src/ config/ include/, `reconcile.py --apply` per member, ONE `propagate.scratch_build` ONLY=<alias>
+  (scratch `.run/waves/_scratch/`) + sha1. Green → `.run/waves/W/banks/<k>.tar` + `banks.tsv` (`k alias unit fns paths
+  commit`); red → files restored (splat_gen when config/ changed), members plateau `bank-hash <alias>`/`apply-failed`.
+  After ≥ 1 bank: `census.py --check` (`check:` line), `twins.py` (`twins:` line), `propagate.py --dry-run --family`
+  per banked family exemplar (sum = propagated), `propagation candidate: A:S (n members) unregistered` for exact-dup
+  heads without a families.tsv row. Each dir gets `gate.json` (alias start outcome rung reason label, final outcome);
+  journal one row per target (note `rung <rung>` for banks); waves row drafted…propagated filled.
+- `fleet W` (host): gate done, tree clean, every bank commit ancestor-or-equal of HEAD → sync + `fleet_check.sh`
+  (tee `.run/waves/W/fleet.log`); green iff rc 0, `83 of 83 byte-identical`, `harness: P of P pairs agree, 0
+  disagreements` → fleet `83/83@<HEAD>` (uncommitted). Long: wrap in `tools/run.sh --bg`.
+- `harvest W --fn A:S --note TEXT [--lever ID --stripped PATH]` (host): refused unless A:S has a banked row in W,
+  the note fits 120 chars, ID resolves (levers.tsv or `cookbook/C<nnnn>.md`, G44). With a lever: stripped copy to
+  `<dir>/stripped.c`, push, `strip --in-volume`: the unit with `func_<ADDR>`'s definition replaced, scratch-built →
+  `strip: differs` rc 0 (load-bearing) or `strip: identical` rc 1 (G45: credit refused, nothing written); a scratch
+  build that fails to compile → `strip: build-error` rc 2. Note → `strip:ok:<ID> TEXT` | `strip:none TEXT`.
+- `close W` (host): refused (rc 2, nothing written) when the gate is not done, fleet is not `83/83@<c>` with every
+  bank commit ancestor-or-equal of `<c>`, or a banked row's note lacks `strip:` (`unharvested: A:S`). Pass → closed =
+  today, harvest `done:<n> notes`, commit `close: banked B, harvest done:<n>, fleet 83/83@<c>`.
+- `wave.py --check` (scanner `wave`): `routing: M of B buckets measured on the manual wave`, `waves: C of W closed
+  with harvest`, `fleet: F of W banked batches followed by a clean fleet check`, `wave control: ok|FAIL` (planted
+  unharvested wave under `.run/waves/_control/` must be refused). rc 0 iff control ok and ledger headers parse.
+  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 3 of 3 ok`.
+- Gotcha: the Makefile's sha1 check renames a mismatching bin `build/<alias>.bin.bad` and make exits 2, so "make rc 0"
+  alone does not identify a hash mismatch (strip checks the `.bad` file).
+
 ### Cookbook symptom index (T8, Phase 1.7)
 - `PY tools/cookbook_index.py [--write]` regenerates `docs/cookbook-symptoms.md` (generated; never hand-edit): tells by
   pass group (entries with a `tell:` header line; group from the levers.tsv row citing the entry, else a group tag),

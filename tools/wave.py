@@ -19,13 +19,27 @@ cards: re-validates .run/waves/<WAVE>/targets.tsv (WAVE defaults to _dry with --
 cookbook/INDEX.md, else the card fails (not written, listed, rc 1); a control card with a planted C9999 must fail
 (`card control: ok|FAIL`). Deterministic; no game bytes (G12): addresses, symbol names, counts, paths, our C only.
 Exit 0 ok / 1 fail / 2 refused. Notes: docs/ops/decomp-environment.md "Waves: draw and cards".
+
+T4 (Phase 1.8), spec .run/briefs/T4.c1.md; host drivers (commit / write tracked config; refused rc 2 in the container):
+    wave.py gate WAVE            clean tree, unGated row -> sync, push the wave dir, inner gate, pull, commit banks + ledgers
+    wave.py fleet WAVE           sync + fleet_check.sh (tee .run/waves/WAVE/fleet.log); green -> fleet 83/83@<HEAD>
+    wave.py harvest WAVE --fn A:S --note TEXT [--lever ID --stripped PATH]   note `strip:ok:<ID> TEXT` | `strip:none TEXT`
+    wave.py close WAVE           refusals (gate, fleet ancestry, unharvested) -> closed + harvest done:<n> notes, commit
+container (--in-volume, cwd /work):
+    wave.py gate WAVE --in-volume       score every target dir (G50/G47/G11, reconcile probe), bank per destination unit
+                                        (reconcile --apply + ONE scratch build + sha1), journal + waves row
+    wave.py strip --fn A:S --stripped PATH --in-volume   `strip: differs` rc 0 | `strip: identical` rc 1 (G45)
+anywhere: wave.py --check (ledger counts + close-refusal control); container: wave.py --selftest (scratch only).
+Notes: docs/ops/decomp-environment.md "Waves: gate, bank, fleet, harvest, close".
 """
 import argparse
 import datetime
 import hashlib
 import re
+import shutil
 import subprocess
 import sys
+import types
 from collections import Counter
 from pathlib import Path
 
@@ -413,9 +427,690 @@ def cmd_cards(a):
     return 0 if ctl and not failed else 1
 
 
+# ---- T4: gate, bank chain, fleet, harvest, close, --check, --selftest ----
+
+WCOLS = ("wave", "kind", "opened", "closed", "pool", "drafted", "banked", "failed", "no_verdict", "insns_banked",
+         "propagated", "fleet", "harvest")
+JCOLS = ("alias", "start", "wave", "route", "outcome", "label", "note")
+BCOLS = ("k", "alias", "unit", "fns", "paths", "commit")
+VERBATIM = ("asm(", "__asm__", "INCLUDE_ASM", "glabel", ".word", ".set noreorder")
+FLEET_N = census.FLEET_N
+FLEET_RE = re.compile(r"^%d/%d@([0-9a-f]{7,40})$" % (FLEET_N, FLEET_N))
+HARVEST_RE = re.compile(r"^done:\d+ notes$")
+WAVE_ID = re.compile(r"^[A-Za-z0-9_]+$")
+DC = ["bash", "tools/docker/dc.sh"]
+WORK = Path("/work")
+
+
+def ledger(path):
+    """-> (comment lines, data rows) of a TSV ledger."""
+    head, data = [], []
+    for line in (path.read_text().splitlines() if path.exists() else []):
+        if line.startswith("#"):
+            head.append(line)
+        elif line.strip():
+            data.append(line.split("\t"))
+    return head, data
+
+
+def write_ledger(path, head, data):
+    path.write_text("".join(x + "\n" for x in head + ["\t".join(r) for r in data]))
+
+
+def header_ok(path, cols):
+    head, data = ledger(path)
+    return ("# " + "\t".join(cols)) in head and all(len(r) == len(cols) for r in data)
+
+
+def wave_row(data, wave):
+    return next((i for i, r in enumerate(data) if r and r[0] == wave), None)
+
+
+def tdir(alias, start):
+    return "%s_0x%08x" % (alias, start)
+
+
+def sh(cmd, capture=True):
+    return subprocess.run(cmd, cwd=ROOT, stdout=subprocess.PIPE if capture else None,
+                          stderr=subprocess.STDOUT if capture else None, text=True)
+
+
+def host_refusal(name):
+    """Host drivers commit or write tracked config: never inside the container (no docker, or cwd /work)."""
+    if ROOT == WORK or not shutil.which("docker"):
+        return "REFUSED: %s is a host driver (no docker / cwd /work here); run it on the host" % name
+    return None
+
+
+def volume_refusal(name):
+    if ROOT != WORK:
+        return "REFUSED: %s --in-volume runs only in the container (cwd /work)" % name
+    return None
+
+
+def clean_tree():
+    return sh(["git", "status", "--porcelain"]).stdout.strip() == ""
+
+
+def git_anc(a, b):
+    return sh(["git", "merge-base", "--is-ancestor", a, b]).returncode == 0
+
+
+def short_head():
+    return sh(["git", "rev-parse", "--short=7", "HEAD"]).stdout.strip()
+
+
+def pull(paths):
+    return subprocess.run(["bash", "-c", 'set -o pipefail; bash tools/docker/dc.sh run tar -cf - "$@" | tar -xf -',
+                           "_"] + paths, cwd=ROOT).returncode
+
+
+def tree_snapshot():
+    return {str(p.relative_to(ROOT)): p.read_bytes() for d in ("src", "config", "include")
+            for p in sorted((ROOT / d).rglob("*")) if p.is_file() and not p.is_symlink()}
+
+
+def read_targets(wave):
+    tsv = RUN / wave / "targets.tsv"
+    return [(r[0], int(r[1], 16), int(r[2], 16), int(r[3]), r[4]) for r in rows(tsv) if len(r) >= 5]
+
+
+def route_of(bk):
+    b = next((x for x in buckets() if x[2] == bk), None)
+    return b[3][3] if b and b[3] and len(b[3]) > 3 else "-"
+
+
+def word(s, n=120):
+    return " ".join(str(s).split())[:n] or "-"
+
+
+def score(wave, targets):
+    """1a: -> (refusal lines, {(alias, start): score dict}). Directory-gated (G50/G47)."""
+    import json
+    wd = RUN / wave
+    names = {tdir(t[0], t[1]) for t in targets}
+    bad = []
+    for t in targets:
+        d = wd / tdir(t[0], t[1])
+        if not (d / "draft.c").is_file() and not (d / "verdict.json").is_file():
+            bad.append("missing verdict: %s" % d.name)
+    for d in sorted(wd.iterdir()) if wd.is_dir() else []:
+        if d.is_dir() and d.name not in names and not d.name.startswith("_") and d.name != "banks":
+            bad.append("stray dir: %s" % d.name)
+    if bad:
+        return bad, {}
+    out = {}
+    for al, st, en, ins, bk in targets:
+        d = wd / tdir(al, st)
+        claim = {}
+        try:
+            claim = json.loads((d / "verdict.json").read_text())
+        except (OSError, ValueError):
+            pass
+        claim = claim if isinstance(claim, dict) else {}
+        s = {"alias": al, "start": "0x%08x" % st, "outcome": "no-verdict", "rung": "-", "reason": "-",
+             "label": word(claim.get("label") or "-", 40), "claim": str(claim.get("status", "")),
+             "note": "no draft.c"}
+        if (d / "draft.c").is_file():
+            draft = (d / "draft.c").read_text(errors="replace")
+            if any(v in draft for v in VERBATIM):
+                s.update(outcome="plateau", reason="verbatim", label="verbatim", note="pasted asm (G11)")
+            else:
+                sh([sys.executable, "tools/reconcile.py", str(d / "draft.c"), "--target", "%s:0x%08x" % (al, st)])
+                vf = ROOT / ".run/reconcile" / tdir(al, st) / "verdict"
+                v = vf.read_text().split() if vf.is_file() else []
+                if len(v) == 2 and v[0] == "banked":
+                    s.update(outcome="candidate", rung=v[1], note="rung %s" % v[1])
+                elif len(v) == 3 and v[0] == "failed" and v[1] == "carve" and v[2] == "needs-apply":
+                    s.update(outcome="candidate", rung="carve", note="rung carve")  # carve is --apply only
+                elif len(v) >= 3 and v[0] == "failed":
+                    s.update(outcome="compile-error" if v[2] == "build-error" else "plateau", rung=v[1],
+                             reason=v[2], note=word("failed %s %s" % (v[1], v[2])))
+                else:
+                    s.update(note="reconcile verdict missing or garbled")
+        out[(al, st)] = s
+    return [], out
+
+
+def bank(wave, targets, scores):
+    """1b: per destination unit, splice every candidate (reconcile --apply) then ONE scratch build + sha1."""
+    import propagate
+    import tarfile
+    propagate.SCRATCH = RUN / "_scratch"
+    asm = Asm()
+    units = types.SimpleNamespace(units={(r[0], r[2]): r for r in rows(C_UNITS) if len(r) >= 3})
+    groups = {}
+    for al, st, en, ins, bk in targets:
+        if scores[(al, st)]["outcome"] != "candidate":
+            continue
+        u = unit_of(units, al, asm.path(al, st))
+        groups.setdefault((al, u[0] if u else "~carve_%08x" % st), []).append(st)
+    wd = RUN / wave
+    bdir = wd / "banks"
+    bpath = wd / "banks.tsv"
+    head, brows = ledger(bpath)
+    head = head or ["# " + "\t".join(BCOLS)]
+    for (al, unit), sts in sorted(groups.items()):
+        snap = tree_snapshot()
+        note = None
+        for st in sts:
+            p = sh([sys.executable, "tools/reconcile.py", str(wd / tdir(al, st) / "draft.c"), "--target",
+                    "%s:0x%08x" % (al, st), "--apply"])
+            vf = ROOT / ".run/reconcile" / tdir(al, st) / "verdict"
+            if p.returncode or not (vf.is_file() and vf.read_text().startswith("banked")):
+                note = "apply-failed"
+                break
+            scores[(al, st)]["rung"] = vf.read_text().split()[1]
+        now = tree_snapshot()
+        changed = sorted(k for k in now if snap.get(k) != now[k])
+        gone = sorted(k for k in snap if k not in now)
+        if note is None and (gone or not changed):
+            note = "apply-failed"
+        if note is None:
+            rel = next((k for k in changed if not k.startswith("include/")), None)
+            try:
+                if rel is None:
+                    raise propagate.Fail("only include/ changed")
+                propagate.scratch_build(al, rel, (ROOT / rel).read_text())
+            except propagate.Fail as e:
+                print("  bank %s/%s: %s" % (al, unit, word(e, 200)))
+                note = "bank-hash %s" % al
+        if note:
+            for k in set(changed) | set(gone):
+                if k in snap:
+                    (ROOT / k).parent.mkdir(parents=True, exist_ok=True)
+                    (ROOT / k).write_bytes(snap[k])
+                else:
+                    (ROOT / k).unlink()
+            if any(k.startswith("config/") for k in set(changed) | set(gone)):
+                sh([sys.executable, "tools/splat_gen.py", "--force", "--only", al])
+            for st in sts:
+                scores[(al, st)].update(outcome="plateau", note=note)
+            print("bank %s/%s: red (%s), %d fns restored" % (al, unit, note, len(sts)))
+            continue
+        k = len(brows) + 1
+        bdir.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(bdir / ("%d.tar" % k), "w") as tf:
+            for c in changed:
+                tf.add(str(ROOT / c), arcname=c)
+        brows.append([str(k), al, unit, ",".join("0x%08x" % s for s in sts), ",".join(changed), "-"])
+        for st in sts:
+            scores[(al, st)]["outcome"] = "banked"
+        print("bank %s/%s: green, %d fns, %d paths" % (al, unit, len(sts), len(changed)))
+    if brows:
+        write_ledger(bpath, head, brows)
+
+
+def after_banks(banked):
+    """census refresh, twins rescan (G46), family propagation dry runs; -> members gated green."""
+    for cmd, pre in (([sys.executable, "tools/census.py", "--check"], "check:"),
+                     ([sys.executable, "tools/twins.py"], "twins:")):
+        p = sh(cmd)
+        line = [x for x in p.stdout.splitlines() if x.startswith(pre)]
+        print(line[-1] if line else "%s rc %d (no %s line)" % (cmd[1], p.returncode, pre))
+    fam = {}
+    for r in rows(ROOT / "config/families.tsv"):
+        if len(r) >= 4:
+            fam[(r[2], int(r[3], 16))] = r[1]
+    dup = {}
+    for r in rows(ROOT / ".run/census/dup.tsv"):
+        if len(r) >= 6 and r[3] == "exact" and r[5].isdigit() and int(r[5]) > 1:
+            dup[(r[0], int(r[1], 16))] = int(r[5])
+    prop = 0
+    for al, st in sorted(banked):
+        if fam.get((al, st)) == "exemplar":
+            p = sh([sys.executable, "tools/propagate.py", "--dry-run", "--family", "%s:0x%08x" % (al, st)])
+            m = re.search(r"(\d+) of (\d+) members gated", p.stdout)
+            print("propagate %s:0x%08x: %s" % (al, st, m.group(0) if m else "rc %d" % p.returncode))
+            prop += int(m.group(1)) if m and p.returncode == 0 else 0
+        elif (al, st) not in fam and (al, st) in dup:
+            print("propagation candidate: %s:0x%08x (%d members) unregistered" % (al, st, dup[(al, st)]))
+    return prop
+
+
+def gate_inner(wave):
+    """1a + 1b in the volume: score, bank per unit, journal + waves row. -> rc."""
+    import json
+    targets = read_targets(wave)
+    if not targets:
+        print("REFUSED: no targets in %s" % (RUN / wave / "targets.tsv"))
+        return 2
+    bad, scores = score(wave, targets)
+    if bad:
+        print("REFUSED: gate %s: %d dirs without an agent run" % (wave, len(bad)))
+        print("\n".join(bad))
+        return 2
+    D = len(targets)
+    if len(set((t[0], t[1]) for t in targets)) != D or len(scores) != D:
+        print("FAIL: coverage: %d scores for %d targets" % (len(scores), D))
+        return 1
+    cls = {"candidate": "banked"}
+    agree = sum(1 for s in scores.values() if s["claim"] == cls.get(s["outcome"], s["outcome"]))
+    print("claims: %d of %d agree with the score" % (agree, D))
+    if any(s["outcome"] == "candidate" for s in scores.values()):
+        msg = draw_filter.ensure()  # dc.sh sync drops asm/: destination units need it
+        if msg:
+            print(msg)
+            return 2
+    bank(wave, targets, scores)
+    out = Counter(s["outcome"] for s in scores.values())
+    B, V = out["banked"], out["no-verdict"]
+    F = D - B - V
+    if B + F + V != D or out["candidate"]:
+        print("FAIL: banked+failed+no-verdict != drafted")
+        return 1
+    print("gate: banked %d + failed %d + no-verdict %d = %d drafted" % (B, F, V, D))
+    banked = [(t[0], t[1]) for t in targets if scores[(t[0], t[1])]["outcome"] == "banked"]
+    prop = after_banks(banked) if banked else 0
+    jh, jd = ledger(JOURNAL)
+    for al, st, en, ins, bk in targets:
+        s = scores[(al, st)]
+        d = RUN / wave / tdir(al, st)
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "gate.json").write_text(json.dumps({k: s[k] for k in ("alias", "start", "outcome", "rung", "reason",
+                                                                    "label")}) + "\n")
+        jd.append([al, "0x%08x" % st, wave, route_of(bk), s["outcome"], s["label"], word(s["note"])])
+    write_ledger(JOURNAL, jh, jd)
+    wh, wd = ledger(WAVES)
+    i = wave_row(wd, wave)
+    if i is not None:
+        r = wd[i] + ["-"] * (13 - len(wd[i]))
+        r[5:11] = [str(D), str(B), str(F), str(V), str(sum(t[3] for t in targets if (t[0], t[1]) in banked)),
+                   str(prop)]
+        wd[i] = r[:13]
+        write_ledger(WAVES, wh, wd)
+    return 0
+
+
+def cmd_gate(a):
+    if a.in_volume:
+        msg = volume_refusal("gate")
+        if msg:
+            print(msg)
+            return 2
+        return gate_inner(a.wave)
+    msg = host_refusal("gate")
+    if msg:
+        print(msg)
+        return 2
+    if not clean_tree():
+        print("REFUSED: working tree not clean (git status --porcelain)")
+        return 2
+    i = wave_row(ledger(WAVES)[1], a.wave)
+    if i is None:
+        print("REFUSED: no config/waves.tsv row %s" % a.wave)
+        return 2
+    if ledger(WAVES)[1][i][5] != "-":
+        print("REFUSED: wave %s already gated (drafted %s); no double journal" % (a.wave, ledger(WAVES)[1][i][5]))
+        return 2
+    rel = ".run/waves/%s" % a.wave
+    for cmd in (DC + ["sync"], DC + ["push", rel]):
+        rc = sh(cmd, capture=False).returncode
+        if rc:
+            print("FAIL: %s rc %d" % (" ".join(cmd[1:]), rc))
+            return rc
+    rc = sh(DC + ["run", "python3", "tools/wave.py", "gate", a.wave, "--in-volume"], capture=False).returncode
+    if rc:
+        return rc
+    rc = pull([rel, "config/journal.tsv", "config/waves.tsv"])
+    if rc:
+        print("FAIL: pull rc %d" % rc)
+        return 1
+    rc = commit_banks(a.wave)
+    if rc:
+        return rc
+    r = ledger(WAVES)[1][wave_row(ledger(WAVES)[1], a.wave)]
+    msg = "gate: banked %s + failed %s + no-verdict %s = %s drafted" % (r[6], r[7], r[8], r[5])
+    return sh(["bash", "tools/commit_task.sh", a.wave, msg, "config/journal.tsv", "config/waves.tsv"],
+              capture=False).returncode
+
+
+def commit_banks(wave):
+    """1c: extract every uncommitted bank tar at the repo root and commit it; commit hash into banks.tsv."""
+    import tarfile
+    bpath = RUN / wave / "banks.tsv"
+    head, brows = ledger(bpath)
+    for j, r in enumerate(brows):
+        if r[5] != "-":
+            continue
+        with tarfile.open(RUN / wave / "banks" / ("%s.tar" % r[0])) as tf:
+            tf.extractall(ROOT, filter="data")
+        n = len(r[3].split(","))
+        rc = sh(["bash", "tools/commit_task.sh", wave, "bank %s/%s: %d fns, sha1 ok" % (r[1], r[2], n)]
+                + r[4].split(","), capture=False).returncode
+        if rc:
+            print("FAIL: bank commit %s rc %d; remaining: %s" % (r[0], rc, " ".join(x[0] for x in brows[j:])))
+            write_ledger(bpath, head, brows)
+            return 1
+        r[5] = short_head()
+        write_ledger(bpath, head, brows)
+    return 0
+
+
+def banks_unreached(run, wave, anc, ref):
+    """-> refusal lines for banks.tsv rows not committed or not ancestor-or-equal of ref."""
+    out = []
+    for r in ledger(run / wave / "banks.tsv")[1]:
+        if len(r) < 6 or r[5] == "-":
+            out.append("uncommitted bank: %s" % (r[0] if r else "?"))
+        elif not anc(r[5], ref):
+            out.append("bank %s commit %s not an ancestor of %s" % (r[0], r[5], ref))
+    return out
+
+
+def cmd_fleet(a):
+    msg = host_refusal("fleet")
+    if msg:
+        print(msg)
+        return 2
+    wd = ledger(WAVES)[1]
+    i = wave_row(wd, a.wave)
+    bad = [] if i is not None and wd[i][5] != "-" else ["gate not done: %s" % a.wave]
+    if not clean_tree():
+        bad.append("working tree not clean")
+    bad += banks_unreached(RUN, a.wave, git_anc, "HEAD")
+    if bad:
+        print("\n".join("REFUSED: " + b for b in bad))
+        return 2
+    head = short_head()
+    rc = sh(DC + ["sync"], capture=False).returncode
+    if rc:
+        return rc
+    log = RUN / a.wave / "fleet.log"
+    lines = []
+    p = subprocess.Popen(DC + ["run", "bash", "tools/fleet_check.sh"], cwd=ROOT, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, text=True)
+    with open(log, "w") as fh:
+        for line in p.stdout:
+            fh.write(line)
+            sys.stdout.write(line)
+            lines.append(line.rstrip("\n"))
+    rc = p.wait()
+    text = "\n".join(lines)
+    m = re.search(r"^(\d+) of (\d+) byte-identical$", text, re.M)
+    h = re.search(r"^harness: (\d+) of \1 pairs agree, 0 disagreements$", text, re.M)
+    if rc or not m or not (int(m.group(1)) == int(m.group(2)) == FLEET_N) or not h:
+        print("fleet: red (rc %d); nothing written (%s)" % (rc, log.relative_to(ROOT)))
+        return 1
+    wh, wd = ledger(WAVES)
+    wd[i][11] = "%d/%d@%s" % (FLEET_N, FLEET_N, head)
+    write_ledger(WAVES, wh, wd)
+    print("fleet: %s written to config/waves.tsv (uncommitted; close commits it)" % wd[i][11])
+    return 0
+
+
+def lever_ids():
+    return {r[0] for r in rows(LEVERS) if r}
+
+
+def harvest_refusal(wave, alias, start, text, lever, stripped, journal, levers):
+    """-> (refusal|None, journal row index, note). Pure over the journal path and the lever id set."""
+    jd = ledger(journal)[1]
+    i = next((k for k, r in enumerate(jd) if len(r) >= 5 and r[0] == alias and r[2] == wave and r[4] == "banked"
+              and r[1].startswith("0x") and int(r[1], 16) == start), None)
+    note = ("strip:ok:%s %s" % (lever, text)) if lever else ("strip:none %s" % text)
+    if i is None:
+        return "REFUSED: notes of unbanked drafts refused (%s:0x%08x in %s)" % (alias, start, wave), None, note
+    if "\t" in text or "\n" in text:
+        return "REFUSED: note has a tab or newline", i, note
+    if len(note) > 120:
+        return "REFUSED: note %d chars > 120" % len(note), i, note
+    if lever and lever not in levers and not (re.match(r"^C\d{4}$", lever) and (ROOT / "cookbook" /
+                                                                                ("%s.md" % lever)).is_file()):
+        return "REFUSED: lever %s does not resolve (config/levers.tsv, cookbook/C<nnnn>.md; G44)" % lever, i, note
+    if lever and not stripped:
+        return "REFUSED: --lever needs --stripped PATH", i, note
+    return None, i, note
+
+
+def parse_fn(s):
+    al, st = s.split(":")
+    return al, int(st, 16)
+
+
+def cmd_harvest(a):
+    msg = host_refusal("harvest")
+    if msg:
+        print(msg)
+        return 2
+    al, st = parse_fn(a.fn)
+    msg, i, note = harvest_refusal(a.wave, al, st, a.note, a.lever, a.stripped, JOURNAL, lever_ids())
+    if msg:
+        print(msg)
+        return 2
+    if a.lever:
+        rel = ".run/waves/%s/%s/stripped.c" % (a.wave, tdir(al, st))
+        (ROOT / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(a.stripped, ROOT / rel)
+        for cmd in (DC + ["sync"], DC + ["push", ".run/waves/%s" % a.wave]):
+            rc = sh(cmd, capture=False).returncode
+            if rc:
+                return rc
+        rc = sh(DC + ["run", "python3", "tools/wave.py", "strip", "--fn", a.fn, "--stripped", rel, "--in-volume"],
+                capture=False).returncode
+        if rc == 1:
+            print("harvest: lever %s inert (G45); credit refused, nothing written" % a.lever)
+            return 1
+        if rc:
+            return rc
+    jh, jd = ledger(JOURNAL)
+    jd[i][6] = note
+    write_ledger(JOURNAL, jh, jd)
+    print("harvest: %s note written (uncommitted; close commits it)" % a.fn)
+    return 0
+
+
+def cmd_strip(a):
+    """Inner: the unit with func_<ADDR>'s definition replaced by the stripped one, scratch-built; differs = lever."""
+    msg = volume_refusal("strip") if a.in_volume else "REFUSED: strip runs only with --in-volume (container)"
+    if msg:
+        print(msg)
+        return 2
+    import propagate
+    import reconcile
+    propagate.SCRATCH = RUN / "_scratch"
+    al, st = parse_fn(a.fn)
+    name = "func_%08X" % st
+    stext = Path(a.stripped).read_text()
+    sdef = next((stext[b:e] for n, b, e in reconcile.fn_spans(stext) if n == name), None)
+    if sdef is None:
+        print("REFUSED: %s defines no %s" % (a.stripped, name))
+        return 2
+    for p in sorted((ROOT / "src" / al).glob("*.c")):
+        text = p.read_text()
+        span = next(((b, e) for n, b, e in reconcile.fn_spans(text) if n == name), None)
+        if span:
+            break
+    else:
+        print("REFUSED: no unit in src/%s defines %s" % (al, name))
+        return 2
+    rel = str(p.relative_to(ROOT))
+    try:
+        propagate.scratch_build(al, rel, text[:span[0]] + sdef + text[span[1]:])
+    except propagate.Fail as e:
+        bad = propagate.SCRATCH / al / "build" / ("%s.bin.bad" % al)  # the Makefile's sha1 check renames a mismatch
+        if "make rc 0" in str(e) or bad.is_file():
+            print("strip: differs")
+            return 0
+        print("strip: build-error (%s)" % word(e, 200))
+        return 2
+    print("strip: identical")
+    return 1
+
+
+def close_refusals(wave, waves, journal, run, anc):
+    """-> (refusals, row index, banked rows n, fleet commit). Pure over ledger paths and anc(a, b) (git ancestry;
+    anc(c, c) = c resolves)."""
+    wd = ledger(waves)[1]
+    i = wave_row(wd, wave)
+    if i is None or len(wd[i]) < 13 or wd[i][5] == "-":
+        return ["gate not done: %s" % wave], i, 0, None
+    r = wd[i]
+    out = ["already closed: %s %s" % (wave, r[3])] if r[3] not in ("", "-") else []
+    m = FLEET_RE.match(r[11])
+    c = m.group(1) if m else None
+    if c is None or not anc(c, c):
+        out.append("fleet not %d/%d@<commit>: %s" % (FLEET_N, FLEET_N, r[11]))
+    else:
+        out += banks_unreached(run, wave, anc, c)
+    jd = [x for x in ledger(journal)[1] if len(x) >= 7 and x[2] == wave and x[4] == "banked"]
+    out += ["unharvested: %s:%s" % (x[0], x[1]) for x in jd if not x[6].startswith("strip:")]
+    return out, i, len(jd), c
+
+
+def cmd_close(a):
+    msg = host_refusal("close")
+    if msg:
+        print(msg)
+        return 2
+    bad, i, n, c = close_refusals(a.wave, WAVES, JOURNAL, RUN, git_anc)
+    if bad:
+        print("\n".join("REFUSED: " + b for b in bad))
+        return 2
+    wh, wd = ledger(WAVES)
+    wd[i][3] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    wd[i][12] = "done:%d notes" % n
+    write_ledger(WAVES, wh, wd)
+    msg = "close: banked %s, harvest done:%d, fleet %d/%d@%s" % (wd[i][6], n, FLEET_N, FLEET_N, c)
+    return sh(["bash", "tools/commit_task.sh", a.wave, msg, "config/waves.tsv", "config/journal.tsv"],
+              capture=False).returncode
+
+
+def plant(d, wave, note):
+    """A gated wave with one banked row (journal note `note`), a valid fleet and one committed bank."""
+    d.mkdir(parents=True, exist_ok=True)
+    write_ledger(d / "waves.tsv", ["# " + "\t".join(WCOLS)],
+                 [[wave, "manual", "2026-01-01", "-", "1", "1", "1", "0", "0", "4", "0", "83/83@abc1234", "open"]])
+    write_ledger(d / "journal.tsv", ["# " + "\t".join(JCOLS)],
+                 [["slus_012_79", "0x80000000", wave, "-", "banked", "-", note]])
+    (d / wave).mkdir(exist_ok=True)
+    write_ledger(d / wave / "banks.tsv", ["# " + "\t".join(BCOLS)],
+                 [["1", "slus_012_79", "game_x", "0x80000000", "src/slus_012_79/game_x.c", "abc1234"]])
+
+
+def control():
+    d = RUN / "_control"
+    plant(d, "c1", "rung as-is")
+    bad = close_refusals("c1", d / "waves.tsv", d / "journal.tsv", d, lambda x, y: True)[0]
+    return any(b.startswith("unharvested: ") for b in bad)
+
+
+def cmd_check():
+    ok = all(header_ok(p, c) for p, c in ((WAVES, WCOLS), (JOURNAL, JCOLS)))
+    wd = ledger(WAVES)[1]
+    manual = {r[0] for r in wd if len(r) >= 13 and r[1] == "manual" and r[3] not in ("", "-")}
+    rd = ledger(ROUTING)[1]
+    m = 0
+    for r in rd:
+        r = r + [""] * (11 - len(r))
+        try:
+            float(r[8])
+            m += int(r[6]) > 0 and r[10] in manual
+        except ValueError:
+            pass
+    print("routing: %d of %d buckets measured on the manual wave" % (m, len(rd)))
+    c = sum(1 for r in wd if len(r) >= 13 and r[3] not in ("", "-") and HARVEST_RE.match(r[12]))
+    print("waves: %d of %d closed with harvest" % (c, len(wd)))
+    f = sum(1 for r in wd if len(r) >= 13 and FLEET_RE.match(r[11]))
+    print("fleet: %d of %d banked batches followed by a clean fleet check" % (f, len(wd)))
+    ctl = control()
+    print("wave control: %s" % ("ok" if ctl else "FAIL"))
+    if not ok:
+        print("FAIL: config/waves.tsv or config/journal.tsv header/row shape")
+    return 0 if ok and ctl else 1
+
+
+def cmd_selftest():
+    import contextlib
+    import io
+    import json
+    global WAVES, JOURNAL, RUN
+
+    def cfg_hash():
+        return hashlib.sha256(b"".join(p.read_bytes() for p in sorted((ROOT / "config").rglob("*"))
+                                       if p.is_file())).hexdigest()
+
+    before = cfg_hash()
+    sroot = ROOT / ".run/waves/_selftest"
+    shutil.rmtree(sroot, ignore_errors=True)
+    saved = (WAVES, JOURNAL, RUN)
+    RUN, WAVES, JOURNAL = sroot, sroot / "waves.tsv", sroot / "journal.tsv"
+    ok = []
+    try:
+        # (1) unharvested bank refused; with a strip: note it passes (positive control)
+        plant(sroot, "s1", "rung as-is")
+        r1 = close_refusals("s1", WAVES, JOURNAL, RUN, lambda x, y: True)[0]
+        plant(sroot, "s1", "strip:none positive control")
+        r2 = close_refusals("s1", WAVES, JOURNAL, RUN, lambda x, y: True)[0]
+        ok.append(any(b.startswith("unharvested: ") for b in r1) and not r2)
+        if ok[-1]:
+            print("selftest unharvested bank: refused ok")
+        # (2) a dir without an agent run refuses the gate; dropped, the gate counts the no-verdict
+        shutil.rmtree(sroot)
+        sroot.mkdir(parents=True)
+        write_ledger(WAVES, ["# " + "\t".join(WCOLS)],
+                     [["s2", "manual", "2026-01-01", "-", "2"] + ["-"] * 7 + ["open"]])
+        write_ledger(JOURNAL, ["# " + "\t".join(JCOLS)], [])
+        A, B = ("slus_012_79", 0x80000000), ("slus_012_79", 0x80000010)
+        wd = sroot / "s2"
+        for t in (A, B):
+            (wd / tdir(*t)).mkdir(parents=True)
+        (wd / tdir(*A) / "verdict.json").write_text(json.dumps({"alias": A[0], "start": "0x%08x" % A[1],
+                                                                "status": "no-verdict", "rung": "-", "label": ""}))
+        (wd / tdir(*B) / "card.md").write_text("# card\n")
+        line = "%s\t0x%08x\t0x%08x\t4\t1-16\n"
+        (wd / "targets.tsv").write_text("# alias\tstart\tend\tinsns\tbucket\n" + line % (A + (A[1] + 16,))
+                                        + line % (B + (B[1] + 16,)))
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = gate_inner("s2")
+        refused = rc == 2 and ("missing verdict: %s" % tdir(*B)) in buf.getvalue()
+        shutil.rmtree(wd / tdir(*B))
+        (wd / "targets.tsv").write_text("# alias\tstart\tend\tinsns\tbucket\n" + line % (A + (A[1] + 16,)))
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = gate_inner("s2")
+        counted = rc == 0 and "gate: banked 0 + failed 0 + no-verdict 1 = 1 drafted" in buf.getvalue() \
+            and len(ledger(JOURNAL)[1]) == 1
+        ok.append(refused and counted)
+        if ok[-1]:
+            print("selftest missing-verdict dir: refused ok")
+        # (3) a harvest note on the unbanked A is refused
+        msg = harvest_refusal("s2", A[0], A[1], "note", None, None, JOURNAL, lever_ids())[0]
+        ok.append(bool(msg) and "unbanked" in msg)
+        if ok[-1]:
+            print("selftest unbanked note: refused ok")
+    finally:
+        WAVES, JOURNAL, RUN = saved
+    same = cfg_hash() == before
+    if not same:
+        print("FAIL: config/ changed during the selftest")
+    n = sum(ok) if same else 0
+    print("selftest: %d of 3 ok" % n)
+    return 0 if n == 3 else 1
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    sub = ap.add_subparsers(dest="cmd", required=True)
+    ap.add_argument("--check", action="store_true", help="ledger counts + close-refusal control (tracked config only)")
+    ap.add_argument("--selftest", action="store_true", help="scratch-only refusals under .run/waves/_selftest/")
+    sub = ap.add_subparsers(dest="cmd")
+    for n in ("gate", "fleet", "close"):
+        s = sub.add_parser(n)
+        s.add_argument("wave")
+        if n == "gate":
+            s.add_argument("--in-volume", action="store_true")
+    h = sub.add_parser("harvest")
+    h.add_argument("wave")
+    h.add_argument("--fn", required=True)
+    h.add_argument("--note", required=True)
+    h.add_argument("--lever")
+    h.add_argument("--stripped")
+    s = sub.add_parser("strip")
+    s.add_argument("wave", nargs="?", help="unused; accepted for symmetry")
+    s.add_argument("--fn", required=True)
+    s.add_argument("--stripped", required=True)
+    s.add_argument("--in-volume", action="store_true")
     d = sub.add_parser("draw")
     d.add_argument("--kind", required=True, choices=KINDS)
     d.add_argument("--weight", required=True, type=int)
@@ -426,7 +1121,16 @@ def main(argv=None):
     c.add_argument("wave", nargs="?")
     c.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
-    return cmd_draw(a) if a.cmd == "draw" else cmd_cards(a)
+    if a.check:
+        return cmd_check()
+    if a.selftest:
+        return cmd_selftest()
+    if a.cmd is None:
+        ap.error("a subcommand, --check or --selftest is required")
+    if getattr(a, "wave", None) and not WAVE_ID.match(a.wave):
+        ap.error("wave id must match [A-Za-z0-9_]+")
+    return {"draw": cmd_draw, "cards": cmd_cards, "gate": cmd_gate, "fleet": cmd_fleet, "harvest": cmd_harvest,
+            "strip": cmd_strip, "close": cmd_close}[a.cmd](a)
 
 
 if __name__ == "__main__":

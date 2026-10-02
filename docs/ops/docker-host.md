@@ -46,6 +46,7 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 - `dc.sh sync`: `git ls-files -co --exclude-standard -z` (paths deleted in the working tree skipped) | `COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata` over stdin into a container that wipes every top-level entry of `/work` except `/work/.run`, then extracts. `/work` is thus an exact copy of tracked + untracked-unignored files, plus the container scratch `/work/.run`.
 - Run `dc.sh sync` before any `dc.sh run` after host edits.
 - Limits: ignored paths (`disks/`, `extracted/`, RE database, host `.run/`) are never carried. `/work/.git` is not carried. Container-side edits outside `/work/.run` are lost on the next sync.
+- `dc.sh push <path…>` (T4 Phase 1.8): host scratch into the volume; every path must be under `.run/` (else rc 2), same tar flags as sync, extracted at `/work` over stdin (no wipe). Pull back: `bash tools/docker/dc.sh run tar -cf - <paths> | tar -xf -`.
 
 ## Disc volume
 - Named volume `dc2-disc` (override `DC2_DISC_VOLUME`); `dc.sh run` mounts it read-only at `/disc`.
@@ -55,7 +56,7 @@ Facts recorded 2026-09-30 (T2.c2). Entry point: `tools/docker/dc.sh`; image reci
 - `sync` is silent since T4.c1: host bsdtar `--no-xattrs --no-mac-metadata` stops the per-file `LIBARCHIVE.xattr.com.apple.provenance` header (COPYFILE_DISABLE=1 alone did not). `dc.sh disc` still uses plain `COPYFILE_DISABLE=1 tar` (harmless warning noise).
 
 ## Use
-- `bash tools/docker/dc.sh build` · `bash tools/docker/dc.sh sync` · `bash tools/docker/dc.sh disc <dir>` · `bash tools/docker/dc.sh run <cmd…>` (exit code passed through).
+- `bash tools/docker/dc.sh build` · `bash tools/docker/dc.sh sync` · `bash tools/docker/dc.sh disc <dir>` · `bash tools/docker/dc.sh push <.run/path…>` · `bash tools/docker/dc.sh run <cmd…>` (exit code passed through).
 
 ## Build (phase 1.3 T3.c1, 2026-10-01)
 - `bash tools/docker/dc.sh sync && bash tools/run.sh <name> -- bash tools/docker/dc.sh run make -j build [ONLY="<alias> …"]`; green = one `<alias>.bin: OK` per alias, exit 0. Base files missing → the container extract above.

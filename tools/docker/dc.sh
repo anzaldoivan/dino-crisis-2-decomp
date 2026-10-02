@@ -6,6 +6,8 @@
 #                                     /work/.run (container scratch, e.g. the reference extract) is kept
 #   dc.sh disc <dir>                  replace volume ${DC2_DISC_VOLUME:-dc2-disc} with <dir>'s top-level
 #                                     *.cue + *.bin (piped over stdin; machine-local game data)
+#   dc.sh push <path…>                copy host paths (each under .run/) into /work on the volume, over
+#                                     stdin (same tar flags as sync); pull = `dc.sh run tar -cf - <paths> | tar -xf -`
 #   dc.sh run <cmd…>                  run <cmd…> in /work on the volume, disc volume read-only at /disc;
 #                                     exit code passed through
 # Volumes: ${DC2_VOLUME:-dc2-work}, ${DC2_DISC_VOLUME:-dc2-disc}. No bind mounts, ever. Touches no other volume.
@@ -18,7 +20,7 @@ DISC_VOL="${DC2_DISC_VOLUME:-dc2-disc}"
 IMG=dc2-build
 PLAT=linux/amd64
 
-usage() { echo "usage: dc.sh build [docker-build args…] | sync | disc <dir> | run <cmd…>" >&2; exit 2; }
+usage() { echo "usage: dc.sh build [docker-build args…] | sync | disc <dir> | push <path…> | run <cmd…>" >&2; exit 2; }
 
 [ $# -ge 1 ] || usage
 sub="$1"; shift
@@ -42,6 +44,18 @@ case "$sub" in
       | COPYFILE_DISABLE=1 tar --null -T - -cf -) \
       | docker run -i --rm --platform "$PLAT" -v "$DISC_VOL":/disc -w /disc "$IMG" \
           sh -c 'find /disc -mindepth 1 -maxdepth 1 -exec rm -rf {} + && tar -xf - -C /disc && ls -l /disc'
+    ;;
+  push)
+    [ $# -ge 1 ] || usage
+    for p in "$@"; do
+      case "$p" in
+        .run/*) case "$p" in *..*) echo "push: $p: '..' not allowed" >&2; exit 2 ;; esac ;;
+        *) echo "push: $p: not under .run/" >&2; exit 2 ;;
+      esac
+      [ -e "$p" ] || { echo "push: $p: missing" >&2; exit 2; }
+    done
+    COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -cf - "$@" \
+      | docker run -i --rm --platform "$PLAT" -v "$VOL":/work -w /work "$IMG" tar -xf -
     ;;
   run)
     [ $# -ge 1 ] || usage
