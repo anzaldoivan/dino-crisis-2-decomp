@@ -40,7 +40,26 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A07C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A144);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A34C);
+typedef struct {
+    unsigned char *p0;
+    unsigned char *p4;
+    unsigned char b8;
+    unsigned char b9;
+    unsigned char pad[2];
+} Ent0C;
+typedef struct {
+    int h0;
+    Ent0C e[1];
+} Tbl;
+
+void func_8005A34C(Tbl *t, int i, unsigned char *p)
+{
+    Ent0C *e = &t->e[i];
+    e->b9 = 1;
+    e->p0 = p;
+    e->p4 = p;
+    e->b8 = p[5];
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A37C);
 
@@ -80,7 +99,9 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D4BC);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D72C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D930);
+int func_8005D930(void) {
+    return *(int *)0x1F800060;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D940);
 
@@ -126,7 +147,11 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EB34);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EC80);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005ECB4);
+int func_8005ECB4(int *a0)
+{
+    *a0 += 2;
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005ECCC);
 
@@ -232,7 +257,19 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060FE8);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061054);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800610A0);
+typedef struct {
+    int pc;
+    char pad04[0x80];
+    int *arg;
+} ScriptCtx;
+extern void func_80034D88(int a, int b, int c);
+
+int func_800610A0(ScriptCtx *ctx)
+{
+    func_80034D88(ctx->arg[2], ctx->arg[1], ctx->arg[0]);
+    ctx->pc += 2;
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800610EC);
 
@@ -454,98 +491,3 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066190);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800661C0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800661FC);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800662B8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800663EC);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006651C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800666C8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800667B8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066888);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066A8C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066B80);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066C20);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066C74);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066E20);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066F78);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80067010);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80067B4C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80067F2C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006837C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800689F4);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80068CA0);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800694A0);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80069890);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800699A8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80069C00);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006AC8C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006AF9C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006B2B8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006B308);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006B674);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006B938);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006BAC8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006BBA8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006BCEC);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006BD80);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006C2D8);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006C454);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006C538);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006C5AC);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006C78C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006CB1C);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006CD30);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006D7F4);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006DABC);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006DCE0);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006DF00);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006E3AC);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006E3B4);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006E3F0);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006E450);

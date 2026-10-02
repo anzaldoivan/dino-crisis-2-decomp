@@ -24,3 +24,5 @@ slus_012_79	0x8002219c	game_8002219C	T3 carve	0x800223bc
 slus_012_79	0x8002be20	game_8002BE20	T3 carve	0x8002bf8c
 slus_012_79	0x80034d14	game_80034D14	T3 carve	0x80034d60
 slus_012_79	0x80036e94	game_80036E94	T3 carve	0x80037068
+slus_012_79	0x800662b8	game_800662B8	T5.c32 carve remainder of game_80057F48
+slus_012_79	0x800661fc	game_800661FC	T3 carve

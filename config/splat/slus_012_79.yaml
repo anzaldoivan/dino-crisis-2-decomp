@@ -143,6 +143,8 @@ segments:
       - [0x340e8, c, game_8004B8E8]
       - [0x4028c, c, game_80057A8C]
       - [0x40748, c, game_80057F48]
+      - [0x4e9fc, c, game_800661FC]
+      - [0x4eab8, c, game_800662B8]
       - [0x56d14, asm, slus_012_79_56d14]  # lib-object psyq470 LIBSND.LIB/UT_ROFF.OBJ; lib-object psyq470 LIBSPU.LIB/S_I.OBJ
       - [0x56d34, asm, slus_012_79_56d34]  # lib-object psyq470 LIBSPU.LIB/S_INI.OBJ
       - [0x56e94, asm, slus_012_79_56e94]  # lib-object psyq470 LIBSPU.LIB/SPU.OBJ
