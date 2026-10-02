@@ -88,9 +88,9 @@ def run(cmd, cwd, stdin=None):
 
 
 class Probe:
-    def __init__(self, row, cc_kind):
+    def __init__(self, row, cc_kind, scratch=SCRATCH):
         self.row, self.name, self.kind = row, row["name"], cc_kind
-        self.dir = SCRATCH / self.name
+        self.dir = scratch / self.name
         self.dir.mkdir(parents=True, exist_ok=True)
         src = ROOT / row["c_path"]
         run([CROSS + "cpp", "-P", "-undef", "-nostdinc", "-D__GNUC__=2", str(src), "-o", "probe.i"], self.dir)

@@ -603,6 +603,20 @@ Working order:
 - Caveat (DK-52, research R1.7-001): the pinned cc1 is Sony-patched (`BUILD 4.0.0030`); no patch source exists. The tree
   is vanilla 2.95.2, so cites say "vanilla 2.95.2"; a lever's byte proof, not the source cite, is the authority.
 
+### Codegen map (T2, Phase 1.7)
+- Registry `config/levers.tsv` `# lever group tell label alias start end before_c after_c cookbook`; groups in order
+  expand-cse, loop, combine, regalloc, sched-reorg; drafts (our C, self-contained, symbol `func_<START>`) under
+  `tools/probes/levers/` (README there).
+- `dc.sh run python3 tools/codegen_map.py [--check] [--groups a,b] [--selftest]`: compiles both drafts under the
+  pinned triple via `tools/probe.py` (scratch `.run/codegen_map/<lever>/<side>/`), compares with the game fn.
+  Classification, first hit wins: compile-error · identical-drafts (cpp `.i` equal) · not-matching (after ≠ target) ·
+  before-matches (inert, G45) · proven. Inert control every compiling run (planted `+= 1` vs `++`, slus_012_79:0x80052634);
+  `--selftest` adds not-matching and proven controls. `--check` rc 1 on any refusal, uncovered required group, stale doc
+  or control FAIL.
+- `PY tools/codegen_map.py --write` on the HOST: `docs/codegen-map.md` derives from levers.tsv text only (no compile);
+  files written inside `dc.sh run` stay in the volume. Never hand-edit the doc.
+- Scanner row `codegen_map` (game `yes`); with zero rows its denominator is 0, so the row is not ok until a lever lands.
+
 ## Models and effort (decomp, on PA3)
 
 PA3 pins model and effort per agent; no agent changes either. The judgments whose silent error would poison everything

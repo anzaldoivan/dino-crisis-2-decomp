@@ -1,0 +1,6 @@
+# config/levers.tsv -- lever registry for tools/codegen_map.py (T2, Phase 1.7). One row per byte-proven lever, TAB-separated.
+# group: expand-cse|loop|combine|regalloc|sched-reorg (gcc 2.95.2 pass groups). tell: the residual the lever moves. label: expected
+# plateau class of `before`. alias/start/end: the game fn, hex, end exclusive. before_c/after_c: our C under tools/probes/levers/,
+# self-contained, defining func_<START>. cookbook: C<nnnn>. Checked by `tools/codegen_map.py --check`; docs/codegen-map.md is
+# generated from this file by `tools/codegen_map.py --write`. No game bytes or asm here (G12).
+# lever	group	tell	label	alias	start	end	before_c	after_c	cookbook
