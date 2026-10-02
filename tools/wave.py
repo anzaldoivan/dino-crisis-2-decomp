@@ -766,7 +766,7 @@ def bank(wave, targets, scores):
             try:
                 if rel is None:
                     raise propagate.Fail("only include/ changed")
-                propagate.scratch_build(al, rel, (ROOT / rel).read_text())
+                propagate.scratch_build(al, {rel: (ROOT / rel).read_text()})
             except propagate.Fail as e:
                 print("  bank %s/%s: %s" % (al, unit, word(e, 200)))
                 note = "bank-hash %s" % al
@@ -1190,7 +1190,7 @@ def cmd_strip(a):
         return 2
     rel = str(p.relative_to(ROOT))
     try:
-        propagate.scratch_build(al, rel, text[:span[0]] + sdef + text[span[1]:])
+        propagate.scratch_build(al, {rel: text[:span[0]] + sdef + text[span[1]:]})
     except propagate.Fail as e:
         bad = propagate.SCRATCH / al / "build" / ("%s.bin.bad" % al)  # the Makefile's sha1 check renames a mismatch
         if "make rc 0" in str(e) or bad.is_file():

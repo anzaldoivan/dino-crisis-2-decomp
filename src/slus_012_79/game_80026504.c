@@ -1,4 +1,5 @@
 #include "common.h"
+#include "dc2.h"
 
 typedef struct { unsigned char b[8]; } Name8;
 typedef struct {
@@ -43,22 +44,19 @@ typedef struct {
     char *x70;
     char pad74[0x84 - 0x74];
     unsigned char x84;
-} Obj;
-typedef struct { char pad0[0x64]; int x64; } Unit;
-typedef struct { char pad0[0x4E0]; Unit *units; } Work;
-#define WORK (*(Work **)0x1F800000)
+} Obj80026504;
 extern unsigned char D_80087DEC[];
 extern unsigned char D_80087DDC[];
 extern int func_800474B4(int a, int b);
-extern Obj *func_80047714(void);
-extern void func_8002B614(Obj *o);
-extern void func_8002B41C(Obj *o);
+extern Obj80026504 *func_80047714(void);
+extern void func_8002B614(Obj80026504 *o);
+extern void func_8002B41C(Obj80026504 *o);
 
 void func_80026504(Src *src, Rec *rec)
 {
     Hdr *h = &src->hdr;
     char *base = h->base;
-    Obj *o;
+    Obj80026504 *o;
 
     while (*(int *)rec != -1 && (o = func_80047714()) != 0) {
         o->x58 = 15;
@@ -74,7 +72,7 @@ void func_80026504(Src *src, Rec *rec)
         o->x48 = rec->x20;
         o->x67 |= D_80087DEC[h->xA];
         rec++;
-        o->x60 = func_800474B4(WORK->units->x64, D_80087DDC[h->x8 - 1]);
+        o->x60 = func_800474B4(WORK->units->id, D_80087DDC[h->x8 - 1]);
         func_8002B614(o);
         func_8002B41C(o);
     }

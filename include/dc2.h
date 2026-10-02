@@ -107,6 +107,9 @@ typedef struct {
 /* Scratchpad word 1: primitive packet cursor (func_8002204C: lw, stores through it, advances by 12). */
 #define PKT (*(u32 **)0x1F800004)
 
+/* Scratchpad word 0x18 (func_8005D930: `lui 0x1f80; lw 0x60`, returned). */
+#define SPAD_60 (*(int *)0x1F800060)
+
 /* Fixed RAM addresses above every loaded binary, passed by func_80057A8C to func_80050D80. Kept as constants, not
  * extern symbols: the banked bytes were compiled from constants (a symbol form adds %hi/%lo relocations; untested). */
 #define D_80184C60 ((void *)0x80184C60)

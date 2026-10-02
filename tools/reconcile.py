@@ -258,7 +258,7 @@ def ladder(draft, alias, start, apply, log, d, unit_override=None):
             tried[out] = rung
             try:
                 try:
-                    propagate.scratch_build(alias, rel, out)
+                    propagate.scratch_build(alias, {rel: out})
                 finally:
                     shutil.copy2(propagate.SCRATCH / alias / "make.log", d / f"make.{rung}.log")
                 log(f"rung {rung}: {', '.join(notes) or 'no change'}; scratch build hash-equal")

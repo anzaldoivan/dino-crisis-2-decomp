@@ -86,7 +86,7 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D4BC);
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D72C);
 
 int func_8005D930(void) {
-    return *(int *)0x1F800060;
+    return SPAD_60;
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005D940);

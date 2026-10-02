@@ -13,6 +13,9 @@ Attempt: 4   Agent: expert-opus55   Ctx at handoff: n/a   Commit: 2ee5fff (base)
 - c28 (attempt 4, spawned ~17:02): verify c27's tree fail-closed (fleet, census --set exe, wave --check, scanners, audit), explain census 3911→3912, apply any missing F1 exemplar, commit as T7.c28, log logs/T7.c28.md. Its files are off-limits until it returns.
 - c27 apply: 15 exemplars rc 0 (8001b530 8001ea54 800264ac 80026a50 8002b3e0 8002d78c 8002e18c 8002e920 800436c8 80047958 8005a34c 8005ecb4 800610a0 800661fc 80066b80); 800786b4 not registered (no kind=game copy).
 
+- c28 done (no hand-back received; read from log): commits 895d95c (tool), 89f7445 (apply, 350 members of 15 families); fleet 83/83, harness 6/6, census `stubs: 943 of 1331 (set exe)` check OK; audit OK (18:50); log committed 5db7ec7. Left: bin_wep0a:0x8017e504 (class 0x8002d78c) unregistered: carve after a text-head data word makes a phantom fn (generalizable gotcha). F1 unregistered: 800786b4 (no copies), 80021f78/80026504/8005d930 (near tier only).
+- 18:50 scanners gate t7-scan running (bg).
+
 ## Hypotheses rejected
 - (none yet)
 
