@@ -433,6 +433,10 @@ WCOLS = ("wave", "kind", "opened", "closed", "pool", "drafted", "banked", "faile
          "propagated", "fleet", "harvest")
 JCOLS = ("alias", "start", "wave", "route", "outcome", "label", "note")
 BCOLS = ("k", "alias", "unit", "fns", "paths", "commit")
+RCOLS = ("bucket", "min_insns", "max_insns", "route", "card_cap", "attempts", "drafted", "banked", "rate", "cost_ctx_k",
+         "basis")
+# a real compile/assemble/link failure in a make log; the Makefile's own `make: *** [...] Error 1` has no colon
+BUILD_ERR = re.compile(r"\berror:|\bError:|undefined reference|Assembler messages|Segmentation fault|multiple definition")
 VERBATIM = ("asm(", "__asm__", "INCLUDE_ASM", "glabel", ".word", ".set noreorder")
 FLEET_N = census.FLEET_N
 FLEET_RE = re.compile(r"^%d/%d@([0-9a-f]{7,40})$" % (FLEET_N, FLEET_N))
@@ -460,6 +464,14 @@ def write_ledger(path, head, data):
 def header_ok(path, cols):
     head, data = ledger(path)
     return ("# " + "\t".join(cols)) in head and all(len(r) == len(cols) for r in data)
+
+
+def build_outcome(rung, log):
+    """Pure: -> (outcome, note) for a reconcile `failed <rung> build-error` from its make.<rung>.log text. Compiled but
+    the sha1 check failed (Makefile renames to `.bin.bad`) -> plateau `hash-mismatch <rung>`; else compile-error."""
+    if ".bin.bad" in log and not BUILD_ERR.search(log):
+        return "plateau", "hash-mismatch %s" % rung
+    return "compile-error", "failed %s build-error" % rung
 
 
 def wave_row(data, wave):
@@ -563,9 +575,12 @@ def score(wave, targets):
                     s.update(outcome="candidate", rung=v[1], note="rung %s" % v[1])
                 elif len(v) == 3 and v[0] == "failed" and v[1] == "carve" and v[2] == "needs-apply":
                     s.update(outcome="candidate", rung="carve", note="rung carve")  # carve is --apply only
+                elif len(v) >= 3 and v[0] == "failed" and v[2] == "build-error":
+                    ml = vf.parent / ("make.%s.log" % v[1])
+                    oc, nt = build_outcome(v[1], ml.read_text(errors="replace") if ml.is_file() else "")
+                    s.update(outcome=oc, rung=v[1], reason=v[2], note=word(nt))
                 elif len(v) >= 3 and v[0] == "failed":
-                    s.update(outcome="compile-error" if v[2] == "build-error" else "plateau", rung=v[1],
-                             reason=v[2], note=word("failed %s %s" % (v[1], v[2])))
+                    s.update(outcome="plateau", rung=v[1], reason=v[2], note=word("failed %s %s" % (v[1], v[2])))
                 else:
                     s.update(note="reconcile verdict missing or garbled")
         out[(al, st)] = s
@@ -996,7 +1011,10 @@ def control():
 
 
 def cmd_check():
-    ok = all(header_ok(p, c) for p, c in ((WAVES, WCOLS), (JOURNAL, JCOLS)))
+    led = [(WAVES, WCOLS), (JOURNAL, JCOLS)] + ([(ROUTING, RCOLS)] if ROUTING.exists() else [])
+    k = sum(1 for p, c in led if header_ok(p, c))
+    print("wave ledgers: %d of %d parse" % (k, len(led)))
+    ok = k == len(led)
     wd = ledger(WAVES)[1]
     manual = {r[0] for r in wd if len(r) >= 13 and r[1] == "manual" and r[3] not in ("", "-")}
     rd = ledger(ROUTING)[1]
@@ -1016,7 +1034,7 @@ def cmd_check():
     ctl = control()
     print("wave control: %s" % ("ok" if ctl else "FAIL"))
     if not ok:
-        print("FAIL: config/waves.tsv or config/journal.tsv header/row shape")
+        print("FAIL: wave ledger header/row shape")
     return 0 if ok and ctl else 1
 
 
@@ -1080,14 +1098,23 @@ def cmd_selftest():
         ok.append(bool(msg) and "unbanked" in msg)
         if ok[-1]:
             print("selftest unbanked note: refused ok")
+        # (4) build-error outcome map over planted make logs (our words only)
+        mism = ("cc1 -quiet -O2 ... src/x/y.c\nld -o build/x.elf\nFAILED sha1: x (build/x.bin.bad)\n"
+                "make: *** [Makefile:122: build/x.bin] Error 1\n")
+        cerr = "src/x/y.c:3: cc1: error: planted parse error before `}'\nmake: *** [build/x/y.o] Error 1\n"
+        ok.append(build_outcome("as-is", mism) == ("plateau", "hash-mismatch as-is")
+                  and build_outcome("as-is", cerr)[0] == "compile-error" and build_outcome("as-is", "")[0]
+                  == "compile-error")
+        if ok[-1]:
+            print("selftest outcome map: ok")
     finally:
         WAVES, JOURNAL, RUN = saved
     same = cfg_hash() == before
     if not same:
         print("FAIL: config/ changed during the selftest")
     n = sum(ok) if same else 0
-    print("selftest: %d of 3 ok" % n)
-    return 0 if n == 3 else 1
+    print("selftest: %d of 4 ok" % n)
+    return 0 if n == 4 else 1
 
 
 def main(argv=None):

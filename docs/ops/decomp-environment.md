@@ -741,7 +741,9 @@ Lever proof (binding):
   `banks`) → whole gate refused rc 2 (`missing verdict: <dir>` / `stray dir: <dir>`). No draft.c → no-verdict. G11
   verbatim (`asm(`, `__asm__`, `INCLUDE_ASM`, `glabel`, `.word`, `.set noreorder`) → plateau, label `verbatim`. Else
   `reconcile.py <draft> --target A:S` probe: `banked <rung>` or `failed carve needs-apply` → bank candidate; `failed
-  <rung> build-error` → compile-error; other failed → plateau; none → no-verdict. Prints
+  <rung> build-error` → `build_outcome(rung, make.<rung>.log text)` (pure; log in `.run/reconcile/<alias>_<start>/`):
+  `.bin.bad` and no compiler/assembler/link error (`error:`, `Error:`, `undefined reference`, …) → plateau note
+  `hash-mismatch <rung>`, else compile-error (T4.c2); other failed → plateau; none → no-verdict. Prints
   `claims: k of D agree with the score` (verdict.json status is a claim, never the score).
 - Bank (DK-36): candidates grouped by destination unit (as cards; none → own carve group), (alias, unit) order; per
   group snapshot src/ config/ include/, `reconcile.py --apply` per member, ONE `propagate.scratch_build` ONLY=<alias>
@@ -762,10 +764,13 @@ Lever proof (binding):
 - `close W` (host): refused (rc 2, nothing written) when the gate is not done, fleet is not `83/83@<c>` with every
   bank commit ancestor-or-equal of `<c>`, or a banked row's note lacks `strip:` (`unharvested: A:S`). Pass → closed =
   today, harvest `done:<n> notes`, commit `close: banked B, harvest done:<n>, fleet 83/83@<c>`.
-- `wave.py --check` (scanner `wave`): `routing: M of B buckets measured on the manual wave`, `waves: C of W closed
+- `wave.py --check` (scanner `wave`, config/scanners.tsv: denominator `wave ledgers: (\d+) of \1 parse`, control
+  `wave control: ok`; T5 retightens to the routing line): first `wave ledgers: K of N parse` (N = waves.tsv +
+  journal.tsv [+ routing.tsv when present]; K = header matches the plan shape and every row has its column count), then `routing: M of B buckets measured on the manual wave`, `waves: C of W closed
   with harvest`, `fleet: F of W banked batches followed by a clean fleet check`, `wave control: ok|FAIL` (planted
   unharvested wave under `.run/waves/_control/` must be refused). rc 0 iff control ok and ledger headers parse.
-  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 3 of 3 ok`.
+  `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 4 of 4 ok`
+  (case 4: planted mismatch / cc1-error log texts → `selftest outcome map: ok`).
 - Gotcha: the Makefile's sha1 check renames a mismatching bin `build/<alias>.bin.bad` and make exits 2, so "make rc 0"
   alone does not identify a hash mismatch (strip checks the `.bad` file).
 
