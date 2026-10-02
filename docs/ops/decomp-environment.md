@@ -143,6 +143,9 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
   accepted 1 (the first twin) → `control: ok`; else `control: FAIL <diff>` rc 1 (no twin pair found = FAIL).
 - **Fleet (T6.c1, 2026-10-01):** 769 of 3426 accepted; refused banked 7, pin-unproven 1879, open-twin-sibling 635,
   switch 122, has-banked-twin 14, others 0. Pinned families = exe, LOGO+ST.
+- **Verify count slot (T9, Phase 1.6):** in a milestone expectation, `<X> of <Y>` with X, Y standalone capitals makes
+  both letters `\d+` placeholders, `A`/`I` included (`draw: A of D accepted`); elsewhere `a`/`A`/`I` stay literal
+  (`phaseend_index.match_expects`, `verify --help`). `plan_edit.py lint` (and `approve`) WARNs on `A`/`I` in such a slot.
 
 ### Compile-only (no ROM) (T8, Phase 1.4)
 

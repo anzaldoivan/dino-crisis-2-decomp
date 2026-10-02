@@ -838,7 +838,22 @@ def _triage_writeback(root, phase, decisions, items):
     return out
 
 
+def _count_slot_warns(text):
+    """T9: `A`/`I` in a `<X> of <Y>` count slot of a backticked Milestone expectation is a verify
+    placeholder (phaseend_index.match_expects); warn so the planner can prefer another letter."""
+    out = []
+    m = re.search(r"(?m)^Milestone:.*$", text)
+    for span in re.findall(r"`([^`]+)`", m.group(0) if m else ""):
+        for s in re.finditer(r"(?<![\w./-])([A-Z]) of ([A-Z])(?![\w./-])", span):
+            for L in sorted({s.group(1), s.group(2)} & {"A", "I"}):
+                out.append("milestone: placeholder '%s' in count slot `%s`; prefer another letter"
+                           % (L, span))
+    return out
+
+
 def cmd_approve(a, root, path, text, explicit):
+    for w in _count_slot_warns(text):
+        sys.stdout.write("WARN  %s\n" % w)
     if is_approved(text):
         die("already approved (a new plan replaces it via REPLAN.md)")
     lines, tasks, headings = parse(text)
@@ -959,6 +974,7 @@ def cmd_lint(a, root, path, text, explicit):
         for d in dep_ids(t):
             if d not in seen:
                 problems.append("line %d: %s dangling dep '%s'" % (t.index + 1, t.id, d))
+    warns += _count_slot_warns(text)
     locked = check_lock(root, path, text, explicit)
     if locked:
         problems.append("header: " + locked)

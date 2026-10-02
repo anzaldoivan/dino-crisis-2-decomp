@@ -864,6 +864,22 @@ def clause_command(clause, py):
 
 
 _PLACEHOLDER_RE = re.compile(r"(?<![\w./-])([B-HJ-Zb-z])(?![\w./-])")
+# T9: `<X> of <Y>` count slot, X and Y standalone capitals: both are placeholders, even `A`/`I`
+_COUNT_SLOT_RE = re.compile(r"(?<![\w./-])([A-Z]) of ([A-Z])(?![\w./-])")
+
+
+def _placeholder_spans(e):
+    """``[(start, end, letter)]`` placeholders of one expectation: `_PLACEHOLDER_RE` hits plus
+    both letters of every `<X> of <Y>` count slot (T9: `A of D`, `I of N` included)."""
+    spans = {}
+    for m in _COUNT_SLOT_RE.finditer(e):
+        for g in (1, 2):
+            spans[m.start(g)] = (m.start(g), m.end(g), m.group(g))
+    for m in _PLACEHOLDER_RE.finditer(e):
+        spans.setdefault(m.start(1), (m.start(1), m.end(1), m.group(1)))
+    return [spans[k] for k in sorted(spans)]
+
+
 _OPS = {"≤": "<=", "<=": "<=", "<": "<", "≥": ">=", ">=": ">=", ">": ">", "=": "==", "==": "=="}
 _OP = r"(<=|>=|==|≤|≥|<|>|=)"
 _LETTER = r"(?<![\w./-])([A-Za-z])(?![\w./-])"
@@ -893,18 +909,18 @@ def _holds(v, op, n):
 
 def match_expects(clause, expects, text):
     """T10: expectation strings not satisfied by ``text`` ([] = ok). A standalone single letter
-    (not ``a``/``A``/``I``) is a placeholder for ``\\d+``; one letter binds one value across every
-    expectation of the clause; bounds from the clause prose (``3 ≤ K ≤ 5``) apply to placeholders.
-    Everything else matches literally."""
+    (not ``a``/``A``/``I``) is a placeholder for ``\\d+``; exception (T9): in a ``<X> of <Y>`` count
+    slot of two standalone capitals both are placeholders, ``A``/``I`` included (``A of D``); one
+    letter binds one value across every expectation of the clause; bounds from the clause prose
+    (``3 ≤ K ≤ 5``) apply to placeholders. Everything else matches literally."""
     pats, letters = [], set()
     for e in expects:
         parts, seen, last = [], set(), 0
-        for m in _PLACEHOLDER_RE.finditer(e):
-            parts.append(re.escape(e[last:m.start()]))
-            L = m.group(1)
+        for s, t, L in _placeholder_spans(e):
+            parts.append(re.escape(e[last:s]))
             parts.append("(?P=%s)" % L if L in seen else r"(?<!\d)(?P<%s>\d+)(?!\d)" % L)
             seen.add(L)
-            last = m.end()
+            last = t
         parts.append(re.escape(e[last:]))
         letters |= seen
         pats.append(re.compile("".join(parts)))
@@ -935,7 +951,7 @@ def match_expects(clause, expects, text):
 
     if search(0, {}):
         return []
-    return [e for e in expects if _PLACEHOLDER_RE.search(e)]
+    return [e for e in expects if _placeholder_spans(e)]
 
 
 def cmd_verify(a, root, conf):
@@ -1444,8 +1460,10 @@ def main(argv=None):
         "Expectations: a backticked string after with/prints/shows/contains/outputs/->, or after\n"
         "'and' when an earlier expectation exists in the clause (`cmd1` and `cmd2` stays prose).\n"
         "Matching is literal, except placeholders: a standalone single ASCII letter (not a/A/I,\n"
-        "not next to [\\w./-]) matches \\d+. One letter binds one value across all expectations\n"
-        "of the clause ('K of K' ... 'all K' must agree); every occurrence in the log is tried.\n"
+        "not next to [\\w./-]) matches \\d+; exception: in a '<X> of <Y>' count slot of two\n"
+        "standalone capitals both letters are placeholders, A/I included ('A of D').\n"
+        "One letter binds one value across all expectations of the clause ('K of K' ...\n"
+        "'all K' must agree); every occurrence in the log is tried.\n"
         "Bounds in the clause prose (backtick spans removed) apply to placeholders:\n"
         "'lo OP X OP hi', 'X OP n', 'n OP X' with OP in <= < >= > = == (or the Unicode forms).\n"
         "A placeholder with no bound only needs to bind. Exit code counts when the clause says\n"
