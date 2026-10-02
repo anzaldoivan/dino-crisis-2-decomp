@@ -2,10 +2,6 @@
 #include "dc2.h"
 
 /* func_80037824 */
-typedef struct {
-    short a;
-    short b;
-} Pair;
 
 extern Pair D_800893D0;
 extern unsigned char D_800ABA96;
@@ -154,14 +150,6 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EFFC);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005F024);
 
-typedef struct {
-    int pc;
-    char pad04[0x80];
-    unsigned char *arg;
-    char pad88[0x16];
-    unsigned char b9E;
-    unsigned char b9F;
-} Ctx;
 
 int func_8005F088(Ctx *c)
 {
@@ -348,17 +336,13 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80063ADC);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80063C50);
 
-typedef struct {
-    unsigned char b0;
-    unsigned char pad[0x27];
-} Elem28;
 extern Elem28 D_800B4A68[];
 
 void func_80063CC4(void)
 {
     unsigned int i;
 
-    *(Elem28 **)(*(int *)0x1F800000 + 0x5FC) = D_800B4A68;
+    WORK->x5FC = D_800B4A68;
     for (i = 0; i < 32; i++) {
         D_800B4A68[i].b0 = 0;
     }
@@ -416,12 +400,6 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80064DCC);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80064E0C);
 
-typedef struct {
-    unsigned char pad0[2];
-    unsigned char unk2;
-    unsigned char pad3[0xC];
-    unsigned char unkF;
-} S800B53A8;
 extern S800B53A8 D_800B53A8;
 extern unsigned short D_800ABA68;
 

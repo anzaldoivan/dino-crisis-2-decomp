@@ -1,4 +1,5 @@
 #include "common.h"
+#include "dc2.h"
 
 typedef struct { char s[8]; } Str8;
 extern Str8 D_80018268;
@@ -18,10 +19,10 @@ void func_8002219C(void)
     unsigned int v;
 
     if (func_80034CD8(1, 14) == 0) {
-        (*(int **)0x1F800000)[0xE64 / 4]--;
+        WORK->xE64--;
     }
-    m = (*(int **)0x1F800000)[0xE68 / 4];
-    t = (*(int **)0x1F800000)[0xE64 / 4];
+    m = WORK->xE68;
+    t = WORK->xE64;
     if (t < m / 10) {
         color = 0x101080;
     } else if (t < m / 2) {
@@ -41,7 +42,7 @@ void func_8002219C(void)
     buf2 = D_80018270;
     func_80021F78(&buf2, 64, 64, 0x7DCD, color, 0, 1);
     func_8002204C(0xB4, 50, t, color);
-    if ((*(int **)0x1F800000)[0xE64 / 4] <= 0) {
+    if (WORK->xE64 <= 0) {
         func_80034C48(3, 9, 0);
         func_80034C48(2, 11, 1);
     }

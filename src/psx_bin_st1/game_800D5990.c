@@ -1,6 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct { short vx, vy, vz, pad; } SVec;
 typedef struct { short a; short pad2; int pad4; int b; } Sub;
 typedef struct {
     char pad0[0x20];
@@ -15,19 +15,18 @@ typedef struct {
     void *x134; char pad138[0x88];
     Sub sub; char pad1CC[0x28];
     short x1F4[8];
-} Obj;
-typedef struct { char pad[0x50]; int flags; } Ctx;
+} Obj800D5990;
 extern int D_800D94D0[];
 extern int func_80034CD8(int, int);
-extern void func_800484F0(Obj *, int, int, int, int);
-extern void func_80079704(void *, SVec *, SVec *);
-extern void func_800D6204(Obj *, int);
+extern void func_800484F0(Obj800D5990 *, int, int, int, int);
+extern void func_80079704(void *, SVECTOR *, SVECTOR *);
+extern void func_800D6204(Obj800D5990 *, int);
 
-void func_800D5990(Obj *p) {
+void func_800D5990(Obj800D5990 *p) {
     Sub *sub = &p->sub;
-    Ctx *ctx;
-    SVec v[4];
-    SVec *vp;
+    Unit *ctx;
+    SVECTOR v[4];
+    SVECTOR *vp;
     short *out;
     short *pz;
     unsigned short x, z;
@@ -35,7 +34,7 @@ void func_800D5990(Obj *p) {
     char *m;
     int *tbl;
 
-    ctx = *(Ctx **)((*(char **)0x1F800000) + 0x4E0);
+    ctx = WORK->units;
     p->x54 += 3;
     p->x55 = 0;
     p->x56 = 0;

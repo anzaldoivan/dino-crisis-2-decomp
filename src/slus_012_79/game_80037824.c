@@ -2,10 +2,6 @@
 #include "dc2.h"
 
 /* func_80037824 */
-typedef struct {
-    short a;
-    short b;
-} Pair;
 
 extern Pair D_800893D0;
 extern unsigned char D_800ABA96;
@@ -75,10 +71,6 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_800391E8);
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80039430);
 
 
-typedef struct {
-    unsigned char b0;
-    unsigned char pad[0x27];
-} Elem28;
 extern Elem28 D_800B4A68[];
 
 

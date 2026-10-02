@@ -589,8 +589,9 @@ def score(wave, targets, keys=None):
             if any(v in draft for v in VERBATIM):
                 s.update(outcome="plateau", reason="verbatim", label="verbatim", note="pasted asm (G11)")
             else:
-                sh([sys.executable, "tools/reconcile.py", str(d / "draft.c"), "--target", "%s:0x%08x" % (al, st)])
-                vf = ROOT / ".run/reconcile" / tdir(al, st) / "verdict"
+                sh([sys.executable, "tools/reconcile.py", str(d / "draft.c"), "--target", "%s:0x%08x" % (al, st),
+                    "--out", str(wd / "_reconcile")])  # T5.c33: the wave's own scratch, not the reconcile corpus
+                vf = wd / "_reconcile" / tdir(al, st) / "verdict"
                 v = vf.read_text().split() if vf.is_file() else []
                 if len(v) == 2 and v[0] == "banked":
                     s.update(outcome="candidate", rung=v[1], note="rung %s" % v[1])
@@ -656,8 +657,9 @@ def bank(wave, targets, scores):
         for st in all_sts:  # T5.c32: a fn whose apply fails is restored and dropped alone, not its whole unit
             pre = tree_snapshot()
             sh([sys.executable, "tools/reconcile.py", str(wd / tdir(al, st) / "draft.c"), "--target",
-                "%s:0x%08x" % (al, st), "--apply"])  # rc also reflects other dirs' verdicts (reconcile gate): unused
-            rd = ROOT / ".run/reconcile" / tdir(al, st)
+                "%s:0x%08x" % (al, st), "--apply",
+                "--out", str(wd / "_reconcile")])  # rc also reflects other dirs' verdicts (reconcile gate): unused
+            rd = wd / "_reconcile" / tdir(al, st)
             v = (rd / "verdict").read_text().strip() if (rd / "verdict").is_file() else "no-verdict"
             if not v.startswith("banked"):
                 restore(al, pre)

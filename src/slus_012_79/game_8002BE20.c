@@ -1,7 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct { short vx, vy, vz, pad; } SVECTOR;
-typedef struct { short m[3][3]; int t[3]; } MATRIX;
 typedef struct { int w[5]; } M20;
 extern int func_80079154(int);
 extern void func_80079704(MATRIX *, SVECTOR *, SVECTOR *);

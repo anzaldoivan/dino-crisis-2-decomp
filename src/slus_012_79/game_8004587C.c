@@ -1,17 +1,18 @@
 #include "common.h"
+#include "dc2.h"
 
 typedef struct {
     unsigned char pad[0x30];
     unsigned short unk30;
     unsigned short unk32;
-} Obj;
-extern Obj D_800B32F0;
+} Obj8004587C;
+extern Obj8004587C D_800B32F0;
 extern unsigned short *func_800458F0(int a, int b);
 
 int func_8004587C(void) {
-    unsigned char *s = *(unsigned char **)0x1F800000;
-    Obj *o = &D_800B32F0;
-    unsigned short v = *func_800458F0(s[0xC2D], s[0xC2C]);
+    Work *s = WORK;
+    Obj8004587C *o = &D_800B32F0;
+    unsigned short v = *func_800458F0(s->xC2D, s->xC2C);
     unsigned short cur;
     if (v != 0xFFFF) {
         cur = o->unk32;

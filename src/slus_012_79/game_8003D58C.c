@@ -1,20 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct { short vx, vy, vz, pad; } SVECTOR;
-typedef struct { int vx, vy, vz, pad; } VECTOR;
-typedef struct { short m[3][3]; int t[3]; } MATRIX;
-typedef struct { short x0, z0, x1, z1; } Seg;
-typedef struct {
-    unsigned char count;
-    unsigned char pad[7];
-    int offs[1];
-} Zones;
-typedef struct {
-    char pad0[0x4E0];
-    void *player;
-    char pad4E4[0x5EC - 0x4E4];
-    Zones *zones;
-} Scratch;
 typedef struct {
     char pad0[0x40];
     short x;
@@ -30,14 +16,14 @@ typedef struct {
     short level;
     char pad5C[0x11A - 0x5C];
     unsigned char hit;
-} Obj;
+} Obj8003D58C;
 int func_80032908(Seg *a, Seg *b);
 short func_80033F10(SVECTOR *a, SVECTOR *b, unsigned char c, int d);
 void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007A824(SVECTOR *r, MATRIX *m);
 void func_8007AFA4(VECTOR *a, VECTOR *b, VECTOR *c);
 
-int func_8003D58C(Obj *obj, int dist, short len, short ang)
+int func_8003D58C(Obj8003D58C *obj, int dist, short len, short ang)
 {
     SVECTOR out;
     Seg s;
@@ -54,7 +40,7 @@ int func_8003D58C(Obj *obj, int dist, short len, short ang)
     unsigned char *p;
     int mask;
     int level;
-    Zones *z;
+    AreaTbl *z;
     unsigned char *e;
     int *v;
     unsigned int i;
@@ -64,7 +50,7 @@ int func_8003D58C(Obj *obj, int dist, short len, short ang)
     p = 0;
     mask = 0x40;
     obj->hit = 0;
-    if (obj == (*(Scratch **)0x1F800000)->player) {
+    if ((void *)obj == WORK->units) {
         mask = 0x80;
     }
     if (obj->flags & 0x1000) {
@@ -109,8 +95,8 @@ int func_8003D58C(Obj *obj, int dist, short len, short ang)
     seg[1].x1 = out.vx + seg[1].x0;
     seg[1].z1 = out.vz + seg[1].z0;
 
-    for (i = 0; i < (*(Scratch **)0x1F800000)->zones->count; i++) {
-        z = (*(Scratch **)0x1F800000)->zones;
+    for (i = 0; i < WORK->areas->count; i++) {
+        z = WORK->areas;
         e = (unsigned char *)z + z->offs[i];
         if (!(e[0] & 1)) continue;
         if (!((*(unsigned short *)(e + 4) >> obj->level) & 1)) continue;
@@ -154,8 +140,8 @@ done:
         level = obj->level + 2;
     }
 
-    for (i = 0; i < (*(Scratch **)0x1F800000)->zones->count; i++) {
-        z = (*(Scratch **)0x1F800000)->zones;
+    for (i = 0; i < WORK->areas->count; i++) {
+        z = WORK->areas;
         e = (unsigned char *)z + z->offs[i];
         if (!(e[0] & 1)) continue;
         if (!((*(unsigned short *)(e + 4) >> level) & 1)) continue;

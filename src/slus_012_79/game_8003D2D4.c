@@ -1,9 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct { short vx, vy, vz, pad; } SVECTOR;
-typedef struct { int vx, vy, vz, pad; } VECTOR;
-typedef struct { short m[3][3]; int t[3]; } MATRIX;
-typedef struct { short x0, y0, x1, y1; } Seg;
 typedef struct {
     char pad0[0x40];
     unsigned short x;                
@@ -16,7 +13,7 @@ typedef struct {
     short layer;                     
     char pad5C[0xBE];
     unsigned char hit;                
-} Obj;
+} Obj8003D2D4;
 typedef struct {
     unsigned char flags;          
     unsigned char count;          
@@ -26,23 +23,12 @@ typedef struct {
     char pad6[2];
     unsigned char attr[1];        
 } Area;
-typedef struct {
-    unsigned char count;
-    char pad1[7];
-    int offs[1];                  
-} AreaTbl;
-typedef struct {
-    char pad0[0x4E0];
-    Obj *player;                      
-    char pad4E4[0x108];
-    AreaTbl *areas;                   
-} Work;
 int func_80032908(Seg *a, Seg *b);
 void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007A824(SVECTOR *r, MATRIX *m);
 void func_8007AFA4(VECTOR *a, VECTOR *b, VECTOR *c);
 
-int func_8003D2D4(Obj *obj, int len)
+int func_8003D2D4(Obj8003D2D4 *obj, int len)
 {
     Seg box;
     Seg seg;
@@ -57,7 +43,7 @@ int func_8003D2D4(Obj *obj, int len)
     int *p;
 
     mode = 0x40;
-    if (obj == (*(Work **)0x1F800000)->player) {
+    if ((void *)obj == WORK->units) {
         mode = 0x80;
     }
     if (obj->flags & 0x1000) {
@@ -68,11 +54,11 @@ int func_8003D2D4(Obj *obj, int len)
     func_8007A824(&obj->rot, &m);
     func_80079704(&m, (SVECTOR *)&seg, (SVECTOR *)&seg);
     box.x0 = obj->x;
-    box.y0 = obj->y;
+    box.z0 = obj->y;
     box.x1 = seg.x0 + obj->x;
-    box.y1 = seg.x1 + obj->y;
-    for (i = 0; i < (*(Work **)0x1F800000)->areas->count; i++) {
-        AreaTbl *t = (*(Work **)0x1F800000)->areas;
+    box.z1 = seg.x1 + obj->y;
+    for (i = 0; i < WORK->areas->count; i++) {
+        AreaTbl *t = WORK->areas;
         e = (Area *)((char *)t + t->offs[i]);
         if (!((e->layers >> obj->layer) & 1)) continue;
         if (!(e->flags & 1)) continue;
@@ -89,9 +75,9 @@ int func_8003D2D4(Obj *obj, int len)
             b.vy = 0;
             a.vy = 0;
             a.vx = box.x0 - seg.x0;
-            a.vz = box.y0 - seg.y0;
+            a.vz = box.z0 - seg.z0;
             b.vx = seg.x1 - seg.x0;
-            b.vz = seg.y1 - seg.y0;
+            b.vz = seg.z1 - seg.z0;
             func_8007AFA4(&a, &b, &b);
             if (b.vy < 0) continue;
             if (mode != 0x80 || (*(unsigned short *)attr & 0x44)) {

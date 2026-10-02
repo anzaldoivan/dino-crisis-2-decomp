@@ -28,4 +28,4 @@ codegen_map	python3 tools/codegen_map.py --check	^levers: \d+ of (\d+) byte-prov
 permute	python3 tools/permute.py --check	^permuter: stored draft iterated \d+ times, (\d+) distinct candidates$	^scorer control: ok$	yes
 plateau	python3 tools/plateau.py --check	^plateau: \d+ of (\d+) planted labelled$	^match control: ok$	yes
 cookbook_index	python3 tools/cookbook_index.py --check	^cookbook-index: \d+ of (\d+) entries indexed$	^control: ok$	no
-wave	python3 tools/wave.py --check	^wave ledgers: (\d+) of \1 parse$	^wave control: ok$	no
+wave	python3 tools/wave.py --check	^routing: (\d+) of \1 buckets measured on the manual wave$	^wave control: ok$	no

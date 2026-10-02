@@ -1,11 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct {
-    char pad0[0x318];
-    char unk318[0xCE];
-    unsigned char unk3E6;
-    unsigned char unk3E7;
-} Work;
 int func_80034CD8(int, int);
 void func_80034C48(int, int, int);
 void func_8001D28C(void);
@@ -58,9 +53,9 @@ void func_80036E94(void)
         func_8002AC1C();
         func_80064AB4();
     }
-    if ((*(Work **)0x1F800000)->unk3E6 != (*(Work **)0x1F800000)->unk3E7) {
+    if (WORK->x3E6 != WORK->x3E7) {
         func_8001DBFC();
-        (*(Work **)0x1F800000)->unk3E7 = (*(Work **)0x1F800000)->unk3E6;
+        WORK->x3E7 = WORK->x3E6;
     }
     if (!func_80034CD8(1, 0xC)) {
         func_80020ACC();
@@ -71,6 +66,6 @@ void func_80036E94(void)
     }
     func_8004A790();
     if (!func_80034CD8(1, 5)) {
-        func_80037C9C((*(Work **)0x1F800000)->unk318);
+        func_80037C9C(WORK->x318);
     }
 }

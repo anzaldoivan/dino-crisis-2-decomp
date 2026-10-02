@@ -1,6 +1,7 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct Obj {
+typedef struct Obj80039654 {
     char pad0[0x42];
     short x42;
     char pad44[0x50 - 0x44];
@@ -22,7 +23,7 @@ typedef struct Obj {
     unsigned char x17B;
     char pad17C[0x1DC - 0x17C];
     int x1DC;
-} Obj;
+} Obj80039654;
 typedef struct {
     char pad0[0x28];
     short x28;
@@ -33,19 +34,15 @@ typedef struct {
     short x60;
     short x62;
 } Cam;
-typedef struct {
-    char pad0[0xC2B];
-    unsigned char xC2B;
-} Scratch;
 extern Cam *D_800B25DC;
 int func_8003C9D0(int);
 int func_8003D29C(void);
-void func_8003EA64(Obj *);
-void func_80044834(Obj *, int);
-void func_800484F0(Obj *, int, int, int, int);
-int func_800487B8(Obj *);
+void func_8003EA64(Obj80039654 *);
+void func_80044834(Obj80039654 *, int);
+void func_800484F0(Obj80039654 *, int, int, int, int);
+int func_800487B8(Obj80039654 *);
 
-void func_80039654(Obj *obj)
+void func_80039654(Obj80039654 *obj)
 {
     unsigned char side = obj->x54.b[1] - 2;
 
@@ -88,7 +85,7 @@ void func_80039654(Obj *obj)
         }
         break;
     case 2:
-        if ((*(Scratch **)0x1F800000)->xC2B == 2 && -(obj->x5A * 1000) != obj->x42) {
+        if (WORK->xC2B == 2 && -(obj->x5A * 1000) != obj->x42) {
             break;
         }
         D_800B25DC->x28 = D_800B25DC->x28 - func_8003D29C() - 2;

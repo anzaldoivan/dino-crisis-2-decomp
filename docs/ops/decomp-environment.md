@@ -115,7 +115,7 @@ with `dc.sh run cat <f> > <f>`. `carve.py --check` (scanner `carve`): every row 
   real-unit (`--apply`: unit written in-tree, `make build ONLY=<alias>` + `sha1sum -c`; failure restores it).
 - **Body hash** (fn definition, whitespace-normalised, inserted casts stripped) checked every rung:
   differs → `failed <rung> body-changed`.
-- **Verdicts:** `.run/reconcile/<alias>_0x<start>/` holds `draft.c`, `verdict` (`banked <first green rung>` |
+- **Verdicts:** `.run/reconcile/<alias>_0x<start>/` (or `--out DIR`/…, T5.c33: wave.py's own scratch) holds `draft.c`, `verdict` (`banked <first green rung>` |
   `failed <rung> <reason>` | `no-verdict`), `ladder.log`, `make.<rung>.log`. Every run ends `reconcile: K of N banked
   without redraft` + `directory gate: banked+failed+no-verdict = drafts: ok|FAIL` (missing verdict = FAIL), then plain `directory gate: ok` when it passed (scanner control).
 - **Control** (`--check`, scanner `reconcile`): func_80037E18's body from `game_80037824.c` + planted
@@ -749,7 +749,8 @@ Lever proof (binding):
   `banks`) → whole gate refused rc 2 (`missing verdict: <dir>` / `stray dir: <dir>`). No draft.c → no-verdict. G11
   verbatim (`asm(`, `__asm__`, `INCLUDE_ASM`, `glabel`, `.word`, `.set noreorder`) → plateau, label `verbatim`. Else
   `reconcile.py <draft> --target A:S` probe: `banked <rung>` or `failed carve needs-apply` → bank candidate; `failed
-  <rung> build-error` → `build_outcome(rung, make.<rung>.log text)` (pure; log in `.run/reconcile/<alias>_<start>/`):
+  <rung> build-error` → `build_outcome(rung, make.<rung>.log text)` (pure; log in
+  `.run/waves/W/_reconcile/<alias>_<start>/`, `reconcile.py --out`, T5.c33; M1's 30 dirs moved there from `.run/reconcile/`):
   `.bin.bad` and no compiler/assembler/link error (`error:`, `Error:`, `undefined reference`, …) → plateau note
   `hash-mismatch <rung>`, else compile-error (T4.c2); other failed → plateau; none → no-verdict. Prints
   `claims: k of D agree with the score` (verdict.json status is a claim, never the score).
@@ -791,14 +792,25 @@ Lever proof (binding):
 - `close W` (host): refused (rc 2, nothing written) when the gate is not done, fleet is not `83/83@<c>` with every
   bank commit ancestor-or-equal of `<c>`, or a banked row's note lacks `strip:` (`unharvested: A:S`). Pass → closed =
   today, harvest `done:<n> notes`, commit `close: banked B, harvest done:<n>, fleet 83/83@<c>`.
-- `wave.py --check` (scanner `wave`, config/scanners.tsv: denominator `wave ledgers: (\d+) of \1 parse`, control
-  `wave control: ok`; T5 retightens to the routing line): first `wave ledgers: K of N parse` (N = waves.tsv +
+- `wave.py --check` (scanner `wave`, config/scanners.tsv: denominator `routing: (\d+) of \1 buckets measured on the
+  manual wave` since T5.c33 (was `wave ledgers: (\d+) of \1 parse`), control `wave control: ok`): first `wave ledgers: K of N parse` (N = waves.tsv +
   journal.tsv [+ routing.tsv when present]; K = header matches the plan shape and every row has its column count), then `routing: M of B buckets measured on the manual wave`, `waves: C of W closed
   with harvest`, `fleet: F of W banked batches followed by a clean fleet check`, `wave control: ok|FAIL` (planted
   unharvested wave under `.run/waves/_control/` must be refused). rc 0 iff control ok and ledger headers parse.
   `--selftest` (container, `.run/waves/_selftest/`, config/ hash asserted unchanged): `selftest: 6 of 6 ok`
   (case 4: planted mismatch / cc1-error log texts → `selftest outcome map: ok`; case 5: apply cause note +
   enclosing-unit prune; case 6: recover counts from a planted journal).
+- M1 result (T5, manual wave): draw seed 1, 30 targets (5 per bucket b1-b6); gate banked 0, then `recover M1` banked
+  19 of 30 (fleet 83/83, harvest done:19). Per-bucket bank rate b1-b4 0.80, b5 0.40, b6 0.20; cost_ctx_k (k tokens of
+  coder context per target) b1 23.5, b2 25.3, b3 34.9, b4 36.0, b5 111.8, b6 374.1 (config/routing.tsv, basis M1).
+  Cliff at b6 (401+ insns): route `draft+permute`; b1-b5 `draft`.
+- Scanner changes after M1 (T5.c33, H7): `reconcile` gates only its registered corpus (`.run/reconcile/`: direct
+  runs + the `--check` control); wave scoring writes `reconcile.py --out .run/waves/W/_reconcile` (a `_` dir, so the
+  stray-dir check skips it). `types`: M1's banked units canonicalised, not the scanner: shared shapes (SVECTOR,
+  VECTOR, MATRIX, Pair, Elem28, S800B53A8, Ctx, Seg, AreaTbl) moved to dc2.h; per-unit scratchpad views merged into
+  dc2.h `Work` (WORK); word 1 = `PKT`; func_80057A8C's fixed RAM addresses are `D_8018xxxx` constant macros in
+  dc2.h; draft-local `Obj` views with differing shapes renamed `Obj<ADDR>` (single-unit shapes stay local).
+  `wave` denominator retightened to the routing line.
 - Gotcha: the Makefile's sha1 check renames a mismatching bin `build/<alias>.bin.bad` and make exits 2, so "make rc 0"
   alone does not identify a hash mismatch (strip checks the `.bad` file).
 

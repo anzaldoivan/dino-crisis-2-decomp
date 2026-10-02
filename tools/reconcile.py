@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """tools/reconcile.py -- reconcile ladder: bank a standalone draft into its real unit without a redraft (T5, Phase 1.6).
 
-  reconcile.py <draft.c> --target <alias>:<start> [--apply]
+  reconcile.py <draft.c> --target <alias>:<start> [--apply] [--out DIR]
   reconcile.py --check
 
 Draft = preamble (#include/#define/typedef/struct/extern/prototype items) + exactly one fn definition. The draft
@@ -28,6 +28,8 @@ malformed verdict is FAIL), then plain `directory gate: ok` when it passed.
 `extern short D_800AF11C;` (the unit says `extern int`), laddered against a scratch copy of that unit where
 func_80037E18 is INCLUDE_ASM; prints `control: <verdict>` (must be `banked decl-sync`), then the gate; rc 1 on any
 FAIL. Never writes src/. Runs where make builds (the amd64 container).
+--out DIR (T5.c33): verdict dirs and the directory gate under DIR instead of .run/reconcile (wave.py scores into
+.run/waves/<wave>/_reconcile/), so the registered corpus `--check` gates holds only the direct reconcile runs.
 """
 import argparse
 import hashlib
@@ -394,7 +396,11 @@ def main():
     ap.add_argument("--target", help="alias:start, e.g. slus_012_79:0x80052634")
     ap.add_argument("--apply", action="store_true", help="write the unit in-tree when the ladder is green")
     ap.add_argument("--check", action="store_true", help="planted decl-sync control + directory gate")
+    ap.add_argument("--out", help="verdict dir root + gate scope (default .run/reconcile)")
     a = ap.parse_args()
+    if a.out:
+        global OUT
+        OUT = Path(a.out).resolve()
     if a.check:
         return check()
     if not a.draft or not a.target or ":" not in a.target:

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "dc2.h"
 
 typedef struct {
     int f0;
@@ -19,7 +20,7 @@ typedef struct {
     unsigned char f61;
     char pad62[2];
     unsigned char f64;
-} Obj;
+} Obj8004B7B8;
 extern int func_80034CD8(int, int);
 extern void func_8001CDE4(int);
 extern int func_8001D9D4(void);
@@ -27,7 +28,7 @@ extern void func_8001ED9C(int);
 extern void func_8004262C(int);
 extern void func_80042758(int);
 
-void func_8004B7B8(Obj *a)
+void func_8004B7B8(Obj8004B7B8 *a)
 {
     unsigned int i;
     int s;
@@ -57,10 +58,10 @@ void func_8004B7B8(Obj *a)
         }
     } else if (s == 4) {
         func_8004262C(4);
-        (*(char **)0x1F800000)[0x6E8] = s;
+        WORK->x6E8 = s;
     } else if (s == 3) {
         func_80042758(0);
         func_8004262C(a->f60);
-        (*(char **)0x1F800000)[0x6E8] = a->f60;
+        WORK->x6E8 = a->f60;
     }
 }

@@ -1,6 +1,7 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct Obj {
+typedef struct Obj800DA040 {
     char pad0[0x50];
     int x50;
     unsigned char x54;
@@ -15,14 +16,14 @@ typedef struct Obj {
     void *x12C;
     char pad130[0x1C0 - 0x130];
     unsigned short x1C0;
-} Obj;
+} Obj800DA040;
 extern char D_800DAE48[];
 extern char D_800DAE54[];
-void func_80047B8C(Obj *, int);
-void func_8004A4D4(Obj *, int, int, int);
-void func_800484F0(Obj *, int, int, int, int);
+void func_80047B8C(Obj800DA040 *, int);
+void func_8004A4D4(Obj800DA040 *, int, int, int);
+void func_800484F0(Obj800DA040 *, int, int, int, int);
 
-void func_800DA040(Obj *s)
+void func_800DA040(Obj800DA040 *s)
 {
     s->x50 = 0x20005;
     s->x108 = 0x4B0;
