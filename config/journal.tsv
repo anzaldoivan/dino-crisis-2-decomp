@@ -85,3 +85,9 @@ slus_012_79	0x8005a34c	F1	draft	banked	MATCH	rung as-is
 slus_012_79	0x8005ecb4	F1	draft	banked	MATCH	rung as-is
 slus_012_79	0x8007e234	F1	draft	plateau	SCHEDULE-REORDER	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
 slus_012_79	0x80047958	F1	draft	banked	MATCH	rung as-is
+slus_012_79	0x80032908	F1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
+slus_012_79	0x800785a4	F1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
+slus_012_79	0x8002d820	F1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: build/slus_012_79/src/slus_012
+slus_012_79	0x800787b4	F1	recover	plateau	SIZE-MISMATCH	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
+slus_012_79	0x80074794	F1	recover	plateau	SIZE-MISMATCH	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
+slus_012_79	0x8007e234	F1	recover	plateau	SCHEDULE-REORDER	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
