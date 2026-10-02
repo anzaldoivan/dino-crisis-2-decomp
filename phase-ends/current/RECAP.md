@@ -11,8 +11,12 @@ draft differs, and generated a symptom index over the technique notebook (the co
 The whole game still rebuilds to 83 of 83 byte-identical binaries.
 
 ## Milestone
-`PY tools/phaseend_index.py verify --verbose` from a fresh `dc.sh sync`, after this phase end's commits: see
-`Verified:` below; numbers per clause are in the verify log named there.
+Verified: `bash tools/docker/dc.sh sync && PY tools/phaseend_index.py verify --verbose` (run.sh pe17-verify, after
+commits c484989 and e45edbc) → exit 0, `VERIFY: GREEN (8/8)`: compiler source sha256 ok + version control ok; levers 6 of
+6 byte-proven, pass groups 5 of 5, inert control ok; permuter 120 iterations, 112 distinct, scorer control ok; plateau 6
+of 6 planted labelled, match control ok; cookbook-index 54 of 54, refs 13 of 13, control ok; scanners 21 of 21; 83 of
+83 byte-identical, harness 6 of 6 pairs, 0 disagreements; audit_public 0 offenders among 936 paths. An earlier run
+before the routing edits (run.sh phaseend-verify) was also GREEN 8/8 (cookbook-index 50 of 50).
 
 ## Decisions that still bind
 - norm: plateau.py evidence lines (mnemonic names and counts at diff indices, no operands/encodings) are within G12 → rule G73
@@ -37,7 +41,8 @@ The whole game still rebuilds to 83 of 83 byte-identical binaries.
 - binding: as above; nothing appended to the card
 - harness (for the auditor, not promoted): T1:27 and T5:52 `dc.sh run` has no stdin and `--help` does not say so;
   T3:41 Bash `cat` of tools/probes/levers/ drafts hook-denied; T9:27-28 card headroom, `wc -c` counts bytes not chars;
-  phase end: reading a SKILL.md just written by skill_add.py via Bash `head` is hook-denied as tool-source reading
+  phase end: reading a SKILL.md just written by skill_add.py via Bash `head` is hook-denied as tool-source reading;
+  `commit_task.sh` did not stage a modified HOW_WE_WORK.md unless passed explicitly (left `M` after c484989)
 
 ## H7 check
 Every summary whose `Files:` names tools, config pins or build files (T1-T8) also lists docs/ops/ (T6 also
