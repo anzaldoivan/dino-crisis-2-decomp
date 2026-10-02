@@ -9,17 +9,17 @@ psx_bin_st1	0x800d5990	game_800D5990	T3 carve	0x800d5b24
 psx_bin_st1	0x800d9000	game_800D9000	T3 carve	0x800d9070
 psx_bin_st8	0x800da040	game_800DA040	T3 carve	0x800da0d4
 slus_012_79	0x80039978	game_80039978	T5.c32 carve remainder of game_80037824
-slus_012_79	0x80039654	game_80039654	T3 carve	0x80039978
+slus_012_79	0x80039654	game_80039654	T3 carve
 slus_012_79	0x8003dd34	game_8003DD34	T5.c32 carve remainder of game_80039978
-slus_012_79	0x8003d58c	game_8003D58C	T3 carve	0x8003dd34
-slus_012_79	0x8003d2d4	game_8003D2D4	T3 carve	0x8003d58c
+slus_012_79	0x8003d58c	game_8003D58C	T3 carve
+slus_012_79	0x8003d2d4	game_8003D2D4	T3 carve
 slus_012_79	0x800458f0	game_800458F0	T5.c32 carve remainder of game_8003DD34
-slus_012_79	0x8004587c	game_8004587C	T3 carve	0x800458f0
+slus_012_79	0x8004587c	game_8004587C	T3 carve
 slus_012_79	0x8004b8e8	game_8004B8E8	T5.c32 carve remainder of game_800458F0
-slus_012_79	0x8004b7b8	game_8004B7B8	T3 carve	0x8004b8e8
+slus_012_79	0x8004b7b8	game_8004B7B8	T3 carve
 slus_012_79	0x80057f48	game_80057F48	T5.c32 carve remainder of game_8004B8E8
-slus_012_79	0x80057a8c	game_80057A8C	T3 carve	0x80057f48
-slus_012_79	0x8002204c	game_8002204C	T3 carve	0x8002219c
+slus_012_79	0x80057a8c	game_80057A8C	T3 carve
+slus_012_79	0x8002204c	game_8002204C	T3 carve
 slus_012_79	0x8002219c	game_8002219C	T3 carve	0x800223bc
 slus_012_79	0x8002be20	game_8002BE20	T3 carve	0x8002bf8c
 slus_012_79	0x80034d14	game_80034D14	T3 carve	0x80034d60

@@ -767,7 +767,8 @@ Lever proof (binding):
 - Carve fixes (T5.c32): `carve.build` runs `make split` then `make build` (one make listed the pre-resplit asm/ files
   as prerequisites → `No rule to make target asm/...s` after every carve); a carve inside an existing unit E keeps E
   on [E.lo, start) and moves E's fns at/after the cut to a continuation row `game_<end>` (E's text pruned per range,
-  `carve.prune`); the reconcile carve rung composes with the draft's own preamble first, dc2.h + self-decl second
+  `carve.prune`); a row's `end` equal to another unit's start is dropped (`carve.norm_ends`: splat_gen --check reads
+  an end as a closing cut before a non-C piece); the reconcile carve rung composes with the draft's own preamble first, dc2.h + self-decl second
   (self-decl dropped a draft typedef dc2.h defines differently: `structure has no member`).
 - `recover W` (host, T5.c32; inner `recover W --in-volume`): wave gated (drafted ≠ `-`) and tree clean, then as `gate`
   (sync, push, inner, pull, one commit per bank, commit `recover: banked B + failed F + no-verdict V = D drafted`).

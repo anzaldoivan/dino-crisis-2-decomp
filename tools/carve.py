@@ -91,6 +91,20 @@ def prune(text, lo, hi):
     return INC.sub(lambda m: m.group(0) if lo <= int(m.group(1), 16) < hi else "", text)
 
 
+def norm_ends(lines, alias):
+    """T5.c32: drop an alias row's `end` when it is another unit's start: the cut is implicit there, and
+    `splat_gen --check` reads an end as a closing cut whose next piece is not C (c_unit `<unit> end` FAIL)."""
+    starts = {int(f[1], 16) for f in (x.rstrip("\n").split("\t") for x in lines if not x.startswith("#"))
+              if len(f) >= 3 and f[0] == alias}
+    out = []
+    for x in lines:
+        f = x.rstrip("\n").split("\t")
+        if not x.startswith("#") and len(f) >= 5 and f[0] == alias and f[4] and int(f[4], 16) in starts:
+            x = "\t".join(f[:4]) + "\n"
+        out.append(x)
+    return out
+
+
 def rows_text():
     return sg.C_UNITS.read_text().splitlines(keepends=True)
 
@@ -141,8 +155,9 @@ def carve(alias, start, end, unit):
         f[2] = unit or f[2]
         unit, f[4] = f[2], endf
         lines[hit] = "\t".join(f if endf else f[:4]) + "\n"
+    lines = norm_ends(lines, alias)
     src = ROOT / f"src/{alias}/{unit}.c"
-    esrc = ROOT / f"src/{alias}/{encl[0]}.c" if encl else None
+    esrc =ROOT / f"src/{alias}/{encl[0]}.c" if encl else None
     csrc = ROOT / f"src/{alias}/{cont}.c" if encl and cont else None
     snap = {p: (p.read_bytes() if p.exists() else None) for p in (sg.C_UNITS, yaml, sha, src, esrc, csrc) if p}
     if csrc is not None and snap[csrc] is not None:
