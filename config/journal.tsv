@@ -60,31 +60,31 @@ slus_012_79	0x8004b7b8	M1	recover	banked	MATCH	strip:none strip:none manual draf
 slus_012_79	0x80036e94	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 slus_012_79	0x80057a8c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 slus_012_79	0x80054c58	M1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x8002b3e0	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x8002d78c	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x8001b530	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x8001ea54	F1	draft	banked	MATCH	rung carve
+slus_012_79	0x8002b3e0	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8002d78c	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8001b530	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8001ea54	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
 slus_012_79	0x80032908	F1	draft	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x80026504	F1	draft	banked	MATCH	rung carve
+slus_012_79	0x80026504	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
 slus_012_79	0x800785a4	F1	draft	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
 slus_012_79	0x8002d820	F1	draft	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: build/slus_012_79/src/slus_012
-slus_012_79	0x80021f78	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x8002e920	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x800661fc	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x80066b80	F1	draft	banked	MATCH	rung as-is
-slus_012_79	0x800786b4	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x800610a0	F1	draft	banked	MATCH	rung as-is
-slus_012_79	0x800264ac	F1	draft	banked	MATCH	rung carve
+slus_012_79	0x80021f78	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8002e920	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x800661fc	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x80066b80	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x800786b4	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x800610a0	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x800264ac	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
 slus_012_79	0x800787b4	F1	draft	plateau	SIZE-MISMATCH	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x800436c8	F1	draft	banked	MATCH	rung as-is
-slus_012_79	0x8002e18c	F1	draft	banked	MATCH	rung carve
-slus_012_79	0x80026a50	F1	draft	banked	MATCH	rung carve
+slus_012_79	0x800436c8	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8002e18c	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x80026a50	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
 slus_012_79	0x80074794	F1	draft	plateau	SIZE-MISMATCH	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x8005d930	F1	draft	banked	MATCH	rung as-is
-slus_012_79	0x8005a34c	F1	draft	banked	MATCH	rung as-is
-slus_012_79	0x8005ecb4	F1	draft	banked	MATCH	rung as-is
+slus_012_79	0x8005d930	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8005a34c	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
+slus_012_79	0x8005ecb4	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
 slus_012_79	0x8007e234	F1	draft	plateau	SCHEDULE-REORDER	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x80047958	F1	draft	banked	MATCH	rung as-is
+slus_012_79	0x80047958	F1	draft	banked	MATCH	strip:none strip:none drafter plateau MATCH, no lever credited
 slus_012_79	0x80032908	F1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
 slus_012_79	0x800785a4	F1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
 slus_012_79	0x8002d820	F1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: build/slus_012_79/src/slus_012
