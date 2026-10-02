@@ -123,6 +123,17 @@ segments:
       - [0x3bb8, asm, slus_012_79_3bb8]  # lib-object psyq470 NOHEAP.OBJ/NOHEAP.OBJ
       - [0x3d30, asm, slus_012_79_3d30]
       - [0x20024, c, game_80037824]
+      - [0x21e54, c, game_80039654]
+      - [0x22178, c, game_80039978]
+      - [0x25ad4, c, game_8003D2D4]
+      - [0x25d8c, c, game_8003D58C]
+      - [0x26534, c, game_8003DD34]
+      - [0x2e07c, c, game_8004587C]
+      - [0x2e0f0, c, game_800458F0]
+      - [0x33fb8, c, game_8004B7B8]
+      - [0x340e8, c, game_8004B8E8]
+      - [0x4028c, c, game_80057A8C]
+      - [0x40748, c, game_80057F48]
       - [0x56d14, asm, slus_012_79_56d14]  # lib-object psyq470 LIBSND.LIB/UT_ROFF.OBJ; lib-object psyq470 LIBSPU.LIB/S_I.OBJ
       - [0x56d34, asm, slus_012_79_56d34]  # lib-object psyq470 LIBSPU.LIB/S_INI.OBJ
       - [0x56e94, asm, slus_012_79_56e94]  # lib-object psyq470 LIBSPU.LIB/SPU.OBJ
