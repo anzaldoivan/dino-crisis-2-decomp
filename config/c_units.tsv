@@ -5,3 +5,4 @@ psx_bin_st2	0x800d7ae4	game_800D7AE4	T6 probe func_800D7AE4
 psx_bin_st6	0x800d5c40	game_800D5C40	T6 probe func_800D5C40
 psx_bin_st9	0x800db960	game_800DB960	T6 probe func_800DB960
 psx_bin_st8	0x800d6ab4	game_800D6AB4	T3 carve	0x800d6b14
+psx_bin_st1	0x800d5990	game_800D5990	T3 carve	0x800d5b24
