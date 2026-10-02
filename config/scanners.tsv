@@ -24,4 +24,4 @@ propagate	python3 tools/propagate.py --dry-run	^propagation dry run: (\d+) of \1
 reconcile	python3 tools/reconcile.py --check	^reconcile: (\d+) of \1 banked without redraft$	^control: banked decl-sync$[\s\S]*^directory gate: ok$	yes
 draw_filter	python3 tools/draw_filter.py --all	^draw: \d+ of (\d+) accepted$	^control: ok$	yes
 compiler_source	python3 tools/compiler_source.py --check	^version sources: (\d+) of (\d+) agree$	^version control: ok$	yes
-codegen_map	python3 tools/codegen_map.py --check --groups regalloc,combine,sched-reorg	^levers: \d+ of (\d+) byte-proven$	^inert control: ok$	yes
+codegen_map	python3 tools/codegen_map.py --check	^levers: \d+ of (\d+) byte-proven$	^inert control: ok$	yes

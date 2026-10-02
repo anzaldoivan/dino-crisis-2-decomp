@@ -12,6 +12,10 @@ byte-equal) · not-matching (after != target) · before-matches (inert lever, G4
   codegen_map.py --groups a,b    required groups for --check (default all five)
   codegen_map.py --selftest      inert, not-matching and proven controls only; reads no levers.tsv rows
   codegen_map.py --write         regenerate docs/codegen-map.md from levers.tsv text (no compile; host-safe)
+config/inherited_tells.tsv (`tell group levers`) maps each tell of the cookbook/C0002.md table (column 1, verbatim)
+to a group and levers.tsv ids or `untested`; unknown group or lever id is rc 2. --check prints `inherited tells: k of K
+mapped` (K = C0002 rows, k = those with an exact row) and fails when k < K or a row names a tell absent from C0002;
+the doc gains `## Inherited tells (C0002)`.
 Inert control every compiling run: planted drafts in .run/codegen_map/control/ must classify before-matches.
 Compiles run in the image (dc.sh run); files written there stay in the volume, so --write runs on the host.
 Exit 0 ok, 1 check/control failure, 2 usage/config error.
@@ -24,6 +28,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LEVERS = ROOT / "config/levers.tsv"
+INHERITED = ROOT / "config/inherited_tells.tsv"
+TRIAGE = ROOT / "cookbook/C0002.md"
 DOC = ROOT / "docs/codegen-map.md"
 SCRATCH = ROOT / ".run/codegen_map"
 DRAFT_DIR = "tools/probes/levers/"
@@ -87,12 +93,48 @@ def read_rows():
     return sorted(rows, key=lambda r: (GROUPS.index(r["group"]), r["lever"]))
 
 
+def read_inherited(rows):
+    """Parse and validate config/inherited_tells.tsv against levers rows; return rows or an error string."""
+    ids, out, seen = {r["lever"] for r in rows}, [], set()
+    for n, line in enumerate(INHERITED.read_text().splitlines(), 1):
+        if not line or line.startswith("#"):
+            continue
+        f = line.split("\t")
+        if len(f) != 3:
+            return f"config/inherited_tells.tsv:{n}: {len(f)} fields, want 3"
+        t, g, lv = f
+        if g not in GROUPS:
+            return f"config/inherited_tells.tsv:{n}: unknown group {g!r} (one of {', '.join(GROUPS)})"
+        if t in seen:
+            return f"config/inherited_tells.tsv:{n}: duplicate tell {t!r}"
+        seen.add(t)
+        levers = [] if lv == "untested" else lv.split(",")
+        bad = [x for x in levers if x not in ids]
+        if bad or (lv != "untested" and not levers):
+            return f"config/inherited_tells.tsv:{n}: unknown lever id(s) {bad} (levers.tsv ids or `untested`)"
+        out.append({"tell": t, "group": g, "levers": levers})
+    return out
+
+
+def triage_tells():
+    """Column 1 of the cookbook/C0002.md table (rows after the `|---|` separator)."""
+    tells, on = [], False
+    for line in TRIAGE.read_text().splitlines():
+        if line.startswith("|---"):
+            on = True
+        elif on and line.startswith("|"):
+            tells.append(line.split("|")[1].strip())
+        elif on:
+            break
+    return tells
+
+
 def gfn(r):
     return f"{r['alias']}:0x{int(r['start'], 16):08x}"
 
 
-def render(rows):
-    """docs/codegen-map.md text from rows (sorted by group index, lever id); no bytes, no asm."""
+def render(rows, inherited):
+    """docs/codegen-map.md text from rows (sorted by group index, lever id) and inherited tells; no bytes, no asm."""
     esc = lambda s: s.replace("|", "\\|")
     out = ["# Codegen map",
            "",
@@ -107,6 +149,11 @@ def render(rows):
         mine = [r for r in rows if r["group"] == g]
         out += [f"- `{r['lever']}`: tell {r['tell']}; before plateau {r['label']}; game fn {gfn(r)}; "
                 f"drafts `{r['before_c']}` / `{r['after_c']}`; cookbook {r['cookbook']}" for r in mine] or ["None yet."]
+    cb = {r["lever"]: r["cookbook"] for r in rows}
+    out += ["", "## Inherited tells (C0002)", "",
+            "From `config/inherited_tells.tsv`: each tell of the `cookbook/C0002.md` triage table, its pass group and levers.", ""]
+    out += [f"- {t['tell']} → {t['group']} → "
+            + (", ".join(f"`{x}` ({cb[x]})" for x in t["levers"]) or "untested") for t in inherited]
     return "\n".join(out) + "\n"
 
 
@@ -198,7 +245,16 @@ def main():
     rows = read_rows()
     if isinstance(rows, str):
         return fail(rows)
-    doc = render(rows)
+    inherited = read_inherited(rows)
+    if isinstance(inherited, str):
+        return fail(inherited)
+    tells = triage_tells()
+    mapped = {t["tell"] for t in inherited}
+    stray = [t["tell"] for t in inherited if t["tell"] not in tells]
+    for t in stray:
+        print(f"codegen_map: inherited tell {t!r} absent from cookbook/C0002.md", file=sys.stderr)
+    n_mapped = sum(t in mapped for t in tells)
+    doc = render(rows, inherited)
     if a.write:
         DOC.write_text(doc)
         print(f"doc: written {DOC.relative_to(ROOT)} ({len(rows)} levers)")
@@ -218,6 +274,7 @@ def main():
     proven = len(rows) - sum(count.values())
     print(f"levers: {proven} of {len(rows)} byte-proven")
     print(f"pass groups: {len(covered)} of {len(GROUPS)} covered")
+    print(f"inherited tells: {n_mapped} of {len(tells)} mapped")
     if a.groups is not None:
         print(f"required groups: {len(covered & set(req))} of {len(req)} covered")
     ctl_ok = control(ctx, *CONTROLS[0])
@@ -228,7 +285,7 @@ def main():
         return 0 if ctl_ok else 1
     current = DOC.is_file() and DOC.read_text() == doc
     print(f"doc: {'current' if current else 'stale'}")
-    ok = ctl_ok and current and not sum(count.values()) and set(req) <= covered
+    ok = ctl_ok and current and not sum(count.values()) and set(req) <= covered and n_mapped == len(tells) and not stray
     return 0 if ok else 1
 
 

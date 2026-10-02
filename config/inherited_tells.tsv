@@ -1,0 +1,11 @@
+# config/inherited_tells.tsv -- inherited triage tells (cookbook/C0002.md table) mapped to gcc pass groups and levers (T5).
+# tell: C0002 column 1, verbatim. group: expand-cse|loop|combine|regalloc|sched-reorg. levers: comma list of config/levers.tsv
+# lever ids, or `untested`. Checked by `tools/codegen_map.py --check` (k of K C0002 rows mapped); rendered into docs/codegen-map.md.
+# tell	group	levers
+a temporary in a spill slot	regalloc	untested
+every small edit moves 20+ instructions	regalloc	untested
+a load stuck below a store while other loads float	sched-reorg	untested
+a phantom callee-saved register	regalloc	untested
+a shift off by ×4 against the target	expand-cse	untested
+a branch's arms swapped	sched-reorg	swap-returning-arm
+a cross-jumped tail merged or not merged	sched-reorg	untested

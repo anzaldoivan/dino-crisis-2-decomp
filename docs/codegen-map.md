@@ -32,3 +32,15 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 
 - `multi-set-param`: tell narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered); before plateau insn-order; game fn slus_012_79:0x8003e164; drafts `tools/probes/levers/multi-set-param.before.c` / `tools/probes/levers/multi-set-param.after.c`; cookbook C0048
 - `swap-returning-arm`: tell if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns); before plateau block-order; game fn slus_012_79:0x8005ee58; drafts `tools/probes/levers/swap-returning-arm.before.c` / `tools/probes/levers/swap-returning-arm.after.c`; cookbook C0047
+
+## Inherited tells (C0002)
+
+From `config/inherited_tells.tsv`: each tell of the `cookbook/C0002.md` triage table, its pass group and levers.
+
+- a temporary in a spill slot → regalloc → untested
+- every small edit moves 20+ instructions → regalloc → untested
+- a load stuck below a store while other loads float → sched-reorg → untested
+- a phantom callee-saved register → regalloc → untested
+- a shift off by ×4 against the target → expand-cse → untested
+- a branch's arms swapped → sched-reorg → `swap-returning-arm` (C0047)
+- a cross-jumped tail merged or not merged → sched-reorg → untested

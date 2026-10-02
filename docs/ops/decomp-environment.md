@@ -615,9 +615,10 @@ Working order:
   or control FAIL.
 - `PY tools/codegen_map.py --write` on the HOST: `docs/codegen-map.md` derives from levers.tsv text only (no compile);
   files written inside `dc.sh run` stay in the volume. Never hand-edit the doc.
-- Scanner row `codegen_map` (game `yes`); with zero rows its denominator is 0, so the row is not ok until a lever lands.
-  Its command carries `--groups <groups proven so far>` (T3: `regalloc,combine`; T4: `sched-reorg`); each later lever task
-  extends it, and plain `--check` (all 5 groups) replaces it when the last group lands.
+- Scanner row `codegen_map` (game `yes`): plain `--check` (all 5 groups covered since T5).
+- `config/inherited_tells.tsv` `# tell group levers`: each `cookbook/C0002.md` tell (column 1 verbatim) → group → levers.tsv
+  ids or `untested` (unknown group/id rc 2). `--check` prints `inherited tells: k of K mapped` after `pass groups:`;
+  rc 1 if k < K or a row's tell is absent from C0002. The doc lists them under `## Inherited tells (C0002)`.
 
 ## Models and effort (decomp, on PA3)
 
