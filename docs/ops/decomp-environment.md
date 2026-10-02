@@ -322,6 +322,25 @@ bash tools/docker/dc.sh run bash tools/fleet_check.sh   # green = `83 of 83 byte
   2026-10-01: classes 25 (lib-pure 15, mixed 10; the 8 B one 1 exe lib + 23 exe game + 181 overlay), lib 485 of
   3911 (exe 485, overlays 0), lib bytes 95344, game 3426, unknown 0; beyond cc 5: 0x8001b458 (a ref + f jal-split),
   0x80078f44, 0x80078f74, 0x8007e48c, 0x80081ae8 (b fallthrough + g transfer-split).
+- **Stubs and the non-C ledger (Phase 1.8 T1):** two lines after `game functions:`, every run:
+  `stubs: S of G game functions not in C` (G = kind game rows; S = game rows with no C body, census's own C-defined
+  detection = `C_HEAD` defs in `c` subsegments, and no `handasm` ledger row) and `ledger: N of D non-C functions named`
+  (D = kind lib rows ∪ `config/ledger.tsv` rows; N = members of D with a valid ledger row). Three tools, one number:
+  S = G − `banked.py` n = G − `progress.py` fleet C. `config/ledger.tsv` `# alias	start	end	ledger	basis`
+  (TAB, hex, addresses + our words only, G12): `lib` = one row per census kind lib row, generated, basis
+  `boundaries lib-object <boundaries.tsv basis>` (same-start group's bases joined with `=>`); `handasm` = hand-added
+  game-kind function that is not C, basis must cite evidence (no C prologue/ABI, cop0/gte-only, or a lib-pure dup
+  class); a merely hard game function is never ledgered, it stays a stub. Stale row = alias:start not a census start,
+  end ≠ census end, `lib` row not kind lib, `handasm` row kind lib or with a C body (listed `ledger stale: k -- …`).
+  `--check` fails (`ledger check: FAIL`) on N < D or any stale row; `--only` restricts the ledger to those aliases.
+  Every-run control `ledger control: ok|FAIL` (in memory: the first kind lib row's ledger entry dropped; ok iff the
+  check then fails); folded into `control:`. Regenerate (lib rows from census + boundaries, handasm rows kept
+  verbatim, stable sort by alias, int start; two runs byte-identical; stdout = ledger, stderr = report, so the file lands
+  on the host): `bash tools/docker/dc.sh sync && bash tools/docker/dc.sh run python3 tools/census.py --write-ledger
+  > .run/ledger.tsv && mv .run/ledger.tsv config/ledger.tsv` (refuses `--only/--fixture/--check`, rc 2).
+  Scanner `census`: denominator = the adjacent stubs+ledger lines (last group D), control = `ledger control: ok` …
+  `control: ok`. 2026-10-02: `stubs: 3419 of 3426`, `ledger: 485 of 485` (485 lib, 0 handasm), `banked: 7 of 3426`,
+  `progress: 7 of 3426` (fleet).
 
 ### Ghidra oracle (T2)
 

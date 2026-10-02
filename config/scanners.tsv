@@ -7,7 +7,7 @@
 # Mirrors (loadmap, boundaries, cc_fingerprint, compile_only plant) are tool copies + symlinks under .run/harness/: the tools
 # hard-code repo-root paths and are not edited; .run/extracted is fleet_check's extract.
 # name	command	denominator_regex	control_regex	game
-census	python3 tools/census.py --check	^binaries: (\d+) of (\d+)$	^control: ok$	yes
+census	python3 tools/census.py --check	^stubs: (\d+) of (\d+) game functions not in C\nledger: (\d+) of (\d+) non-C functions named$	^ledger control: ok[\s\S]*^control: ok$	yes
 oracle_diff	python3 tools/oracle_diff.py	^oracle: (\d+) of (\d+) binaries compared	^control: planted start detected ok$[\s\S]*^control: stale hash detected ok$	yes
 dup_census	python3 tools/dup_census.py --check	^exact tier: \d+ classes, (\d+) of (\d+) functions	^relocation control: .*: ok$[\s\S]*^near control: .*: ok$	yes
 banked	python3 tools/banked.py --quiet	^banked: (\d+) of (\d+)$	^control: 1 of 2 ok$	yes
