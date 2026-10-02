@@ -616,7 +616,9 @@ Lever proof (binding):
   - loop: loop present
   - combine: combine regmove present
   - regalloc: lreg greg present
-  - sched-reorg: sched sched2 dbr jump jump2 present
+  - sched-reorg: sched sched2 dbr jump jump2 present. sched/sched2 are the old list scheduler `gcc/sched.c`, not
+    haifa-sched.c (2.95.2 configure.in:3552-3557 builds haifa only for alpha/hppa/powerpc/rs6000/sparc/m32r; the
+    `.sched` dump prints sched.c strings): cite sched.c lines for this group (T4, C0048)
   - also written: addressof flow flow2 bp mach.
 - Passes proven off at -O2 -mips1: none by absence (every group dump exists; gcse runs, its dump reads
   `GCSE pass 1`). A present dump proves the pass ran, not that it changed anything: read the dump body.

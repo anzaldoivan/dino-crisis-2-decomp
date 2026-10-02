@@ -177,3 +177,5 @@ G70 | A scanner's control must be able to fail | decomp,instruments,scanners | a
 G71 | Source units change only through their gated tool (carve, propagate, reconcile) | decomp,carve,propagation,reconcile | active | phase 1.6 T3/T4/T5
 
 G72 | A task checks its own milestone clause with the verifier's matching rules | verify,milestone,process | active | phase 1.6 T8/T9
+
+G73 | Describe a residual, never reproduce it: mnemonic names and counts at diff indices only | decomp,firewall,plateau | active | phase 1.7 T7/T9

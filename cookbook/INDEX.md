@@ -50,3 +50,7 @@ C0047 | If/else arm order: jump.c swaps an early-return then-arm last; invert th
 C0048 | Param def sinks to its use in sched1 (birthing boost): give the pseudo a 2nd SET (++n) to keep it on top | codegen-map,sched,sched1,sched2,birthing,insn-order,param,sched-reorg | 2026-10-02 | 1.7/T4 | -
 C0049 | Counted for vs while (n--): check_dbra_loop reverses a counting-only for to 0; n-- tests vs a hoisted -1 | codegen-map,loop,check_dbra_loop,move_movables,reversal,hoist,biv,count-down | 2026-10-02 | 1.7/T5 | -
 C0050 | Scaled index: x*4 / p[i] puts the index first in the addu (expand MULT-first swap); i<<2 keeps base first | codegen-map,expand-cse,expand,fold,operand-order,address,mult,shift | 2026-10-02 | 1.7/T5 | -
+C0051 | Check which scheduler file a gcc target builds before citing it | gcc,sched,haifa,sched-reorg,codegen-map | 2026-10-02 | 1.7/T4 | phase-ends/current/tasks/T4.md
+C0052 | decomp-permuter --seed is a replay, not a search seed; seed random in a wrapper | permuter,determinism,seed | 2026-10-02 | 1.7/T6 | phase-ends/current/tasks/T6.md
+C0053 | Split asm is wiped by sync; regenerate it with make split ONLY=<alias> | build,split,docker,permuter | 2026-10-02 | 1.7/T6 | phase-ends/current/tasks/T6.md
+C0054 | Plateau classifier: test length drift before index-wise labels | plateau,classifier,diff,codegen-map | 2026-10-02 | 1.7/T7 | phase-ends/current/tasks/T7.md

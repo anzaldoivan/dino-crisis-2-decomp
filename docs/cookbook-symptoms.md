@@ -50,15 +50,17 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `boundaries`: C0041
 - `branch-polarity`: C0002
 - `breadth`: C0005
-- `build`: C0004, C0021, C0040
+- `build`: C0004, C0021, C0040, C0053
 - `byte-proof`: C0001
 - `c`: C0028
 - `callee-saved`: C0002
 - `cdda`: C0009
 - `census`: C0031, C0034, C0036, C0037, C0041, C0042
 - `check`: C0027
+- `classifier`: C0054
 - `clean`: C0021
 - `cliff`: C0006
+- `codegen-map`: C0051, C0054
 - `compression`: C0018
 - `config`: C0042
 - `cookbook-format`: C0001
@@ -67,10 +69,10 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `cross-jump`: C0002
 - `data-in-text`: C0031
 - `dedup`: C0035, C0036, C0038
-- `determinism`: C0012
+- `determinism`: C0012, C0052
 - `deterministic`: C0003
-- `diff`: C0008
-- `docker`: C0024, C0044
+- `diff`: C0008, C0054
+- `docker`: C0024, C0044, C0053
 - `drafting`: C0005, C0006
 - `draw`: C0043
 - `dry-run`: C0027
@@ -87,9 +89,10 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `fresh-volume`: C0030
 - `function-boundary`: C0034
 - `gate`: C0004
-- `gcc`: C0025
+- `gcc`: C0025, C0051
 - `ghidra`: C0010, C0011, C0012, C0013, C0017, C0020, C0032, C0033
 - `gp`: C0025
+- `haifa`: C0051
 - `harness`: C0037, C0040, C0042
 - `headers`: C0039
 - `headless`: C0017
@@ -124,9 +127,10 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `parsing`: C0037
 - `pcsx-redux`: C0015, C0019
 - `performance`: C0038
-- `permuter`: C0003
+- `permuter`: C0003, C0052, C0053
 - `phase-end`: C0044
 - `pin`: C0026
+- `plateau`: C0054
 - `probe`: C0026
 - `propagation`: C0040
 - `ps1`: C0016
@@ -141,10 +145,14 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `residual`: C0001
 - `rodata`: C0022
 - `routing`: C0006
+- `sched`: C0051
+- `sched-reorg`: C0051
 - `sdk-version`: C0011
+- `seed`: C0052
 - `smc`: C0014
 - `spill`: C0002
 - `splat`: C0022, C0023, C0028, C0031, C0034, C0035
+- `split`: C0053
 - `str`: C0007
 - `strategy`: C0003
 - `switch`: C0020, C0032
