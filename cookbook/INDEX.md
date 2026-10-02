@@ -48,3 +48,5 @@ C0045 | Byte-field mask/shift order survives combine only when the mask fits and
 C0046 | A late temp's v0/v1 choice follows local vs global ownership; reuse a user var to move it | codegen-map,regalloc,local-alloc,global-alloc,v0,v1,temp-reuse,reg-substitution | 2026-10-01 | 1.7/T3 | -
 C0047 | If/else arm order: jump.c swaps an early-return then-arm last; invert the test to lay it | codegen-map,jump,block-order,branch-polarity,delay-slot,dbr,sched-reorg | 2026-10-02 | 1.7/T4 | -
 C0048 | Param def sinks to its use in sched1 (birthing boost): give the pseudo a 2nd SET (++n) to keep it on top | codegen-map,sched,sched1,sched2,birthing,insn-order,param,sched-reorg | 2026-10-02 | 1.7/T4 | -
+C0049 | Counted for vs while (n--): check_dbra_loop reverses a counting-only for to 0; n-- tests vs a hoisted -1 | codegen-map,loop,check_dbra_loop,move_movables,reversal,hoist,biv,count-down | 2026-10-02 | 1.7/T5 | -
+C0050 | Scaled index: x*4 / p[i] puts the index first in the addu (expand MULT-first swap); i<<2 keeps base first | codegen-map,expand-cse,expand,fold,operand-order,address,mult,shift | 2026-10-02 | 1.7/T5 | -

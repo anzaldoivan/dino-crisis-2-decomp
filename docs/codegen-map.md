@@ -5,6 +5,8 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 
 | Tell | Group | Lever | Cookbook | Game fn |
 |---|---|---|---|---|
+| addu operand order in a scaled-index address: index,base vs base,index (same insns) | expand-cse | shift-scaled-index | CCOOK | slus_012_79:0x800604f4 |
+| count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez) | loop | while-postdec | C0049 | slus_012_79:0x800474b4 |
 | andi-before-srl vs srl-before-andi on a byte field | combine | mask-then-shift | C0045 | slus_012_79:0x8001b538 |
 | late pointer-bump temp in $v0 vs $v1 (3 insns after the last call) | regalloc | reuse-user-var | C0046 | slus_012_79:0x8005ed34 |
 | narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered) | sched-reorg | multi-set-param | C0048 | slus_012_79:0x8003e164 |
@@ -12,11 +14,11 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 
 ## expand-cse
 
-None yet.
+- `shift-scaled-index`: tell addu operand order in a scaled-index address: index,base vs base,index (same insns); before plateau reg-substitution; game fn slus_012_79:0x800604f4; drafts `tools/probes/levers/shift-scaled-index.before.c` / `tools/probes/levers/shift-scaled-index.after.c`; cookbook CCOOK
 
 ## loop
 
-None yet.
+- `while-postdec`: tell count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez); before plateau insn-shape; game fn slus_012_79:0x800474b4; drafts `tools/probes/levers/while-postdec.before.c` / `tools/probes/levers/while-postdec.after.c`; cookbook C0049
 
 ## combine
 
