@@ -8,3 +8,4 @@ func_800D7AE4	psx_bin_st2	0x800d7ae4	0x800d7b38	tools/probes/func_800D7AE4.c	T4 
 func_800DB960	psx_bin_st9	0x800db960	0x800db9f4	tools/probes/func_800DB960.c	T4 (e) two divides + global pointer, tie-breaker, overlay
 func_80052634	slus_012_79	0x80052634	0x80052654	tools/probes/func_80052634.c	T5 standalone draft: scratchpad work counter ++
 func_800D2514	bin_e60	0x800d2514	0x800d2554	tools/probes/func_800D2514.c	T2 (1.8) pin proof, family E, 16 insns
+func_80129FA8	bin_kof_p60p	0x80129fa8	0x80129ff0	tools/probes/func_80129FA8.c	T2 (1.8) pin proof, family KOF, 18 insns
