@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/KOF_P51P.BIN
   asm_path: asm/bin_kof_p51p
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_kof_p51p/assets
   src_path: src/bin_kof_p51p
   build_path: build/bin_kof_p51p
@@ -27,6 +28,9 @@ segments:
     subsegments:
       - [0x0, rodata, bin_kof_p51p_0]  # text-end scan: last jr ra + delay slot
       - [0x14, asm, bin_kof_p51p_14]
+      - [0x4e4, c, game_800D04E4]
+      - [0x55c, asm, bin_kof_p51p_55c]
+      - [0x914, c, game_800D0914]
       - [0x1a60, data, bin_kof_p51p_1a60]  # data-island text-end..loadmap end
       - [0x1c08, bin, bin_kof_p51p_trailing]  # final 2 B (size not 4-aligned)
   - [0x1c0a]

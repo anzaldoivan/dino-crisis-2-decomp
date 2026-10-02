@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/PSX/BIN/ST7.BIN
   asm_path: asm/psx_bin_st7
+  nonmatchings_path: nonmatchings
   asset_path: asm/psx_bin_st7/assets
   src_path: src/psx_bin_st7
   build_path: build/psx_bin_st7
@@ -26,5 +27,14 @@ segments:
     vram: 0x800d5800
     subsegments:
       - [0x0, asm, psx_bin_st7_0]  # text-end scan: last jr ra + delay slot
+      - [0x68, c, game_800D5868]
+      - [0xfc, asm, psx_bin_st7_fc]
+      - [0x894, c, game_800D6094]
+      - [0x89c, asm, psx_bin_st7_89c]
+      - [0x1c34, c, game_800D7434]
+      - [0x1c3c, c, game_800D743C]
+      - [0x1eac, asm, psx_bin_st7_1eac]
+      - [0x2284, c, game_800D7A84]
+      - [0x22a4, asm, psx_bin_st7_22a4]
       - [0x28b4, data, psx_bin_st7_28b4]  # data-island text-end..loadmap end
   - [0x2aec]

@@ -1,5 +1,7 @@
 #include "common.h"
 #include "dc2.h"
+#include "../shared/func_8005A34C.h"
+#include "../shared/func_800610A0.h"
 
 /* func_80037824 */
 
@@ -40,25 +42,9 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A07C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A144);
 
-typedef struct {
-    unsigned char *p0;
-    unsigned char *p4;
-    unsigned char b8;
-    unsigned char b9;
-    unsigned char pad[2];
-} Ent0C;
-typedef struct {
-    int h0;
-    Ent0C e[1];
-} Tbl;
-
-void func_8005A34C(Tbl *t, int i, unsigned char *p)
+void func_8005A34C(Tbl_s8005A34C *t, int i, unsigned char *p)
 {
-    Ent0C *e = &t->e[i];
-    e->b9 = 1;
-    e->p0 = p;
-    e->p4 = p;
-    e->b8 = p[5];
+#include "../shared/func_8005A34C.inc.c"
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005A37C);
@@ -149,8 +135,7 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EC80);
 
 int func_8005ECB4(int *a0)
 {
-    *a0 += 2;
-    return 0;
+#include "../shared/func_8005ECB4.inc.c"
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005ECCC);
@@ -169,7 +154,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EF48);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EF8C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EFE4);
+int func_8005EFE4(int *a0)
+{
+#include "../shared/func_8005ECB4.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005EFFC);
 
@@ -215,7 +203,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005FCD0);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005FEE0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005FFB8);
+void func_8005FFB8(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8005FFC0);
 
@@ -223,7 +214,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006004C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060460);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800604EC);
+void func_800604EC(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800604F4);
 
@@ -237,7 +231,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060848);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060968);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060A24);
+void func_80060A24(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060A2C);
 
@@ -257,23 +254,19 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80060FE8);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061054);
 
-typedef struct {
-    int pc;
-    char pad04[0x80];
-    int *arg;
-} ScriptCtx;
-extern void func_80034D88(int a, int b, int c);
-
-int func_800610A0(ScriptCtx *ctx)
+#define SHARED_F0 func_80034D88
+int func_800610A0(ScriptCtx_s800610A0 *ctx)
 {
-    func_80034D88(ctx->arg[2], ctx->arg[1], ctx->arg[0]);
-    ctx->pc += 2;
-    return 0;
+#include "../shared/func_800610A0.inc.c"
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800610EC);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006113C);
+#define SHARED_F0 func_8002EB14
+int func_8006113C(ScriptCtx_s800610A0 *ctx)
+{
+#include "../shared/func_800610A0.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061188);
 
@@ -297,7 +290,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061A84);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061BAC);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061CFC);
+int func_80061CFC(int *a0)
+{
+#include "../shared/func_8005ECB4.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80061D14);
 
@@ -355,13 +351,20 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80063654);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80063700);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800637D0);
+int func_800637D0(int *a0)
+{
+#include "../shared/func_8005ECB4.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800637E8);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_800638F8);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006393C);
+#define SHARED_F0 func_80044B80
+int func_8006393C(ScriptCtx_s800610A0 *ctx)
+{
+#include "../shared/func_800610A0.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80063988);
 
@@ -429,7 +432,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80064AB4);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80064B88);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80064BB0);
+void func_80064BB0(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80064BB8);
 
@@ -469,7 +475,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80065EFC);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80065F24);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80065F40);
+void func_80065F40(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80065F48);
 
@@ -477,11 +486,20 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006600C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066048);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006605C);
+void func_8006605C(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066064);
+void func_80066064(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_8006606C);
+void func_8006606C(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80057F48", func_80066074);
 

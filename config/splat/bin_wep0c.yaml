@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP0C.BIN
   asm_path: asm/bin_wep0c
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_wep0c/assets
   src_path: src/bin_wep0c
   build_path: build/bin_wep0c
@@ -29,6 +30,9 @@ segments:
       - [0x4, rodata, bin_wep0c_4]  # jtbl jr=0x8017e824 sltiu
       - [0x20, rodata, bin_wep0c_20]
       - [0x30, asm, bin_wep0c_30]
+      - [0x1564, c, game_8017FA64]
+      - [0x1584, asm, bin_wep0c_1584]
+      - [0x16c4, c, game_8017FBC4]
       - [0x16d4, data, bin_wep0c_16d4]  # data-island text-end..loadmap end
       - [0x1790, bin, bin_wep0c_trailing]  # final 1 B (size not 4-aligned)
   - [0x1791]

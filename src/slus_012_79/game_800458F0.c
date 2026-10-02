@@ -1,5 +1,6 @@
 #include "common.h"
 #include "dc2.h"
+#include "../shared/func_800436C8.h"
 
 /* func_80037824 */
 
@@ -69,8 +70,9 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_80047814);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_800478B8);
 
-void func_80047958(int *a0) {
-    a0[20] = 0;
+void func_80047958(int *a0)
+{
+#include "../shared/func_80047958.inc.c"
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_80047960);
@@ -155,7 +157,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_80049FD0);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004A050);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004A0F8);
+int func_8004A0F8(V3s_s800436C8 *a, V3s_s800436C8 *b)
+{
+#include "../shared/func_800436C8.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004A144);
 
@@ -215,15 +220,35 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B298);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B35C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B428);
+#define SHARED_F0 func_800487B8
+void func_8004B428(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B448);
+#define SHARED_F0 func_800487B8
+void func_8004B448(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B468);
+#define SHARED_F0 func_800487B8
+void func_8004B468(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B488);
+#define SHARED_F0 func_800487B8
+void func_8004B488(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B4A8);
+#define SHARED_F0 func_800487B8
+void func_8004B4A8(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_8004B4C8);
 

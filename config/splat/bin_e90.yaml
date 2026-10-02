@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/E90.BIN
   asm_path: asm/bin_e90
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_e90/assets
   src_path: src/bin_e90
   build_path: build/bin_e90
@@ -36,5 +37,9 @@ segments:
       - [0x90, rodata, bin_e90_90]
       - [0x94, rodata, bin_e90_94]  # jtbl jr=0x800d2f68 sltiu
       - [0xa8, asm, bin_e90_a8]
+      - [0x98c, c, game_800D098C]
+      - [0x9ac, asm, bin_e90_9ac]
+      - [0xcb8, c, game_800D0CB8]
+      - [0x2130, asm, bin_e90_2130]
       - [0x4868, data, bin_e90_4868]  # data-island text-end..loadmap end
   - [0x4918]

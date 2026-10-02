@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP00.BIN
   asm_path: asm/bin_wep00
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_wep00/assets
   src_path: src/bin_wep00
   build_path: build/bin_wep00
@@ -26,5 +27,6 @@ segments:
     vram: 0x8017e500
     subsegments:
       - [0x0, asm, bin_wep00_0]  # text-end scan: last jr ra + delay slot
+      - [0x17e4, c, game_8017FCE4]
       - [0x1848, data, bin_wep00_1848]  # data-island text-end..loadmap end
   - [0x1890]

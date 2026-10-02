@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP0E.BIN
   asm_path: asm/bin_wep0e
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_wep0e/assets
   src_path: src/bin_wep0e
   build_path: build/bin_wep0e
@@ -26,5 +27,8 @@ segments:
     vram: 0x80120000
     subsegments:
       - [0x0, asm, bin_wep0e_0]  # text-end scan: last jr ra + delay slot
+      - [0xad8, c, game_80120AD8]
+      - [0xb14, asm, bin_wep0e_b14]
+      - [0x2348, c, game_80122348]
       - [0x2358, data, bin_wep0e_2358]  # data-island text-end..loadmap end
   - [0x2408]

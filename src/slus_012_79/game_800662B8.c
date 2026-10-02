@@ -40,22 +40,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_80066888);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_80066A8C);
 
-extern int func_8004A2C4(int a, int b);
-
+#define SHARED_F0 func_8004A2C4
 short func_80066B80(int a, int b, short ang, short step)
 {
-    int d;
-
-    d = (func_8004A2C4(a, b) - ang) & 0xFFF;
-    if (d < 0x800 && d < step * 2) {
-        step = d;
-    } else if (d >= 0x800 && 0x1000 - d < step * 2) {
-        step = 0x1000 - d;
-    }
-    if (d <= 0x800) {
-        return step;
-    }
-    return -step;
+#include "../shared/func_80066B80.inc.c"
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_80066C20);
@@ -128,7 +116,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_8006DCE0);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_8006DF00);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_8006E3AC);
+void func_8006E3AC(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_8006E3B4);
 

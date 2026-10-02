@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/EA0.BIN
   asm_path: asm/bin_ea0
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_ea0/assets
   src_path: src/bin_ea0
   build_path: build/bin_ea0
@@ -26,5 +27,9 @@ segments:
     vram: 0x800d0000
     subsegments:
       - [0x0, asm, bin_ea0_0]  # text-end scan: last jr ra + delay slot
+      - [0x23c, c, game_800D023C]
+      - [0x2b4, c, game_800D02B4]
+      - [0x2d4, asm, bin_ea0_2d4]
+      - [0x3e4, c, game_800D03E4]
       - [0x49c, data, bin_ea0_49c]  # data-island text-end..loadmap end
   - [0x50c]

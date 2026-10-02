@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/E10.BIN
   asm_path: asm/bin_e10
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_e10/assets
   src_path: src/bin_e10
   build_path: build/bin_e10
@@ -29,5 +30,10 @@ segments:
       - [0xa4, rodata, bin_e10_a4]  # jtbl jr=0x800d2c60 sltiu
       - [0xd0, rodata, bin_e10_d0]
       - [0xf8, asm, bin_e10_f8]
+      - [0x7e8, c, game_800D07E8]
+      - [0x860, c, game_800D0860]
+      - [0x880, asm, bin_e10_880]
+      - [0x1954, c, game_800D1954]
+      - [0x3a6c, asm, bin_e10_3a6c]
       - [0x4178, data, bin_e10_4178]  # data-island text-end..loadmap end
   - [0x433c]

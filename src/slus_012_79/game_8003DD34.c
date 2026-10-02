@@ -1,5 +1,7 @@
 #include "common.h"
 #include "dc2.h"
+#include "../shared/func_800436C8.h"
+#include "../shared/func_8002B3E0.h"
 
 /* func_80037824 */
 
@@ -57,7 +59,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E164);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E1B4);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E230);
+void func_8003E230(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E238);
 
@@ -67,15 +72,26 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E488);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E4E0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E63C);
+void func_8003E63C(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E644);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E6E4);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E740);
+#define SHARED_D0 D_800894C8
+void func_8003E740(Obj8002B3E0_s8002B3E0 *obj)
+{
+#include "../shared/func_8002B3E0.inc.c"
+}
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E77C);
+#define SHARED_F0 func_800487B8
+void func_8003E77C(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E79C);
 
@@ -91,7 +107,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003EA64);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003EAAC);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003EB18);
+void func_8003EB18(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003EB20);
 
@@ -157,7 +176,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80042758);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8004283C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_800428D0);
+void func_800428D0(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_800428D8);
 
@@ -173,22 +195,9 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80043284);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_800434DC);
 
-typedef struct {
-    short x;
-    short y;
-    short z;
-} V3s;
-
-int func_800436C8(V3s *a, V3s *b)
+int func_800436C8(V3s_s800436C8 *a, V3s_s800436C8 *b)
 {
-    int dx;
-    int dz;
-
-    dx = b->x - a->x;
-    dx = (dx < 0) ? -dx : dx;
-    dz = b->z - a->z;
-    dz = (dz < 0) ? -dz : dz;
-    return dx * dx + dz * dz;
+#include "../shared/func_800436C8.inc.c"
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80043714);

@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP0D.BIN
   asm_path: asm/bin_wep0d
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_wep0d/assets
   src_path: src/bin_wep0d
   build_path: build/bin_wep0d
@@ -28,5 +29,8 @@ segments:
       - [0x0, rodata, bin_wep0d_0]  # text-end scan: last jr ra + delay slot
       - [0x24, rodata, bin_wep0d_24]  # jtbl jr=0x80122264 sltiu
       - [0x48, asm, bin_wep0d_48]
+      - [0xa94, c, game_80120A94]
+      - [0xad0, asm, bin_wep0d_ad0]
+      - [0x25c4, c, game_801225C4]
       - [0x25d4, data, bin_wep0d_25d4]  # data-island text-end..loadmap end
   - [0x269c]

@@ -24,7 +24,10 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_80039C54);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003A160);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003A410);
+void func_8003A410(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003A418);
 

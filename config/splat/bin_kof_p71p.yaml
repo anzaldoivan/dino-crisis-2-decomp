@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/KOF_P71P.BIN
   asm_path: asm/bin_kof_p71p
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_kof_p71p/assets
   src_path: src/bin_kof_p71p
   build_path: build/bin_kof_p71p
@@ -27,6 +28,9 @@ segments:
     subsegments:
       - [0x0, rodata, bin_kof_p71p_0]  # text-end scan: last jr ra + delay slot
       - [0x14, asm, bin_kof_p71p_14]
+      - [0x480, c, game_800D0480]
+      - [0x4f8, asm, bin_kof_p71p_4f8]
+      - [0x8a0, c, game_800D08A0]
       - [0x1a14, data, bin_kof_p71p_1a14]  # data-island text-end..loadmap end
       - [0x1bc8, bin, bin_kof_p71p_trailing]  # final 2 B (size not 4-aligned)
   - [0x1bca]

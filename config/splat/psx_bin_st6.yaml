@@ -27,6 +27,8 @@ segments:
     vram: 0x800d5800
     subsegments:
       - [0x0, asm, psx_bin_st6_0]  # text-end scan: last jr ra + delay slot
+      - [0x68, c, game_800D5868]
+      - [0xfc, asm, psx_bin_st6_fc]
       - [0x440, c, game_800D5C40]
       - [0x1124, data, psx_bin_st6_1124]  # data-island text-end..loadmap end
   - [0x1428]

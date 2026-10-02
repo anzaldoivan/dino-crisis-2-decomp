@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/E31.BIN
   asm_path: asm/bin_e31
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_e31/assets
   src_path: src/bin_e31
   build_path: build/bin_e31
@@ -29,6 +30,9 @@ segments:
       - [0x4c, rodata, bin_e31_4c]  # jtbl jr=0x800d1a5c sltiu
       - [0x60, rodata, bin_e31_60]
       - [0xa4, rodata, bin_e31_a4]  # jtbl jr=0x800d3104 sltiu
-      - [0xb8, asm, bin_e31_b8]
+      - [0xb8, c, game_800D00B8]
+      - [0x758, asm, bin_e31_758]
+      - [0x10f4, c, game_800D10F4]
+      - [0x2e4c, asm, bin_e31_2e4c]
       - [0x34b8, data, bin_e31_34b8]  # data-island text-end..loadmap end
   - [0x35f0]

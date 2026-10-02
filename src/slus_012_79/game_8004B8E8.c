@@ -130,7 +130,10 @@ void func_80052634(void)
     WORK->x228++;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004B8E8", func_80052654);
+void func_80052654(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004B8E8", func_8005265C);
 

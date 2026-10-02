@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/E60.BIN
   asm_path: asm/bin_e60
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_e60/assets
   src_path: src/bin_e60
   build_path: build/bin_e60
@@ -29,5 +30,10 @@ segments:
       - [0x64, rodata, bin_e60_64]  # jtbl jr=0x800d202c sltiu
       - [0x7c, rodata, bin_e60_7c]
       - [0xec, asm, bin_e60_ec]
+      - [0x740, c, game_800D0740]
+      - [0x7b8, c, game_800D07B8]
+      - [0x7d8, asm, bin_e60_7d8]
+      - [0x1558, c, game_800D1558]
+      - [0x43fc, asm, bin_e60_43fc]
       - [0x4aa0, data, bin_e60_4aa0]  # data-island text-end..loadmap end
   - [0x4c04]

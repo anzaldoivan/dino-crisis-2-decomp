@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/KOF_P01P.BIN
   asm_path: asm/bin_kof_p01p
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_kof_p01p/assets
   src_path: src/bin_kof_p01p
   build_path: build/bin_kof_p01p
@@ -28,5 +29,7 @@ segments:
       - [0x0, rodata, bin_kof_p01p_0]  # text-end scan: last jr ra + delay slot
       - [0x24, rodata, bin_kof_p01p_24]  # jtbl jr=0x800d2150 sltiu
       - [0x48, asm, bin_kof_p01p_48]
+      - [0x99c, c, game_800D099C]
+      - [0x9d8, asm, bin_kof_p01p_9d8]
       - [0x24b0, data, bin_kof_p01p_24b0]  # data-island text-end..loadmap end
   - [0x257c]

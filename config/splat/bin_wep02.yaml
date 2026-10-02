@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/WEP02.BIN
   asm_path: asm/bin_wep02
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_wep02/assets
   src_path: src/bin_wep02
   build_path: build/bin_wep02
@@ -29,6 +30,9 @@ segments:
       - [0x4, rodata, bin_wep02_4]  # jtbl jr=0x8017e700 sltiu
       - [0x20, rodata, bin_wep02_20]
       - [0x24, rodata, bin_wep02_24]  # jtbl jr=0x8017e928 sltiu
-      - [0x40, asm, bin_wep02_40]
+      - [0x40, c, game_8017E540]
+      - [0xd4, asm, bin_wep02_d4]
+      - [0x1c64, c, game_80180164]
+      - [0x1c6c, asm, bin_wep02_1c6c]
       - [0x2274, data, bin_wep02_2274]  # data-island text-end..loadmap end
   - [0x22dc]

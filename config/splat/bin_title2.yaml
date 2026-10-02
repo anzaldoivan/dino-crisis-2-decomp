@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/TITLE2.BIN
   asm_path: asm/bin_title2
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_title2/assets
   src_path: src/bin_title2
   build_path: build/bin_title2
@@ -28,5 +29,7 @@ segments:
       - [0x0, rodata, bin_title2_0]  # text-end scan: last jr ra + delay slot
       - [0x1c, rodata, bin_title2_1c]  # jtbl jr=0x800d5bf8 sltiu
       - [0x30, asm, bin_title2_30]
+      - [0xd9c, c, game_800D659C]
+      - [0xdcc, asm, bin_title2_dcc]
       - [0xf00, data, bin_title2_f00]  # data-island text-end..loadmap end
   - [0xf88]

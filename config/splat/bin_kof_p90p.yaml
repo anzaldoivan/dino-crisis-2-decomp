@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/KOF_P90P.BIN
   asm_path: asm/bin_kof_p90p
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_kof_p90p/assets
   src_path: src/bin_kof_p90p
   build_path: build/bin_kof_p90p
@@ -27,5 +28,7 @@ segments:
     subsegments:
       - [0x0, rodata, bin_kof_p90p_0]  # text-end scan: last jr ra + delay slot
       - [0x24, asm, bin_kof_p90p_24]
+      - [0x9ec, c, game_801289EC]
+      - [0xa28, asm, bin_kof_p90p_a28]
       - [0x2238, data, bin_kof_p90p_2238]  # data-island text-end..loadmap end
   - [0x22ec]

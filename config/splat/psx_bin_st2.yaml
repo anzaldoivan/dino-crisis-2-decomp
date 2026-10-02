@@ -28,6 +28,8 @@ segments:
     subsegments:
       - [0x0, rodata, psx_bin_st2_0]  # text-end scan: last jr ra + delay slot
       - [0x74, asm, psx_bin_st2_74]
+      - [0x700, c, game_800D5F00]
+      - [0x19a8, asm, psx_bin_st2_19a8]
       - [0x22e4, c, game_800D7AE4]
       - [0x2410, data, psx_bin_st2_2410]  # data-island text-end..loadmap end
   - [0x2890]

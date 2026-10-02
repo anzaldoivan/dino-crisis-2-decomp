@@ -1,4 +1,6 @@
 #include "common.h"
+#include "../shared/func_8002E920.h"
+#include "dc2.h"
 
 /* func_800DB960 */
 typedef struct {
@@ -31,9 +33,16 @@ INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DBA30);
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DBA74);
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DBB88);
+void func_800DBB88(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DBB90);
+#define SHARED_F0 func_800DC094
+void func_800DBB90(void)
+{
+#include "../shared/func_8001EA54.inc.c"
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DBBB0);
 
@@ -71,7 +80,10 @@ INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DD45C);
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DD6A0);
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DD808);
+void func_800DD808(int *a0)
+{
+#include "../shared/func_80047958.inc.c"
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DD810);
 
@@ -81,7 +93,11 @@ INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DDC94);
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DDD90);
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DDE24);
+#define SHARED_F0 func_80048274
+void func_800DDE24(Obj8002E920_s8002E920 *o)
+{
+#include "../shared/func_8002E920.inc.c"
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DDEA8);
 
@@ -91,7 +107,10 @@ INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DDF2C);
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DDFD0);
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE040);
+void func_800DE040(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE048);
 
@@ -107,7 +126,10 @@ INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE304);
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE378);
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE424);
+void func_800DE424(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE42C);
 
@@ -121,7 +143,10 @@ INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE76C);
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE7A8);
 
-INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE7E4);
+void func_800DE7E4(void)
+{
+#include "../shared/func_8001B530.inc.c"
+}
 
 INCLUDE_ASM("asm/psx_bin_st9/nonmatchings/game_800DB960", func_800DE7EC);
 

@@ -8,6 +8,7 @@ options:
   base_path: ../..
   target_path: extracted/retail/files/BIN/E30.BIN
   asm_path: asm/bin_e30
+  nonmatchings_path: nonmatchings
   asset_path: asm/bin_e30/assets
   src_path: src/bin_e30
   build_path: build/bin_e30
@@ -26,5 +27,10 @@ segments:
     vram: 0x800d0000
     subsegments:
       - [0x0, asm, bin_e30_0]  # text-end scan: last jr ra + delay slot
+      - [0x640, c, game_800D0640]
+      - [0x6b8, c, game_800D06B8]
+      - [0x142c, asm, bin_e30_142c]
+      - [0x1da4, c, game_800D1DA4]
+      - [0x1dac, asm, bin_e30_1dac]
       - [0x1ee8, data, bin_e30_1ee8]  # data-island text-end..loadmap end
   - [0x1fc8]
