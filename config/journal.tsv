@@ -31,32 +31,32 @@ slus_012_79	0x80036e94	M1	draft	plateau	MATCH	apply-failed
 slus_012_79	0x80057a8c	M1	draft	plateau	MATCH	apply-failed
 slus_012_79	0x80054c58	M1	draft	plateau	LENGTH-DRIFT	apply-failed
 slus_012_79	0x8008124c	M1	recover	plateau	SIZE-MISMATCH	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-psx_bin_st8	0x800da040	M1	recover	banked	MATCH	rung carve
+psx_bin_st8	0x800da040	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 psx_bin_st9	0x800dc094	M1	recover	plateau	REGALLOC-PERM	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=psx_bin_st9 rc 2: build/psx_bin_st9/src/psx_bin_
-slus_012_79	0x8002219c	M1	recover	banked	MATCH	rung carve
+slus_012_79	0x8002219c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 psx_bin_st9	0x800d740c	M1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=psx_bin_st9 rc 2: build/psx_bin_st9/src/psx_bin_
 slus_012_79	0x80053eac	M1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x80063cc4	M1	recover	banked	MATCH	rung as-is
+slus_012_79	0x80063cc4	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung as-is; no lever credited
 slus_012_79	0x8005e160	M1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x8002204c	M1	recover	banked	MATCH	rung carve
+slus_012_79	0x8002204c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 slus_012_79	0x80051998	M1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
-slus_012_79	0x80039654	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x8003d58c	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x80065004	M1	recover	banked	MATCH	rung as-is
-slus_012_79	0x80034d14	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x8003de8c	M1	recover	banked	MATCH	rung as-is
-slus_012_79	0x8003d2d4	M1	recover	banked	MATCH	rung carve
+slus_012_79	0x80039654	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x8003d58c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x80065004	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung as-is; no lever credited
+slus_012_79	0x80034d14	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x8003de8c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung as-is; no lever credited
+slus_012_79	0x8003d2d4	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 slus_012_79	0x8005c608	M1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: build/slus_012_79/src/slus_012
 slus_012_79	0x80068ca0	M1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: mipsel-linux-gnu-ld: build/slu
-slus_012_79	0x80064998	M1	recover	banked	MATCH	rung as-is
-slus_012_79	0x8004587c	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x8002be20	M1	recover	banked	MATCH	rung carve
-psx_bin_st1	0x800d5990	M1	recover	banked	MATCH	rung carve
+slus_012_79	0x80064998	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung as-is; no lever credited
+slus_012_79	0x8004587c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x8002be20	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+psx_bin_st1	0x800d5990	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 slus_012_79	0x8006c78c	M1	recover	plateau	REGALLOC-PERM	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
 psx_bin_st9	0x800da16c	M1	recover	plateau	OPCODE-MIXED	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=psx_bin_st9 rc 2: build/psx_bin_st9/src/psx_bin_
-slus_012_79	0x8005f088	M1	recover	banked	MATCH	rung as-is
-psx_bin_st1	0x800d9000	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x8004b7b8	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x80036e94	M1	recover	banked	MATCH	rung carve
-slus_012_79	0x80057a8c	M1	recover	banked	MATCH	rung carve
+slus_012_79	0x8005f088	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung as-is; no lever credited
+psx_bin_st1	0x800d9000	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x8004b7b8	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x80036e94	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
+slus_012_79	0x80057a8c	M1	recover	banked	MATCH	strip:none strip:none manual draft, plateau MATCH, banked at reconcile rung carve; no lever credited
 slus_012_79	0x80054c58	M1	recover	plateau	LENGTH-DRIFT	apply-failed failed carve build-error; rung carve: FAIL make build ONLY=slus_012_79 rc 2: sha1sum: WARNING: 1 computed c
