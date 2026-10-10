@@ -1,0 +1,27 @@
+# config/psxdecomp.toml — adopted by /psxdecomp:upgrade (the repository predates psxdecomp).
+
+[psxdecomp]
+version = "0.4.0"
+profile = "psx"
+bootstrapped = "adopted 2026-10-04"
+
+[pa3]
+version = "3.14.2"
+
+[refs]
+file = "config/refs.toml"
+index = "docs/ops/refs.md"
+
+[deviations]
+list = ["adopted: not bootstrapped by psxdecomp; pins recorded as found"]
+
+[public]
+repo = "anzaldoivan/dino-crisis-2-decomp"
+dev_branch = "main"
+checks = ["build SLUS_012.79", "public-clean audit (no game bytes)", "compile-only (pinned triple, no game bytes)"]
+private_repo = "anzaldoivan/dino-crisis-2-decomp-private"
+private_rev = "ae11967ceb453fd3ef6556b073a2d7d2e934befd"   # the -private commit CI reads
+image = "ghcr.io/anzaldoivan/dino-crisis-2-decomp-toolchain@sha256:076b21e6df2c760ee31c4e60ad39e69e1a54aa26b8480724202fa447ace17c76"
+land_check = ["bash", "tools/docker/land_check.sh", "{tree}"]
+deny = ["config/waves.tsv", "config/journal.tsv", "config/routing.tsv", "config/usage.tsv"]   # agent ledgers
+keyed = {"config/c_units.tsv" = 2}   # carve rows: alias, start

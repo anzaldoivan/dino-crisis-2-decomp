@@ -1,0 +1,4 @@
+# config/compiler_source.tsv -- vanilla compiler source (T1, Phase 1.7); fetched by tools/compiler_source.py --fetch into
+# dest (scratch under .run/, never committed). sha256 checked on ftp.gnu.org and mirrors.kernel.org/gnu, 2026-10-01.
+# name	version	url	sha256	dest
+gcc	2.95.2	https://ftp.gnu.org/gnu/gcc/gcc-2.95.2.tar.gz	064e1cb06ea5d2f4a07ec46c1c64d771f74d04f404b6a6766bca2477f7d72482	.run/compiler-src/gcc-2.95.2

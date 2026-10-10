@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # GitHub Actions only: workflows pin actions to full commit SHAs, and Dependabot bumps the SHA and its `# vN` comment.
+  # Add a `pip` block if the tools ever ship a requirements file.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]

@@ -1,0 +1,4 @@
+# config/discs.tsv -- the README disc table's input (tools/psxd_publish.py). source dump: the data-track hash in
+# config/medium.sha1 is not yet checked against Redump; set redump once it is.
+disc	serial	executable	track	source
+USA	SLUS-01279	SLUS_012.79	Dino Crisis 2 (USA) (Track 1).bin	dump
