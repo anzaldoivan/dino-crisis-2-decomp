@@ -1,7 +1,7 @@
 # config/psxdecomp.toml — adopted by /psxdecomp:upgrade (the repository predates psxdecomp).
 
 [psxdecomp]
-version = "0.4.0"
+version = "0.4.1"
 profile = "psx"
 bootstrapped = "adopted 2026-10-04"
 
