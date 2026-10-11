@@ -32,4 +32,4 @@ plateau	python3 tools/plateau.py --check	^plateau: \d+ of (\d+) planted labelled
 cookbook_index	python3 tools/cookbook_index.py --check	^cookbook-index: \d+ of (\d+) entries indexed$	^control: ok$	no
 wave	python3 tools/wave.py --check	^routing: (\d+) of \1 buckets measured on the manual wave$	^wave control: ok$	yes
 census_set	python3 tools/census.py --check --set exe	^set exe: \d+ aliases, \d+ game fns.*$[\s\S]*^stubs: \d+ of (\d+) game functions not in C \(set exe\)\nledger: \d+ of \d+ non-C functions named \(set exe\)$	^ledger control: ok \(set exe[\s\S]*^control: ok$	yes
-wave_usage	python3 tools/wave.py --check && python3 tools/wave.py --selftest	^usage: \d+ of (\d+) waves with a 5h before/after record$	^selftest rolled usage row: refused ok$[\s\S]*^selftest: 9 of 9 ok$	yes
+wave_usage	python3 tools/wave.py --check && python3 tools/wave.py --selftest	^usage: \d+ of (\d+) waves with a 5h before/after record$	^selftest rolled usage row: refused ok$[\s\S]*^selftest: 12 of 12 ok$	yes

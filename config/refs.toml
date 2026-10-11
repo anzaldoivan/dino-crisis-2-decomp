@@ -337,3 +337,41 @@ do       = "let the bytes (prologue idioms, library signatures) pick the compile
 what     = "decomp.me's gcc2.7.2-psx is not a repo's toolchain: old-gcc release 0.13 vs BFM's 0.17, another maspsx commit, and gas pads .text to 16 bytes"
 evidence = "BFM tools/decompme_replica.sh header (P33 E1, 2026-09-07)"
 do       = "prove a preset through the kit's decompme_replica before saving it; read the verdict, not the .text size"
+
+# ---- added by /psxdecomp:upgrade 2026-10-12 ----
+[[ref]]
+name = "parasite-eve-decomp"
+url = "https://github.com/khasinski/parasite-eve-decomp"
+class = "link"
+licence = "none selected (its LICENSE.md, read 2026-10-12 at commit a357ac0c): ideas only, no text and no code"
+topics = ["exemplar", "debt-baseline", "verify-gate", "asm-evidence", "pinned-toolchain"]
+covers = "practice on a PS1 project (seen 2026-10-12): debt baselines that must equal the tree, one verify gate, an evidence record for each assembly function, a toolchain that refuses a patched checkout"
+used_by = "psxdecomp 0.6.0 (2026-10-12): the equal-baseline rule of the debt check, the `make verify` convention, the dirty-checkout check of the toolchain pins"
+
+[[ref]]
+name = "kings-field-decomp"
+url = "https://github.com/sushi-shi/kings-field-decomp"
+class = "link"
+licence = "CC0-1.0 (read 2026-10-12 at commit e4930cd2; kings-field-2-decomp 7a8e5f04 and homm2-decomp 716e50b3 are CC0-1.0 too)"
+topics = ["exemplar", "names-ledger", "bank-ledger", "budgets", "triage-order"]
+covers = "practice on two PS1 projects and one PC project of the same author (seen 2026-10-12): a naming-review ledger with evidence and a decision, a bank with a high-water mark, a time and an attempt budget for each function"
+used_by = "psxdecomp 0.6.0 (2026-10-12): the columns of config/names.tsv, the budgets and the triage order of the campaign templates"
+
+[[ref]]
+name = "snowboardkids2-decomp"
+url = "https://github.com/cdlewis/snowboardkids2-decomp"
+class = "link"
+licence = "none (no licence file, read 2026-10-12 at commit 3b1bd5db): ideas only, no text and no code"
+topics = ["exemplar", "guard-hooks", "give-up-report", "agent-workflow"]
+covers = "practice on an N64 project (seen 2026-10-12): hooks that refuse an edit of assembly and hash files, a fixed report when an agent gives up on a function"
+used_by = "psxdecomp 0.6.0 (2026-10-12): the guard hook and its default rules, the give-up report of the campaign templates"
+
+[[authority]]
+topic = "the exact name of a PsyQ library function"
+order = ["ghidra-psx-ldr", "psyq-sdk", "psy-q-decomp"]
+rule = "take the name as the signature or the SDK header of the linked version spells it; never invent, translate or shorten an SDK name"
+
+[[trap]]
+what = "a byte-identical match proves what the code does, not what it is called: a matched function can carry a name that says another behaviour"
+evidence = "sushi-shi/homm2-decomp docs/semantic-naming-audit.md at commit 716e50b (read 2026-10-12): its audit of matched code found names that claimed a behaviour of another routine"
+do = "record every name with its evidence in config/names.tsv; check a game term against a source in this file before it is accepted"

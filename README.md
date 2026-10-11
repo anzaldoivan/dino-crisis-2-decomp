@@ -2,28 +2,29 @@
 
 ## Description
 
-A matching decompilation of **Dino Crisis 2** (Capcom, 2000) for the Sony PlayStation, USA release (SLUS-01279): C
-source that, compiled with the original era's toolchain and linked in the original order, rebuilds every code binary
-on the disc byte for byte. The executable and all 82 code overlays are checked against their SHA-1 inside every build.
+This repository is a matching decompilation of **Dino Crisis 2** (Capcom, 2000) for the Sony PlayStation, USA release
+(SLUS-01279). It is C source. Compiled with the original era's toolchain and linked in the original order, this source
+rebuilds every code binary on the disc byte for byte. Every build checks the executable and all 82 code overlays
+against their SHA-1.
 
 Readable, rebuildable source is the foundation for documenting how the game works, and later for ports, asset tools and
 mods. Until a function is matched, it stays as assembly, so the build is always byte-identical.
 
 <!-- psxdecomp: ai-policy -->
 > [!IMPORTANT]
-> **AI policy:** LLMs produce negligible decompilation results without good guidance. Investigate and familiarize yourself with the console's architecture and the game you are decompiling, and always use your own judgment. Humans drive the decisions; AI reads and writes the code.
+> **AI policy:** LLMs produce negligible decompilation results without good guidance. Investigate and familiarize yourself with the console's architecture and the game you are decompiling, and always use your own judgment. Humans drive the decisions. AI reads and writes the code.
 
 <!-- psxdecomp:disc:begin -->
 | Disc | Serial | Executable | SHA-1 of the data track |
 |---|---|---|---|
 | USA | SLUS-01279 | `SLUS_012.79` | `f7c71427c4c8726c9114514746c42f10928fbaee` |
 
-The target `SLUS_012.79` has SHA-1 `c33bcaf3c58bd123f63cb03d907d8ca909f0fff8` (`config/check.slus_012_79.sha`); every build checks its rebuild against it.
+The target `SLUS_012.79` has SHA-1 `c33bcaf3c58bd123f63cb03d907d8ca909f0fff8` (`config/check.slus_012_79.sha`). Every build checks its rebuild against it.
 <!-- psxdecomp:disc:end -->
 
 > [!IMPORTANT]
 > This repository contains no game data: no executable, disc image, extracted file, disassembly or vendor SDK. You
-> need your own legally obtained copy of the game. `tools/audit_public.py` enforces this on every push; see
+> need your own legally obtained copy of the game. `tools/audit_public.py` enforces this on every push. See
 > [CONTRIBUTING.md](CONTRIBUTING.md) and [src/NOTICE.md](src/NOTICE.md).
 
 ## Progress
@@ -141,6 +142,8 @@ The target `SLUS_012.79` has SHA-1 `c33bcaf3c58bd123f63cb03d907d8ca909f0fff8` (`
 
 </details>
 
+The published number is the matched code of the `game` category, in bytes. The `sdk` row counts the SDK libraries apart.
+
 Progress bars powered by [decomp.dev][psxd-progress].
 
 [psxd-code]: https://decomp.dev/anzaldoivan/dino-crisis-2-decomp.svg?mode=shield&label=Code&measure=code&category=game
@@ -149,18 +152,21 @@ Progress bars powered by [decomp.dev][psxd-progress].
 <!-- psxdecomp:progress:end -->
 
 Like most PlayStation games, Dino Crisis 2 keeps only part of its code in the boot executable (`SLUS_012.79`). The
-rest lives in overlays, separate code files on the disc that the game loads into a fixed memory region when it needs
-them: 70 under `BIN/`, 11 under `PSX/BIN/` and 1 under `PSX/DATA/`. Once progress is published, each folder gets a
-row here and every overlay its own category on decomp.dev, named after its file on the disc (`BIN/E00.BIN`).
+rest lives in overlays. An overlay is a separate code file on the disc. The game loads an overlay into a fixed memory
+region when it needs that overlay. There are 70 overlays under `BIN/`, 11 under `PSX/BIN/` and 1 under `PSX/DATA/`.
+
+Once progress is published, each folder gets a row here. Every overlay then gets its own category on decomp.dev,
+named after its file on the disc (`BIN/E00.BIN`).
 
 A function counts as matched when its C compiles to the original instructions and the whole binary still hashes
 correctly with it linked. PsyQ SDK library code is counted apart from the game's own code. Reaching 100% ends the first
-stage only: names, types and documentation of the game's systems come after.
+stage only. Names, types and documentation of the game's systems come after.
 
 ## Building the decompilation
 
-Requirements: Docker that can run `linux/amd64` images (Apple silicon: Rosetta), git, bash, and your own dump of the
-USA disc as a cue sheet plus its two track files. The extractor checks every file of the dump against
+The build requires Docker that can run `linux/amd64` images (Apple silicon: Rosetta), git and bash. The build also
+requires your own dump of the USA disc as a cue sheet plus its two track files. The extractor checks every file of the
+dump against
 [`config/medium.sha1`](config/medium.sha1), file names included.
 
 ```sh
@@ -193,12 +199,13 @@ and exits 0. A mismatch prints `FAILED sha1: <alias>`.
 
 ### Setting up
 
-The build runs in a Linux container: `tools/docker/Dockerfile` defines it, `tools/docker/dc.sh` drives it and
+The build runs in a Linux container. `tools/docker/Dockerfile` defines it, `tools/docker/dc.sh` drives it and
 `tools/docker/fetch_toolchain.sh` fetches the pinned toolchain.
 
 ### Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before your first pull request: your own copy of the game, nothing derived from it in git, and the AI-use conduct.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before your first pull request. Its topics are your own copy of the game,
+nothing derived from it in git, and the AI-use conduct.
 
 ### Reference
 
@@ -206,14 +213,16 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before your first pull request: your own
 
 ## Acknowledgements
 
-Prior community work this project builds on or was checked against: a recompilation and a randomizer exist; neither
-carries evidenced symbols, so neither is an input (checked 2026-09-30). The governance and method come from
-ProjectArchitect 3 and the decomp-architect kit distilled from a finished matching decompilation.
+This section lists the prior community work that this project builds on or was checked against. A recompilation and a
+randomizer exist. Neither carries evidenced symbols, so neither is an input (checked 2026-09-30). The governance and
+method come from ProjectArchitect 3 and the decomp-architect kit distilled from a finished matching decompilation.
 
 ## License
 
-The project's own work — the tooling, the build system, the documentation — is licensed under MIT for tools and
-documents; no rights are claimed over the original game, whose code and assets remain Capcom's; anyone commercialising
-a port should contact Capcom first. See [`LICENSE`](LICENSE). **No license is asserted over the reimplemented sources
-under `src/`** ([`src/NOTICE.md`](src/NOTICE.md)). Third-party components keep their own licenses
-([`THIRD_PARTY.md`](THIRD_PARTY.md)). *Dino Crisis 2* is the property of its rights holder.
+The project's own work is the tooling, the build system and the documentation. This work is licensed under MIT for
+tools and documents. No rights are claimed over the original game, whose code and assets remain Capcom's. Anyone
+commercialising a port should contact Capcom first. See [`LICENSE`](LICENSE).
+
+**No license is asserted over the reimplemented sources under `src/`** ([`src/NOTICE.md`](src/NOTICE.md)). Third-party
+components keep their own licenses ([`THIRD_PARTY.md`](THIRD_PARTY.md)). *Dino Crisis 2* is the property of its rights
+holder.

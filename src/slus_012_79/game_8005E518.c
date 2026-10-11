@@ -28,23 +28,50 @@ extern int func_80034CD8(int, int);
 extern void func_8004262C(int);
 
 
-
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E518);
-
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E5BC);
-
+/* func_8005E518, func_8005E6A4 (T8 w36: above both) */
 typedef struct State0x8005e6a4 {
     char pad0[4];
     unsigned char x4;
 } State0x8005e6a4;
+extern State0x8005e6a4 D_800B49D0;
+/* func_8005E854, func_8005E8F8 (T8 w36: above both) */
+typedef struct {
+    char pad[0xA4];
+} Elem0x8005e8f8;
+extern Elem0x8005e8f8 *D_800B49C8;
+extern void func_80018020(void *, int);
+
+typedef struct State0x8005e518 {
+    char pad0[4];
+    unsigned char x4;
+    char pad5[7 - 5];
+    unsigned char x7;
+    char pad8[0xA - 8];
+    unsigned short xA;
+} State0x8005e518;
+extern unsigned short D_800ABA90;
+extern void (*D_8008A35C[])(void);
+#define S0x8005e518 ((State0x8005e518 *)&D_800B49D0)
+
+void func_8005E518(void) {
+    if (D_800ABA90 & 0x100) {
+        if (S0x8005e518->x7 != 0xFF && func_80034CD8(2, 6) == 0) {
+            S0x8005e518->x4 = 1;
+        }
+    }
+    D_8008A35C[S0x8005e518->x4]();
+    S0x8005e518->xA++;
+    WORK->x6C4 = 0;
+}
+
+INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E5BC);
+
 typedef struct Elem0x8005e6a4 {
     unsigned char x0;
     unsigned char x1;
     char pad2[0x34 - 0x2];
 } Elem0x8005e6a4;
 extern unsigned int D_800AF5B8;
-extern State0x8005e6a4 D_800B49D0;
 extern void func_8001BE08();
 extern void func_8001D9E4(void);
 extern void func_8002EB14(int, int, int);
@@ -88,20 +115,62 @@ int func_8005E844(void) {
     return D_8008A358 + 0x10;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E854);
+typedef struct Elem0x8005e854 {
+    char *x0;
+    char pad4[0x80 - 0x4];
+    int x80;
+    int *x84;
+    char pad88[0x9B - 0x88];
+    unsigned char x9B;
+    char pad9C[0xA0 - 0x9C];
+    unsigned char xA0;
+    char padA1[0xA4 - 0xA1];
+} Elem0x8005e854;
 
-typedef struct {
-    char pad[0xA4];
-} Elem0x8005e8f8;
-extern Elem0x8005e8f8 *D_800B49C8;
-extern void func_80018020(void *, int);
+void func_8005E854(signed char i, short off)
+{
+    int *p;
+    Elem0x8005e854 *e;
+    char *v;
+
+    p = (int *)WORK->x5F4;
+    e = (Elem0x8005e854 *)&D_800B49C8[i];
+    p += off;
+
+    func_80018020(e, 0x29);
+    e->x9B = 1;
+    v = WORK->x5F4 + *p;
+    e->x84 = &e->x80;
+    e->xA0 = 0xFF;
+    e->x0 = v;
+}
+
 
 void func_8005E8F8(signed char i)
 {
     func_80018020(&D_800B49C8[i], 0x29);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E940);
+typedef struct Obj0x8005e940 {
+    char pad0[0x9E];
+    unsigned char kind;
+    signed char idx;
+} Obj0x8005e940;
+
+void *func_8005E940(Obj0x8005e940 *o)
+{
+    switch (o->kind) {
+    case 0:
+        return (char *)WORK->units + o->idx * 0x260;
+    case 1:
+        return (char *)WORK->x4DC + o->idx * 0x70;
+    case 2:
+        return (char *)WORK->x4E4 + o->idx * 0xAC;
+    case 3:
+        return (char *)WORK->x4E8 + o->idx * 0x34;
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005EA34);
 

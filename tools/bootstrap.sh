@@ -13,7 +13,8 @@ cd "$REPO"
 say() { printf 'bootstrap: %s\n' "$*"; }
 
 # 1) system packages — presence only; print the install line, never run it.
-# TODO(phase-3): fill the list once the toolchain is chosen (binutils for the target, a C preprocessor, clang-format, make,
+# Phase 1.3 put the toolchain in the build image (tools/docker/Dockerfile; pins: docs/ops/docker-host.md), so this list is
+# the host's part only. A bare host would also need (binutils for the target, a C preprocessor, clang-format, make,
 # the archive tools the extractor needs, python3-venv). TODO(platform): the package names differ per target and per distro.
 PKGS="git make python3-venv clang-format"
 if command -v dpkg >/dev/null 2>&1; then
@@ -38,7 +39,7 @@ if [ -f requirements-python.txt ]; then
     say "installing pinned Python requirements (no-op when satisfied)"
     .venv/bin/pip install -q -r requirements-python.txt
 else
-    say "requirements-python.txt not present yet — TODO(phase-1)"
+    say "no requirements-python.txt: the Python tools run in the build image (tools/docker/dc.sh)"
 fi
 
 # 3) submodules (no-op when populated; none until Phase 3 adds the shim, the differ, the decompiler and the permuter)
@@ -46,19 +47,20 @@ if [ -f .gitmodules ]; then
     say "submodules: git submodule update --init"
     git submodule update --init
 else
-    say "no submodules yet — TODO(phase-3)"
+    say "no submodules: the build image holds the pinned tools (docs/ops/docker-host.md)"
 fi
 
-# 4) the vintage compiler — TODO(phase-4): verify the tracked archive's checksum (`sha256sum --check`), extract each
+# 4) the vintage compiler — pinned in phase 1.4 (docs/ops/compiler-pin.md), fetched by tools/docker/fetch_toolchain.sh. On a bare host: verify the tracked archive's checksum (`sha256sum --check`), extract each
 #    candidate into its OWN directory, and print the pinned triple from docs/ops/decomp-environment.md. Never download without a
 #    checksum to verify against; never vendor a compiler whose license forbids it (keep a fetch step + checksum instead).
-say "vintage compiler: TODO(phase-4) — nothing to fetch until the candidate ladder exists"
+say "vintage compiler: in the build image (the pin: docs/ops/compiler-pin.md in the development repository); nothing to fetch here"
 
-# 5) the preflight (its exit status is ours) — TODO(phase-3): `make check-env` asserts the toolchain executes, the
+# 5) the preflight (its exit status is ours). This repository has no `make check-env`: the gate is
+#    tools/fleet_check.sh in the build image. A `make check-env` would assert the toolchain executes, the
 #    assembler version is the pinned one and the dump's hash matches.
 if grep -q '^check-env:' Makefile 2>/dev/null; then
     say "make check-env"
     make --no-print-directory check-env
 else
-    say "make check-env not present yet — TODO(phase-3); bootstrap ends here"
+    say "no make check-env here: the gate is tools/fleet_check.sh in the build image (tools/docker/dc.sh); bootstrap ends here"
 fi

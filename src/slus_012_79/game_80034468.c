@@ -1,6 +1,6 @@
 #include "dc2.h"
 
-typedef struct { short x, z; } Pt0x80034468;
+/* Pt0x80034468: dc2.h (T8 w35) */
 typedef struct {
     unsigned char pad0;
     unsigned char n;

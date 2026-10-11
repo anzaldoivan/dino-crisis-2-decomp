@@ -112,7 +112,27 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B674);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B938);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006BAC8);
+void func_8006BBA8(unsigned char n, short x, short y);
+
+void func_8006BAC8(unsigned int n, short x, short y)
+{
+    unsigned int d;
+    int px;
+
+    d = n % 10;
+    n -= d;
+    func_8006BBA8(d, x, y);
+    if (n != 0) {
+        px = x << 16;
+        do {
+            n /= 10;
+            px -= 8 << 16;
+            d = n % 10;
+            n -= d;
+            func_8006BBA8(d, px >> 16, y);
+        } while (n != 0);
+    }
+}
 
 typedef struct Poly0x8006bba8 {
     unsigned int tag;

@@ -60,7 +60,29 @@ int func_80060EAC(void)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_80060EB4);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_80060EF0);
+typedef struct State0x80060ef0 {
+    int x0;
+    unsigned char x4;
+    unsigned char x5;
+} State0x80060ef0;
+typedef struct Obj0x80060ef0 {
+    int x0;
+    char pad4[0x84];
+    int x88;
+} Obj0x80060ef0;
+extern State0x80060ef0 D_800B49D0;
+
+int func_80060EF0(Obj0x80060ef0 *obj)
+{
+    State0x80060ef0 *s = &D_800B49D0;
+
+    if (s->x5 != 0xFF) {
+        obj->x88 = s->x5;
+        obj->x0 += 2;
+        return 0;
+    }
+    return 1;
+}
 
 typedef struct {
     int pc;
@@ -250,7 +272,42 @@ int func_800615EC(Obj0x800615ec *o)
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_80061680);
+typedef struct Shot0x80061680 {
+    char pad0[0x4E];
+    signed char x4E;
+    signed char x4F;
+    int x50;
+    char pad54[0x70 - 0x54];
+} Shot0x80061680;
+typedef struct Obj0x80061680 {
+    int x0;
+    char pad4[0x84 - 0x4];
+    int *x84;
+} Obj0x80061680;
+extern unsigned int D_800AF150;
+extern void func_8002BB68();
+extern void func_8002BC7C();
+extern void func_80047958(void *);
+
+int func_80061680(Obj0x80061680 *obj)
+{
+    int *p = obj->x84;
+    unsigned int i;
+
+    if (*p != -1) {
+        func_8002BB68(*(unsigned char *)p);
+    } else {
+        func_8002BC7C(0);
+        for (i = 0; i < D_800AF150; i++) {
+            Shot0x80061680 *s = (Shot0x80061680 *)WORK->x4DC + i;
+            if ((s->x50 & 1) && s->x4E == 3 && s->x4F >= 3 && s->x4F != 0x10) {
+                func_80047958(s);
+            }
+        }
+    }
+    obj->x0 += 2;
+    return 0;
+}
 
 typedef struct {
     int x0;
@@ -668,9 +725,77 @@ int func_80061FD4(Ctx0x80061fd4 *ctx)
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_800620FC);
+typedef struct {
+    int x0;
+    int x4;
+    int x8;
+    int xC;
+    int x10;
+    int x14;
+    int x18;
+    int x1C;
+    int x20;
+    int x24;
+    int x28;
+} Args0x800620fc;
+typedef struct {
+    int pc;
+    char pad4[0x84 - 0x4];
+    Args0x800620fc *x84;
+} Ctx0x800620fc;
+typedef struct {
+    unsigned char b0;
+    unsigned char b1;
+    unsigned char b2;
+    char pad3;
+    short h4;
+    short h6;
+    short h8;
+    short hA;
+    short hC;
+    short hE;
+    short h10;
+    short h12;
+    char pad14[0x28 - 0x14];
+} Ent0x800620fc;
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_80062210);
+int func_800620FC(Ctx0x800620fc *ctx)
+{
+    Ent0x800620fc *e = (Ent0x800620fc *)WORK->x5FC + ctx->x84->x28;
+
+    e->b1 = 7;
+    e->b0 = ctx->x84->x24 | 1;
+    e->b2 = ctx->x84->x20;
+    e->h4 = ctx->x84->x1C;
+    e->h6 = ctx->x84->x18;
+    e->h8 = ctx->x84->x14;
+    e->hA = ctx->x84->x10;
+    e->hC = ctx->x84->xC;
+    e->hE = ctx->x84->x8;
+    e->h10 = ctx->x84->x4;
+    e->h12 = ctx->x84->x0;
+    ctx->pc += 2;
+    return 0;
+}
+
+int func_80062210(Ctx0x800620fc *ctx)
+{
+    Ent0x800620fc *e = (Ent0x800620fc *)WORK->x5FC + ctx->x84->x28;
+
+    e->b1 = 8;
+    e->b0 = ctx->x84->x24 | 1;
+    e->b2 = ctx->x84->x20;
+    e->h4 = ctx->x84->x1C;
+    e->h6 = ctx->x84->x18;
+    e->h8 = ctx->x84->x14;
+    e->hA = ctx->x84->x10;
+    e->hC = ctx->x84->xC;
+    e->hE = ctx->x84->x8;
+    e->h10 = ctx->x84->x4;
+    e->h12 = ctx->x84->x0;
+    ctx->pc += 2;
+    return 0;
+}
 
 typedef struct {
     int x0;
@@ -819,7 +944,42 @@ int func_80062474(Ctx0x80062474 *ctx)
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_8006266C);
+typedef struct {
+    unsigned char b0;
+    unsigned char b1;
+    unsigned char b2;
+    char pad3;
+    short h4;
+    short h6;
+    short h8;
+    short hA;
+    short hC;
+    short hE;
+    short h10;
+    short h12;
+    unsigned char b14;
+    char pad15[0x28 - 0x15];
+} Ent0x8006266c;
+
+int func_8006266C(Ctx0x80061fd4 *ctx)
+{
+    Ent0x8006266c *e = (Ent0x8006266c *)WORK->x5FC + ctx->x84->x2C;
+
+    e->b1 = 11;
+    e->b0 = ctx->x84->x28 | 1;
+    e->b2 = ctx->x84->x24;
+    e->h4 = ctx->x84->x20;
+    e->h6 = ctx->x84->x1C;
+    e->h8 = ctx->x84->x18;
+    e->hA = ctx->x84->x14;
+    e->hC = ctx->x84->x10;
+    e->hE = ctx->x84->xC;
+    e->h10 = ctx->x84->x8;
+    e->h12 = ctx->x84->x4;
+    e->b14 = ctx->x84->x0;
+    ctx->pc += 2;
+    return 0;
+}
 
 extern void (*D_8008A3B0[])(Elem28 *);
 
@@ -837,7 +997,64 @@ int func_80062794(Ctx *ctx)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_80062820);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_800629BC);
+typedef struct Vec0x800629bc {
+    short x0;
+    short x2;
+    short x4;
+    short x6;
+    short x8;
+    short xA;
+} Vec0x800629bc;
+typedef struct Ent0x800629bc {
+    unsigned char x0;
+    unsigned char x1;
+    char pad2[0xC - 0x2];
+    Vec0x800629bc xC;
+    char pad18[0x34 - 0x18];
+} Ent0x800629bc;
+typedef struct Src0x800629bc {
+    unsigned short x0;
+    short pad2;
+    unsigned short x4;
+    short pad6;
+    unsigned short x8;
+    short padA;
+    unsigned short xC;
+    short padE;
+    unsigned short x10;
+    short pad12;
+    unsigned short x14;
+    short pad16;
+    unsigned char x18;
+    char pad19[3];
+    int x1C;
+} Src0x800629bc;
+typedef struct Obj0x800629bc {
+    int x0;
+    char pad4[0x84 - 4];
+    Src0x800629bc *x84;
+} Obj0x800629bc;
+extern void func_80018020(void *, int);
+
+int func_800629BC(Obj0x800629bc *obj)
+{
+    Ent0x800629bc *s;
+    Vec0x800629bc *v;
+
+    s = &((Ent0x800629bc *)WORK->x4E8)[obj->x84->x1C + 1];
+    func_80018020(s, 0xD);
+    s->x0 = 1;
+    s->x1 = obj->x84->x18;
+    s->xC.x0 = obj->x84->x14;
+    v = &s->xC;
+    v->x2 = obj->x84->x10;
+    v->x4 = obj->x84->xC;
+    v->x6 = obj->x84->x8;
+    v->x8 = obj->x84->x4;
+    v->xA = obj->x84->x0;
+    obj->x0 += 2;
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_80062AC0);
 
@@ -961,7 +1178,33 @@ int func_8006321C(int *pc)
     return ret;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006059C", func_8006325C);
+typedef struct {
+    int pc;
+    char pad04[0x80];
+    unsigned char **arg;
+} ScriptCtx0x8006325c;
+
+int func_8006325C(ScriptCtx0x8006325c *ctx)
+{
+    unsigned char *p;
+    int idx;
+
+    p = ctx->arg[0];
+    idx = func_80035A88(WORK->xC2D, WORK->xC2C);
+    if (WORK->x608 != (int)ctx->arg[0]) {
+        WORK->x608 = (int)ctx->arg[0];
+        if (p[7] != WORK->xEC8[idx]) {
+            WORK->xEC8[idx] = p[7];
+            WORK->xE6C[idx] = 0;
+        }
+        func_80018020(WORK->x620, 0x12);
+        WORK->x629 = 0xFF;
+        WORK->x671 = 0xFF;
+        func_80041DC0(p[1], p[4]);
+    }
+    ctx->pc += 2;
+    return 0;
+}
 
 extern void func_80037068(int);
 extern void func_80034C48(int, int, int);

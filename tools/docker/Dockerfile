@@ -32,6 +32,14 @@ RUN python3 -m venv /opt/permuter \
     && git -C /opt/permuter/decomp-permuter checkout -q "$PERMUTER_SHA" \
     && test "$(git -C /opt/permuter/decomp-permuter rev-parse HEAD)" = "$PERMUTER_SHA" \
     && /opt/permuter/bin/pip install --no-cache-dir toml==0.10.2 Levenshtein==0.27.5 rapidfuzz==3.14.6
+# Decompile scaffold m2c (matt-kempster), pinned by commit (= mmx6's pin); its one runtime dep (graphviz, pycparser is
+# vendored) at its poetry.lock version, in its own venv. Run: /opt/m2c-venv/bin/python /opt/m2c/m2c.py (T19.c1).
+ARG M2C_SHA=708d2d2cb2698f091a92492b328f73b24209f72d
+RUN python3 -m venv /opt/m2c-venv \
+    && git clone https://github.com/matt-kempster/m2c.git /opt/m2c \
+    && git -C /opt/m2c checkout -q "$M2C_SHA" \
+    && test "$(git -C /opt/m2c rev-parse HEAD)" = "$M2C_SHA" \
+    && /opt/m2c-venv/bin/pip install --no-cache-dir graphviz==0.20.3
 # Candidate compilers (phase 1.4 T1): old-gcc psx builds, esa PsyQ CC1PSX.EXE, maspsx, wibo → /opt/cc/<name>/.
 # sha256-pinned in config/toolchains.tsv (named build context `cfg`, see dc.sh build). Pin: toolchains.tsv col 7 (psyq4.6 a2.86/G0/O2).
 COPY --from=cfg toolchains.tsv /usr/local/share/toolchains.tsv

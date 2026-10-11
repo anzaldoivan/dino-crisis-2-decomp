@@ -240,7 +240,26 @@ int func_80064998(void) {
     return D_800B4F74;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800644CC", func_800649A8);
+extern unsigned short D_800B4F70;
+
+void func_800649A8(int arg0, int arg1, int arg2) {
+    Work *w = WORK;
+    short y = arg1;
+    int mode = w->xC50 >> 8;
+
+    D_800B4F68[0] = arg0;
+    D_800B4F68[1] = y;
+    D_800B4F68[2] = arg2;
+    if (*(unsigned char *)&w->xC50 == 11) {
+        D_800B4F70 = 0x30;
+        D_800B4F68[1] = y + 700;
+    } else if (mode == 1 || mode == 7) {
+        D_800B4F70 = 0x10;
+    } else if (mode == 2 || mode == 8) {
+        D_800B4F70 = 0x20;
+    }
+    func_80034C48(2, 10, 1);
+}
 
 extern void func_80065EC8(void);
 extern void func_80018020(void *, int);
@@ -258,7 +277,28 @@ void func_80064A60(void)
     func_80034C48(2, 0x1F, 0);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800644CC", func_80064AB4);
+typedef struct Ent0x80064ab4 {
+    unsigned char flags;
+    unsigned char kind;
+    unsigned char pad2[0xE];
+} Ent0x80064ab4;
+extern Ent0x80064ab4 D_800B4F78[32];
+extern void (*D_8008A560[])(Ent0x80064ab4 *);
+extern void (*D_8008A57C[])(void);
+
+void func_80064AB4(void)
+{
+    Ent0x80064ab4 *e;
+
+    for (e = D_800B4F78; e < &D_800B4F78[32]; e++) {
+        if (e->flags & 1) {
+            D_8008A560[e->kind](e);
+        }
+    }
+    if (D_800B53A8.pad0[0] & 1) {
+        D_8008A57C[D_800B53A8.unk2]();
+    }
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800644CC", func_80064B88);
 
@@ -475,7 +515,55 @@ void func_80066074(Obj8006600C_s8006600C *obj)
 #include "../shared/func_8006600C.inc.c"
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800644CC", func_800660B0);
+typedef struct ElA0x800660b0 {
+    char pad0[0x1A];
+    unsigned short f1A;
+    char pad1C[0x28 - 0x1C];
+} ElA0x800660b0;
+typedef struct ElB0x800660b0 {
+    char pad0[0x22];
+    unsigned short f22;
+    char pad24[0x34 - 0x24];
+} ElB0x800660b0;
+typedef struct Hdr0x800660b0 {
+    ElA0x800660b0 *a;
+    ElB0x800660b0 *b;
+    unsigned short na;
+    unsigned short nb;
+} Hdr0x800660b0;
+typedef struct Obj0x800660b0 {
+    char pad0[0x46];
+    unsigned char f46;
+    signed char f47;
+    char pad48[0x4F - 0x48];
+    signed char f4F;
+    char pad50[0x68 - 0x50];
+    Hdr0x800660b0 *hdr;
+} Obj0x800660b0;
+extern void func_800661FC(void *arg0, int arg1);
+
+void func_800660B0(Obj0x800660b0 *obj)
+{
+    Hdr0x800660b0 *h = obj->hdr;
+    ElA0x800660b0 *a = h->a;
+    ElB0x800660b0 *b = h->b;
+    unsigned int i;
+
+    for (i = 0; i < h->na; i++) {
+        a->f1A += obj->f47;
+        a++;
+    }
+    for (i = 0; i < h->nb; i++) {
+        b->f22 += obj->f47;
+        b++;
+    }
+    if (obj->f4F == 0) {
+        obj->f4F = 8;
+    }
+    obj->f4F++;
+    func_800661FC(obj, 0);
+    obj->f46 = 1;
+}
 
 #define SHARED_F0 func_800661FC
 void func_80066190(unsigned char *arg0)

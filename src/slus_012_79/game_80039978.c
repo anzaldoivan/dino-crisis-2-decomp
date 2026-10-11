@@ -327,9 +327,51 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003C498);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003C688);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003C8D8);
+extern Work D_800AE080;
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003C9D0);
+void func_8003C8D8(Unit *self) {
+    Unit *u = WORK->units;
+    unsigned int i;
+
+    self->flags = 1;
+    for (i = 1; i < D_800AF11C; i++) {
+        u++;
+        if ((u->flags & 1) && u->x1C0) {
+            u->x1C0 = 0;
+            u->x1C2 += 4;
+            u->x54 = (u->x1C2 << 8) | 2;
+            if (u == D_800AE080.units + 1) {
+                func_80034C48(7, 0x1C, 1);
+            } else {
+                func_80034C48(7, 0x1D, 1);
+            }
+        }
+    }
+}
+
+extern int func_80034CD8(int, int);
+
+unsigned short func_8003C9D0(unsigned short arg0) {
+    if ((signed char)WORK->padc2a[0] == 2) {
+        if (func_80034CD8(2, 0x26)) {
+            arg0 = arg0 * 2;
+        } else if (func_80034CD8(2, 0x27)) {
+            arg0 = (arg0 * 5) / 2;
+        } else {
+            arg0 = arg0 * 3;
+        }
+    }
+    if ((signed char)WORK->padc2a[0] == 0) {
+        arg0 = (arg0 * 2) / 3;
+    }
+    if (func_80034CD8(9, 0x33)) {
+        arg0 >>= 1;
+    }
+    if (WORK->x4C7 == 1 && (WORK->xC2B >= 7 || WORK->xC2B == 4)) {
+        arg0 >>= 1;
+    }
+    return arg0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003CADC);
 
@@ -341,7 +383,23 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003D1E0);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003D22C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003D29C);
+extern u16 D_800AF132;
+
+s32 func_8003D29C(void) {
+    s32 var_a1;
+    u16 var_v1;
+    u32 var_a0;
+
+    var_v1 = D_800AF132;
+    var_a0 = 0;
+    var_a1 = 0;
+    do {
+        var_a1 += var_v1 & 1;
+        var_a0 += 1;
+        var_v1 = (u16) (var_v1 >> 1);
+    } while (var_a0 < 0x10U);
+    return var_a1 * 0xA;
+}
 
 
 extern Elem28 D_800B4A68[];

@@ -8,11 +8,11 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 
 ### expand-cse
 
-- addu operand order in a scaled-index address: index,base vs base,index (same insns) -> C0050 — Scaled index: x*4 / p[i] puts the index first in the addu (expand MULT-first swap); i<<2 keeps base first
+- addu operand order in a scaled-index address: index,base vs base,index (same insns) -> C0050 — Scaled index: x*4 / p[i] puts the index first in the addu (expand MULT-first swap), but i<<2 keeps base first
 
 ### loop
 
-- count-down to -1 against a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez) -> C0049 — Counted for vs while (n--): check_dbra_loop reverses a counting-only for to 0; n-- tests vs a hoisted -1
+- count-down to -1 against a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez) -> C0049 — Counted for vs while (n--): check_dbra_loop reverses a counting-only for to 0, but n-- tests vs a hoisted -1
 
 ### combine
 
@@ -20,11 +20,11 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 
 ### regalloc
 
-- a late temp lands in $v0 where the game has $v1 (or the reverse), same insns, after the last call -> C0046 — A late temp's v0/v1 choice follows local vs global ownership; reuse a user var to move it
+- a late temp lands in $v0 where the game has $v1 (or the reverse), same insns, after the last call -> C0046 — A late temp's v0/v1 choice follows local vs global ownership, and a reused user var moves it
 
 ### sched-reorg
 
-- if/else arms in swapped order (early-return arm at fallthrough vs at the branch target; same insns, branch polarity flipped) -> C0047 — If/else arm order: jump.c swaps an early-return then-arm last; invert the test to lay it
+- if/else arms in swapped order (early-return arm at fallthrough vs at the branch target; same insns, branch polarity flipped) -> C0047 — If/else arm order: jump.c swaps an early-return then-arm last. Invert the test to lay it
 - narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered) -> C0048 — Param def sinks to its use in sched1 (birthing boost): give the pseudo a 2nd SET (++n) to keep it on top
 
 ## Inherited tells (C0002)

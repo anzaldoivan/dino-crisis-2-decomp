@@ -1,19 +1,21 @@
 # config/psxdecomp.toml — adopted by /psxdecomp:upgrade (the repository predates psxdecomp).
 
 [psxdecomp]
-version = "0.4.0"
+version = "0.6.0"
 profile = "psx"
 bootstrapped = "adopted 2026-10-04"
 
 [pa3]
 version = "3.14.2"
+tag = "v3.14.2"
+sha = "0ccf0dfaf95e36435ec1b7e58f3be3f863acb19b"
 
 [refs]
 file = "config/refs.toml"
 index = "docs/ops/refs.md"
 
 [deviations]
-list = ["adopted: not bootstrapped by psxdecomp; pins recorded as found"]
+list = ["adopted: not bootstrapped by psxdecomp; pins recorded as found", "rule ids: the project rules G68 to G73 are in the range the kit keeps for itself (G68 to G100); kept by the developer's decision of 2026-10-12, no id collides today"]
 
 [public]
 repo = "anzaldoivan/dino-crisis-2-decomp"
@@ -25,3 +27,44 @@ image = "ghcr.io/anzaldoivan/dino-crisis-2-decomp-toolchain@sha256:076b21e6df2c7
 land_check = ["bash", "tools/docker/land_check.sh", "{tree}"]
 deny = ["config/waves.tsv", "config/journal.tsv", "config/routing.tsv", "config/usage.tsv"]   # agent ledgers
 keyed = {"config/c_units.tsv" = 2}   # carve rows: alias, start
+
+# [own]: what this repository holds itself in place of a psxdecomp delivery. psxdecomp writes nothing for a key
+# set here; /psxdecomp:doctor checks that its path exists.
+[own]
+gate = "bash tools/fleet_check.sh"
+toolchain = "config/toolchains.tsv"
+
+# [kit]: psxdecomp's kit pin of 2026-09-30 (compat.toml). The kit's install record here names no commit.
+[kit]
+digest = "sha256:581f5ec0553b8c9119fca08ebb3b863caeb3bb2c1e5039402aa67f403ce6e748"
+repo = "https://github.com/anzaldoivan/BFM-decomp.git"
+sha = "898aeb324d557ae3c5c672ef08bdbbc3db080962"
+
+# [psyq]: the PsyQ release the game links, from psxdecomp's psyq.toml (seen 2026-10-01). A lead for phase 1.4;
+# the pin is phase 1.4's finding and lives in the repo's compiler-pin record.
+[psyq]
+stamp = "470"
+version = "4.7"
+ships_compiler = "no"
+cc1_banner = ""
+aspsx = ""
+old_gcc = ""
+confidence = "measured"
+status = "lead — never the pin"
+
+# [host]: the host recipe of the machine that builds (docs/ops/docker-host.md).
+[host]
+recipe = "macos-arm64"
+
+# [delivered]: the sha256 of each owned file as psxdecomp last wrote it. A copy edited here since then is
+# never overwritten unasked (`upgrade apply --take <action>`).
+[delivered]
+"tools/psxd_publish.py" = "c0ad003bfbc260bdf884fcaadf54a2cca29c50ab56c77f56aead722cc69500c8"
+".github/workflows/psxdecomp-readme.yml" = "eab2b6057b4312894af79521964e7849530e6c774bcc52568a88cf56d2cfe0bd"
+"tools/psxd_floor.py" = "b6259b13d8b835a9c89d8e168cdd40b2b4919eae820ebdf26af36d0fc36fb5b6"
+"docs/ops/psxdecomp-floor.md" = "50bc503b0fdd331f8da79baeca9b743bee1a0c01095336ab40e2948da4f0037a"
+"docs/ops/psxdecomp-campaign.md" = "ef1994de8d855b9d3a2ae7119cb5bda78adda1e33410452905fc593df084301e"
+"docs/ops/psxdecomp-split.md" = "5b50214fdd44e691a0a5e7d4fa94eaec9d4b0fde67e414f057e9a860a5802fc9"
+"rules/STE1.md" = "3737fb8d58ec7aeca2f7278d5c8839f23797b558aac9e49fa9e455617d1666cc"
+"rules/FIN1.md" = "2d84dfc79e8569a4b22946384f0634981ca66f0033d2eb5721a8a06803afc851"
+"rules/NAME1.md" = "d25360eae69ff42edf5963edffa9dada9e98116bc9151ebd12551d08a4edceeb"
