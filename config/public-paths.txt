@@ -11,11 +11,13 @@ README.md
 SECURITY.md
 THIRD_PARTY.md
 .github/
+config/asm-evidence.tsv
 config/boundaries.tsv
 config/c_units.tsv
 config/categories.tsv
 config/check.*.sha
 config/compiler_source.tsv
+config/debt-baseline.txt
 config/decomp-hooks.snippet.json
 config/discs.tsv
 config/families.tsv
@@ -29,6 +31,7 @@ config/loadmap.evidence.tsv
 config/loadmap.tsv
 config/mcp.json.template
 config/medium.sha1
+config/names.tsv
 config/oracle_exceptions.tsv
 config/probes.tsv
 config/psxdecomp.toml
@@ -36,6 +39,7 @@ config/public-paths.txt
 config/refs.toml
 config/scanners.tsv
 config/splat/
+config/style-ratchet.txt
 config/toolchains.tsv
 cookbook/
 docs/codegen-map.md
@@ -85,6 +89,7 @@ tools/probe.py
 tools/probes/
 tools/progress.py
 tools/propagate.py
+tools/psxd_floor.py
 tools/psxd_publish.py
 tools/reconcile.py
 tools/splat_gen.py

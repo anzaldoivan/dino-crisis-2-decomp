@@ -21,9 +21,79 @@ void func_80037824(int a0, int a1)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_8003784C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_800379C0);
+typedef struct Obj0x800379c0 {
+    char pad0[0x4C];
+    unsigned short x4C;
+} Obj0x800379c0;
+typedef struct Rec0x800379c0 {
+    char pad0[0x8];
+    unsigned int x8;
+} Rec0x800379c0;
+extern Obj0x800379c0 D_800B24A0;
+extern int func_800723A4(int *, Rec0x800379c0 **);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037AA0);
+int func_800379C0(unsigned int arg0)
+{
+    int a;
+    Rec0x800379c0 *b;
+
+    if (++D_800B24A0.x4C >= 150) {
+        WORK->x4BA = 2;
+    }
+    if (func_800723A4(&a, &b) != 0) {
+        return 0;
+    }
+    D_800B24A0.x4C = 0;
+    if (arg0 < b->x8) {
+        WORK->x4BA = 2;
+    }
+    if (b->x8 < WORK->x4BC) {
+        WORK->x4BA = 2;
+    }
+    WORK->x4BC = b->x8;
+    return a;
+}
+
+typedef struct Obj0x80037aa0 {
+    int x0;
+    int x4[2];
+    int xC;
+    int x10[2];
+    int x18;
+    int x1C;
+    int x20;
+    int x24;
+    int x28;
+    int x2C;
+    int x30;
+    int x34;
+    int x38;
+} Obj0x80037aa0;
+extern int func_800379C0();
+extern void func_800722B4();
+extern void func_800856BC();
+extern void func_80085738();
+extern void func_80085C24();
+
+void func_80037AA0(Obj0x80037aa0 *p)
+{
+    int r;
+
+    if (p->x38 != 0) {
+        func_800856BC(p->x4[p->xC], p->x30);
+        func_80085738(p->x10[p->x18], p->x28 * p->x20);
+        p->x34 = 1;
+        p->xC ^= 1;
+    }
+    r = func_800379C0(p->x2C);
+    if (r == 0) {
+        p->x38 = 0;
+        return;
+    }
+    p->x38 = 1;
+    func_80085C24(r, p->x4[p->xC]);
+    func_800722B4(r);
+}
 
 typedef struct Obj0x80037b7c {
     char pad0[0x34];
@@ -149,7 +219,22 @@ void func_80037E18(Unit *self)
     self->side = cnt[0] >= cnt[1];
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037ED8);
+void func_80037ED8(void)
+{
+    unsigned int cnt[2];
+    Unit *u;
+
+    u = WORK->units;
+    cnt[1] = 0;
+    cnt[0] = 0;
+    cnt[u->side]++;
+    for (u = WORK->units + 1; u < WORK->units + D_800AF11C; u++) {
+        if (u->flags & 1) {
+            u->side = cnt[0] > cnt[1];
+            cnt[u->side]++;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80037FD4);
 

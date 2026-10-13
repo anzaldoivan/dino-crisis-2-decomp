@@ -38,11 +38,45 @@ void func_8005978C(Obj0x8005978c *obj)
     D_8008A1D0[obj->state](obj);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80059250", func_800597C8);
+typedef struct Obj0x800597c8 {
+    unsigned char pad0[0x2];
+    unsigned char x2;
+    unsigned char x3;
+    unsigned char pad4[0x28 - 0x4];
+    unsigned char x28;
+    unsigned char pad29[0x2B - 0x29];
+    unsigned char x2B;
+} Obj0x800597c8;
+extern void func_80034C48(int, int, int);
+extern int func_80034CD8(int, int);
+extern void func_80037068(int);
+extern void func_800371A0(void);
 
-typedef struct Blk0x800598e0 {
-    int w[0x460 / 4];
-} Blk0x800598e0;
+void func_800597C8(Obj0x800597c8 *obj)
+{
+    switch (WORK->x310) {
+    case 0:
+        func_80034C48(3, 0, 0);
+        WORK->x310++;
+        func_80037068(obj->x3 + 1);
+        break;
+    case 1:
+        func_800371A0();
+        if (func_80034CD8(2, 0x17) == 0) {
+            WORK->x310++;
+        }
+        break;
+    case 2:
+        obj->x2 = 0;
+        obj->x2B = 0;
+        WORK->x30E = 0;
+        WORK->x310 = 0;
+        obj->x28 ^= 1;
+        break;
+    }
+}
+
+/* Blk0x800598e0: dc2.h (T8 w36) */
 typedef struct Q0x800598e0 {
     int v[4];
 } Q0x800598e0;
@@ -318,7 +352,24 @@ void func_8005AD28(void)
                   D_800AD06C + (D_800ABA96 << 12) - 0xFFC);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80059250", func_8005AE5C);
+typedef struct Ent0x8005ae5c {
+    unsigned char x0;
+    char pad1[0x4 - 0x1];
+    void (*x4)(struct Ent0x8005ae5c *);
+    char pad8[0x34 - 0x8];
+} Ent0x8005ae5c;
+extern int D_800AF5B8;
+
+void func_8005AE5C(void)
+{
+    Ent0x8005ae5c *p;
+
+    for (p = (Ent0x8005ae5c *)WORK->x4E8; p < &((Ent0x8005ae5c *)WORK->x4E8)[D_800AF5B8]; p++) {
+        if ((p->x0 & 1) && p->x4 != 0) {
+            p->x4(p);
+        }
+    }
+}
 
 typedef struct Tile0x8005af1c {
     unsigned int tag;

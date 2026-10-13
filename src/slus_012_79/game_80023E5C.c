@@ -276,7 +276,35 @@ void func_800247D8(Obj_800247D8 *p)
     func_8002485C(p);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_8002485C);
+extern void *func_80081CA4();
+extern void func_80024E50();
+
+void func_8002485C(Obj_800247D8 *p)
+{
+    Sub_800247D8 *s;
+    int buf[2];
+    int *b;
+
+    s = &p->sub;
+    if ((s->pad0[0xC] & 2) || (s->pad0[0xC] & 1)) {
+        s->pad11 = s->pad11 + s->g;
+        if ((unsigned char)(s->pad11 + 50) > 100) {
+            s->g = s->g * -1;
+        }
+    }
+    if (!(s->pad0[0xC] & 4)) {
+        s->h -= s->pad0[7];
+        if (s->h < 0) {
+            s->h += 0x2580;
+        }
+    }
+    b = buf;
+    if (s->pad0[0xC] & 8) {
+        s->f = (s->f + 1) & 0x3F;
+    }
+    func_80081CA4(b, 0, 8);
+    func_80024E50(b);
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_80024944);
 
@@ -284,9 +312,110 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_80024E50);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_800250E0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_800252D0);
+typedef struct Sub0x800252d0 {
+    char pad0[0x10];
+    unsigned char x10;
+    char pad11;
+    unsigned char x12;
+    char pad13[2];
+    unsigned char x15;
+} Sub0x800252d0;
+typedef struct Obj0x800252d0 {
+    char pad0[3];
+    signed char x3;
+    char pad4[0xC - 4];
+    Sub0x800252d0 sub;
+} Obj0x800252d0;
+extern void func_8002628C();
+extern void func_800254B8();
+extern void (*D_80087CD0[])(Obj0x800252d0 *);
+extern unsigned char D_80087CCC;
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_800253C0);
+void func_800252D0(Obj0x800252d0 *arg0)
+{
+    Work *w = WORK;
+    Sub0x800252d0 *s;
+    unsigned char *u;
+    int flag;
+
+    u = (unsigned char *)w->units;
+    s = &arg0->sub;
+    if ((w->xC50 & 0xF) != 5) {
+        arg0->x3 = 2;
+    }
+    flag = 0;
+    if (s->x15 && (u[0x55] == 6 || (u[0x55] == 5 && (unsigned int)(u[0x56] - 5) < 2))) {
+        flag = 1;
+    }
+    if (!flag) {
+        s->x10 = 0;
+        s->x12 = 0;
+        s->x15 = 0;
+        D_80087CCC = 1;
+    }
+    D_80087CD0[arg0->x3](arg0);
+    if (flag) {
+        func_8002628C(arg0);
+        func_800254B8(arg0);
+    }
+}
+
+typedef struct {
+    void *x0;
+    char *x4;
+} Sub0x800253c0;
+typedef struct {
+    unsigned char pad0[3];
+    unsigned char x3;
+    void (*x4)();
+    unsigned char pad8[4];
+    Sub0x800253c0 sub;
+} Obj0x800253c0;
+typedef struct {
+    short m[9];
+    char pad12[0x48 - 0x12];
+} Mat0x800253c0;
+typedef struct {
+    unsigned char x0;
+    unsigned char x1;
+    unsigned char x2;
+    unsigned char x3;
+    char pad4[0xA - 4];
+    short xA;
+    char padC[2];
+    short xE;
+} Cam0x800253c0;
+extern Mat0x800253c0 D_800AF668[];
+extern void func_80025B44();
+
+void func_800253C0(Obj0x800253c0 *arg0)
+{
+    Sub0x800253c0 *s = &arg0->sub;
+    Mat0x800253c0 *p;
+    Cam0x800253c0 *c;
+
+    s->x0 = D_80182398;
+    func_80018020(D_800AF668, 1);
+    s->x4 = func_800474B4(WORK->units->id, 3);
+    arg0->x4 = func_80025B44;
+    arg0->x3++;
+    for (p = D_800AF668; p < &D_800AF668[32]; p++) {
+        p->m[8] = 0x1000;
+        p->m[4] = 0x1000;
+        p->m[0] = 0x1000;
+        p->m[7] = 0;
+        p->m[6] = 0;
+        p->m[5] = 0;
+        p->m[3] = 0;
+        p->m[2] = 0;
+        p->m[1] = 0;
+    }
+    c = (Cam0x800253c0 *)WORK->padC;
+    c->xE = 0x1000;
+    c->xA = 0x7D0;
+    c->x1 = 0;
+    c->x2 = 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_800254B8);
 

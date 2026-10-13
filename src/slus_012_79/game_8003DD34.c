@@ -16,7 +16,30 @@ extern int D_800AF11C;
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003DD34);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003DD90);
+extern int func_8004A0F8(void *a, void *b);
+extern int func_80078844(int);
+extern int func_80078914(int);
+extern int func_80078E14(int);
+extern int func_8007AC34(int, int);
+
+unsigned int func_8003DD90(SVECTOR *a, SVECTOR *b, short dist, SVECTOR *out)
+{
+    unsigned int d;
+    short ang;
+
+    d = func_80078E14(func_8004A0F8(b, a));
+    if ((unsigned int)dist < d) {
+        ang = func_8007AC34(b->vx - a->vx, b->vz - a->vz);
+        out->vx = (func_80078844(ang) * dist) >> 12;
+        out->vy = 0;
+        out->vz = (func_80078914(ang) * dist) >> 12;
+        return d;
+    }
+    out->vx = b->vx - a->vx;
+    out->vy = 0;
+    out->vz = b->vz - a->vz;
+    return 0;
+}
 
 unsigned short func_8003DE8C(short a, short b, short c, short d)
 {
@@ -68,7 +91,47 @@ int func_8003DF80(char *obj, void *target, unsigned int dist, unsigned int range
     return 1;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E020);
+typedef struct Obj0x8003e020 {
+    unsigned char pad0[0x54];
+    unsigned char x54;
+    unsigned char x55;
+} Obj0x8003e020;
+typedef struct Glob0x8003e020 {
+    unsigned char pad0[0x3A];
+    unsigned short x3A;
+} Glob0x8003e020;
+extern struct Glob0x8004084c *D_800B25DC;
+#define G0x8003e020 ((Glob0x8003e020 *)D_800B25DC)
+
+void func_8003E020(Obj0x8003e020 *a0)
+{
+    unsigned char v = WORK->xC2B;
+
+    if (v == 4 || v >= 7) {
+        G0x8003e020->x3A = 0x70;
+        return;
+    }
+    if (a0->x54 == 1) {
+        if (a0->x55 == 2) {
+            G0x8003e020->x3A += 2;
+        }
+        if (a0->x55 == 0) {
+            G0x8003e020->x3A -= 1;
+        }
+        if (a0->x55 == 5) {
+            G0x8003e020->x3A -= 2;
+        }
+        if (a0->x55 == 6) {
+            G0x8003e020->x3A = 0x20;
+        }
+    }
+    if (G0x8003e020->x3A > 0xE0) {
+        G0x8003e020->x3A = 0xE0;
+    }
+    if (G0x8003e020->x3A < 0x20) {
+        G0x8003e020->x3A = 0x20;
+    }
+}
 
 typedef struct Obj0x8003e144 {
     char pad0[0x140];
@@ -178,7 +241,42 @@ void func_8003E238(Obj0x8003e238 *o)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E378);
+typedef struct Obj0x8003e378 {
+    char pad0[0x150];
+    short f150;
+    short f152;
+    short f154;
+    char pad156[0x15D - 0x156];
+    unsigned char idx;
+    unsigned char part;
+    char pad15f[0x161 - 0x15F];
+    unsigned char f161;
+} Obj0x8003e378;
+typedef struct Pt0x8003e378 {
+    char pad0[0x40];
+    short x40;
+    short x42;
+    short x44;
+} Pt0x8003e378;
+extern void func_8003E488();
+
+void func_8003E378(Obj0x8003e378 *o)
+{
+    Pt0x8003e378 *p;
+
+    o->f161 = 0;
+    if (o->part == 0xFF) {
+        o->f150 = WORK->units[o->idx].x40;
+        o->f152 = WORK->units[o->idx].x42;
+        o->f154 = WORK->units[o->idx].x44;
+    } else {
+        p = (Pt0x8003e378 *)func_800474B4(WORK->units[o->idx].id, o->part);
+        o->f150 = p->x40;
+        o->f152 = p->x42;
+        o->f154 = p->x44;
+    }
+    func_8003E488(o);
+}
 
 typedef struct Obj0x8003e488 {
     char pad00[0x64];
@@ -204,14 +302,95 @@ void func_8003E488(Obj0x8003e488 *obj)
     func_8003E4E0(obj);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E4E0);
+typedef struct Obj0x8003e4e0 {
+    char pad0[0x4A];
+    unsigned short f4A;
+    char pad4C[0x64 - 0x4C];
+    int f64;
+    char pad68[0x140 - 0x68];
+    short f140;
+    short f142;
+    char pad144[0x15F - 0x144];
+    unsigned char f15F;
+    char pad160[4];
+    short f164;
+    short f166;
+    unsigned short f168;
+    unsigned short f16A;
+    unsigned short f16C;
+    unsigned short f16E;
+} Obj0x8003e4e0;
+struct Obj0x8003e488;
+char *func_800474B4(int a, int b);
+int func_8003DD34(int, int, unsigned short);
+unsigned short func_8003DE8C(short a, short b, short c, short d);
+
+void func_8003E4E0(struct Obj0x8003e488 *arg)
+{
+    Obj0x8003e4e0 *o = (Obj0x8003e4e0 *)arg;
+    Ent0x8003e238 *e;
+    int v;
+
+    e = (Ent0x8003e238 *)func_800474B4(o->f64, o->f15F);
+    if (o->f16A != 0) {
+        v = ((unsigned short)o->f140 + func_8003DD34(o->f140, o->f164, o->f168)) & 0xFFF;
+        o->f140 = v;
+        if (v & 0x800) {
+            int t = -o->f16A & 0xFFF;
+            if (v < t) {
+                o->f140 = t;
+            }
+        } else if (o->f16A < v) {
+            o->f140 = o->f16A;
+        }
+        e->f48 = o->f140;
+    }
+    if (o->f16E != 0) {
+        v = ((unsigned short)o->f142 + func_8003DE8C(o->f142, o->f166, o->f16C = (o->f16C - o->f4A) & 0xFFF, o->f16E)) & 0xFFF;
+        o->f142 = v;
+        if (v & 0x800) {
+            int t = -o->f16E & 0xFFF;
+            if (v < t) {
+                o->f142 = t;
+            }
+        } else if (o->f16E < v) {
+            o->f142 = o->f16E;
+        }
+        e->f4A = o->f142;
+    }
+}
 
 void func_8003E63C(void)
 {
 #include "../shared/func_8001B530.inc.c"
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E644);
+typedef struct Obj0x8003e644 {
+    unsigned char pad0[0x50];
+    int x50;
+    unsigned char x54;
+    unsigned char x55;
+    unsigned char pad56[0x58 - 0x56];
+    unsigned char x58;
+    unsigned char pad59[0x260 - 0x59];
+} Obj0x8003e644;
+
+int func_8003E644(Obj0x8003e644 *self, int arg1)
+{
+    unsigned int i;
+    Obj0x8003e644 *p;
+
+    p = (Obj0x8003e644 *)WORK->units;
+    for (i = 1; i < D_800AF11C; i++) {
+        p++;
+        if (p == self) continue;
+        if (!(p->x50 & 1)) continue;
+        if (p->x58 != self->x58) continue;
+        if (p->x54 != 1) continue;
+        if (p->x55 == arg1) return 1;
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_8003E6E4);
 
@@ -702,6 +881,7 @@ typedef struct Glob0x8004084c {
     int x6C;
     Obj0x8004084c *x70;
     Obj0x8004084c *x74;
+    unsigned char x78;          /* func_80040F7C (T8 w37): lbu/sb 0x78 */
 } Glob0x8004084c;
 extern Glob0x8004084c *D_800B25DC;
 char *func_800474B4(int a, int b);
@@ -771,7 +951,25 @@ void func_8004084C(Obj0x8004084c *obj, unsigned short mode, short ang)
     cur->x4C = 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80040AB8);
+void func_80040AB8(Obj0x8004084c *obj, unsigned short mode)
+{
+    Obj0x8004084c *base;
+    Obj0x8004084c *cur;
+    short *p;
+
+    base = (Obj0x8004084c *)func_800474B4(obj->x64, 0);
+    cur = (Obj0x8004084c *)func_800474B4(obj->x64, mode);
+    if (mode == 1) {
+        p = D_800B25DC->x60;
+    } else {
+        p = D_800B25DC->x58;
+    }
+    p[0] += func_8003DD34(p[0], 0x60, 0);
+    p[1] += func_8003DD34(p[1], 0x60, 0);
+    cur->x48 = p[0] - base->x48;
+    cur->x4A = p[1] - base->x4A;
+    cur->x4C = 0;
+}
 
 typedef struct Sub0x80040b94 {
     unsigned char f;
@@ -887,7 +1085,29 @@ int func_80040DB8(Seg *a, int *p)
     return 1;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8003DD34", func_80040F7C);
+extern int func_800523EC(int);
+
+int func_80040F7C(void)
+{
+    Shot *p = WORK->x4DC;
+    int v = WORK->xC50 >> 8;
+
+    if (D_800B25DC->x78) {
+        for (; p < WORK->x4DC + 12; p++) {
+            if (p->x4F == 3) {
+                p->x4F = 0x10;
+            }
+        }
+        D_800B25DC->x78 = 0;
+        return 1;
+    }
+    if (v == 3 || v == 4 || v == 6) {
+        if (func_800523EC(1) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 extern int D_800181D4;
 extern void func_8001CDE4(int);

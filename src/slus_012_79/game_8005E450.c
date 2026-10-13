@@ -7,10 +7,7 @@ typedef struct {
     unsigned char x6EA;
 } Work0x8005e450;
 #define WORK0x8005e450 (*SCRATCH(Work0x8005e450 *, 0))
-typedef struct {
-    char pad0[0xC];
-    int xC;
-} Hdr0x8005e450;
+/* Hdr0x8005e450: dc2.h (T8 w35) */
 typedef struct {
     int x0;
     char pad4;

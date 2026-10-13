@@ -1,11 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct {
-    char pad0[0x69];
-    unsigned char x69;
-    char pad6a[0x70 - 0x6A];
-    unsigned short x70;
-} Obj0x8002002c;
 typedef struct {
     char pad0[4];
     int x4;

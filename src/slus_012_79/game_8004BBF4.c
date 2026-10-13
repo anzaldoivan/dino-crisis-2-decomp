@@ -137,7 +137,17 @@ void func_8004BC58(Obj0x8004bc58 *obj)
     func_800514C4(&b, obj->x88 + 50, 50, 2, 0xFFFF);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004BBF4", func_8004BFC8);
+extern const Lbl0x8004f450 D_80019B50;
+
+void func_8004BFC8(unsigned short arg0, unsigned short arg1, unsigned short arg2, unsigned short arg3)
+{
+    Lbl0x8004f450 strs;
+
+    strs = D_80019B50;
+    func_80050D80(D_80184A40, 0x60, 0xC4, 0xD, 0x7C8E, 0x80808080, 3);
+    func_80050D80(D_80184B60, 0xE8, 0xC4, 0xD, 0x7C8E, 0x80808080, 3);
+    func_800506BC(strs.s[arg0], 0x20, 0xC5, 0x64, 0x707070, 0x64, 0);
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004BBF4", func_8004C0B4);
 

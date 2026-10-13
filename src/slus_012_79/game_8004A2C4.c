@@ -47,7 +47,43 @@ int func_8004A2F8(short *a)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A2C4", func_8004A32C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A2C4", func_8004A378);
+int func_8004A378(short *p, short *q)
+{
+    int x0;
+    int dz;
+    int dx1;
+    int px;
+    int dz1;
+    int dx3;
+    int dz3;
+    int z0;
+    int dx2;
+    int dz2;
+
+    x0 = q[0];
+    z0 = q[1];
+    dz = p[2] - z0;
+    dx1 = q[2] - x0;
+    px = p[0] - x0;
+    dz1 = q[3] - z0;
+    dx3 = q[6] - x0;
+    dz3 = q[7] - z0;
+    if (dx1 * dz > dz1 * px || dx3 * dz < dz3 * px) {
+        return 0;
+    }
+    dz2 = q[5] - z0;
+    dx2 = q[4] - x0;
+    dz -= dz2;
+    dx1 -= dx2;
+    px -= dx2;
+    dz1 -= dz2;
+    dx3 -= dx2;
+    dz3 -= dz2;
+    if (dx1 * dz < dz1 * px || dx3 * dz > dz3 * px) {
+        return 0;
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A2C4", func_8004A464);
 

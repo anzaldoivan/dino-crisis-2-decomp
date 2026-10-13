@@ -1,11 +1,6 @@
 #include "common.h"
 #include "dc2.h"
 
-typedef struct {
-    char pad0[0xC];
-    int flags;
-    char pad10[0x18 - 0x10];
-} Ent0x8001c2b0;
 extern unsigned char D_800A79BA[];
 extern int D_800AF11C;
 extern void (*D_80085FA8[])(Ent0x8001c2b0 *);

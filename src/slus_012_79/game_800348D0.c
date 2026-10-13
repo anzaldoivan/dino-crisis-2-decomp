@@ -8,7 +8,7 @@ typedef struct {
     char pad4C[0x5A - 0x4C];
     short x5A;
 } Obj0x800348d0;
-typedef struct { int vx, vy, vz, pad; } Vec0x800348d0;
+/* Vec0x800348d0: VECTOR in dc2.h (T8 w35) */
 extern void func_80049F7C();
 extern int func_800339AC(void *, Seg *, SVECTOR *);
 extern int func_8004A0F8(SVECTOR *a, SVECTOR *b);
@@ -18,7 +18,7 @@ unsigned int func_800348D0(Obj0x800348d0 *obj, short ang, unsigned char flags)
     Seg seg;
     SVECTOR out;
     Seg box;
-    Vec0x800348d0 end;
+    VECTOR end;
     SVECTOR dir;
     unsigned char *p;
     unsigned short *pt;

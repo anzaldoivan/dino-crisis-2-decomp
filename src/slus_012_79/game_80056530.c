@@ -295,7 +295,28 @@ void func_80056C80(Obj0x80056c80 *obj)
     func_8004D028(obj, 0xA0, 0x60);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80056530", func_80056DFC);
+typedef struct Obj0x80056dfc {
+    char pad0;
+    unsigned char x1;
+    unsigned char x2;
+    unsigned char x3;
+} Obj0x80056dfc;
+extern char D_8008A7F8[];
+
+void func_80056DFC(Obj0x80056dfc *p)
+{
+    p->x1 = 0;
+    p->x2 = 0;
+    p->x3 = 0;
+    func_8004C960(p);
+    func_8004DFF4(p, 0x80, 0x18, 2);
+    func_8004F9A4(0x10, 0x58);
+    func_8004F710(0x80, 0x58, 0x808080);
+    func_8004F450(p);
+    func_80050D80(D_80184A40, 0x60, 0xC4, 0xD, 0x7C8E, 0x80808080, 3);
+    func_80050D80(D_80184B60, 0xE8, 0xC4, 0xD, 0x7C8E, 0x80808080, 3);
+    func_800506BC(D_8008A7F8, 0x20, 0xC5, 0x64, 0x707070, 0x64, 0);
+}
 
 typedef struct Obj0x80056f00 {
     char pad0[0x70];
