@@ -93,7 +93,8 @@ class Probe:
         self.dir = scratch / self.name
         self.dir.mkdir(parents=True, exist_ok=True)
         src = ROOT / row["c_path"]
-        run([CROSS + "cpp", "-P", "-undef", "-nostdinc", "-D__GNUC__=2", str(src), "-o", "probe.i"], self.dir)
+        run([CROSS + "cpp", "-P", "-undef", "-nostdinc", "-D__GNUC__=2", f"-I{ROOT / 'include'}", str(src), "-o",
+             "probe.i"], self.dir)  # -Iinclude (T10.c10): a draft may #include "gte.h", as Makefile CPPFLAGS
         self.cache = {}
 
     def asm(self, cc, g, o):

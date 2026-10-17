@@ -46,7 +46,7 @@ extern Chan0x80045a20 D_800B2F28[];
 extern Hdr0x80045a20 *D_800B2BA0[];
 extern void func_80018020(void *, int);
 extern int func_80034CD8(int, int);
-extern void func_80045B8C();
+extern void func_80045B8C(unsigned short, short, unsigned short, unsigned short); /* was () (T10 w39 draft) */
 extern int func_80081324(void);
 extern void func_80081334(void);
 

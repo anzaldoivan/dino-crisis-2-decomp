@@ -31,8 +31,13 @@ keyed = {"config/c_units.tsv" = 2}   # carve rows: alias, start
 # [own]: what this repository holds itself in place of a psxdecomp delivery. psxdecomp writes nothing for a key
 # set here; /psxdecomp:doctor checks that its path exists.
 [own]
-gate = "bash tools/fleet_check.sh"
+gate = "bash tools/docker/push_check.sh"  # the fleet check in the build container: the pre-push hook runs it on the host
 toolchain = "config/toolchains.tsv"
+
+# [floor]: the preprocess command of the build (the host's `cc -E` with the flags of the makefile), so the debt
+# count reads the text that the compiler gets.
+[floor]
+cpp = "cc -E -undef -nostdinc -D__GNUC__=2 -Iinclude {file}"
 
 # [kit]: psxdecomp's kit pin of 2026-09-30 (compat.toml). The kit's install record here names no commit.
 [kit]
@@ -59,12 +64,13 @@ recipe = "macos-arm64"
 # [delivered]: the sha256 of each owned file as psxdecomp last wrote it. A copy edited here since then is
 # never overwritten unasked (`upgrade apply --take <action>`).
 [delivered]
-"tools/psxd_publish.py" = "c0ad003bfbc260bdf884fcaadf54a2cca29c50ab56c77f56aead722cc69500c8"
-".github/workflows/psxdecomp-readme.yml" = "eab2b6057b4312894af79521964e7849530e6c774bcc52568a88cf56d2cfe0bd"
-"tools/psxd_floor.py" = "b6259b13d8b835a9c89d8e168cdd40b2b4919eae820ebdf26af36d0fc36fb5b6"
-"docs/ops/psxdecomp-floor.md" = "50bc503b0fdd331f8da79baeca9b743bee1a0c01095336ab40e2948da4f0037a"
-"docs/ops/psxdecomp-campaign.md" = "ef1994de8d855b9d3a2ae7119cb5bda78adda1e33410452905fc593df084301e"
+"tools/psxd_publish.py" = "ffc994a9f00ca10dae1d7c17b9057efbbe915d805d2a7f03975cedde428119bf"
+".github/workflows/psxdecomp-readme.yml" = "e9d3f804fafd86930432b25af7c83f54f21fb81929750f5e84cec680585dfb35"
+"tools/psxd_floor.py" = "875b4815c8b3e21be9e261d554a36296f2d3a622962d1be7702364fef6f5379c"
+"docs/ops/psxdecomp-floor.md" = "bfd5940c243a61edf4995f2bb1ebbf3fcfbf6d666f2ebe158945885fc3d9ba6b"
+"docs/ops/psxdecomp-campaign.md" = "39c3084c3f179230b7ff12bde246c091c3b34d2183cf39c4e880fe9888c6dbb9"
 "docs/ops/psxdecomp-split.md" = "5b50214fdd44e691a0a5e7d4fa94eaec9d4b0fde67e414f057e9a860a5802fc9"
 "rules/STE1.md" = "3737fb8d58ec7aeca2f7278d5c8839f23797b558aac9e49fa9e455617d1666cc"
-"rules/FIN1.md" = "2d84dfc79e8569a4b22946384f0634981ca66f0033d2eb5721a8a06803afc851"
-"rules/NAME1.md" = "d25360eae69ff42edf5963edffa9dada9e98116bc9151ebd12551d08a4edceeb"
+"rules/FIN1.md" = "e753b307315e832737f35b35020492b63425ff67db83ee30d325609afa0dca4f"
+"rules/NAME1.md" = "bba87e0d3bb5599686ba6e8d61f1a9fa28b11c4780e088c8d44f245e2e33df9b"
+"tools/psxd_img.py" = "bdf2bc1b413b99d74af2be75ecb7c18acda84dad7f7cb02eeb206cde8435ff46"

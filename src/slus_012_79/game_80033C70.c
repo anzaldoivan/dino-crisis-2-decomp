@@ -1,10 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct {
-    short x;
-    short y;
-    short z;
-} Vec0x80033c70;
 
 int func_80033C70(Vec0x80033c70 *out, Vec0x80033c70 *a, Vec0x80033c70 *b, int y)
 {

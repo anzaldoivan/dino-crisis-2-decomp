@@ -78,7 +78,53 @@ void func_800418DC(unsigned short id)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80041994);
+/* func_80041994 reads x4 (T17.2 w38), moved above it. */
+typedef struct Snd0x80041dc0 {
+    unsigned short id;
+    char pad2[2];               /* was pad2[6] */
+    unsigned int x4;            /* func_80041994: compared unsigned with Ent.cur */
+} Snd0x80041dc0;
+extern Snd0x80041dc0 D_800187AC[];
+
+typedef struct Ent0x80041994 {
+    unsigned short id;
+    unsigned int lo;
+    unsigned int cur;
+} Ent0x80041994;
+typedef struct Wk0x80041994 {
+    char pad0[0x220];
+    unsigned short x220;
+} Wk0x80041994;
+extern Ent0x80041994 D_80089D50[];
+extern Snd0x80041dc0 D_800187AC[];
+extern void func_8001CDE4(int);
+extern int func_8001D9D4(void);
+extern void func_8001EC10(int);
+
+void func_80041994(int idx)
+{
+    Ent0x80041994 *e;
+    Wk0x80041994 *w;
+
+
+    e = &D_80089D50[idx];
+    if (e->cur != e->lo) {
+        w = *SCRATCH(Wk0x80041994 *, 0);
+
+        if (w->x220 != 0xFFFF) {
+            if (D_800187AC[w->x220].x4 < e->cur) {
+                w->x220 = 0xFFFF;
+            }
+        }
+    }
+    while (func_8001D9D4()) {
+        func_8001CDE4(1);
+    }
+    func_8001EC10(e->id);
+    while (func_8001D9D4()) {
+        func_8001CDE4(1);
+    }
+}
 
 typedef struct Ent0x80041a68 {
     unsigned short id;
@@ -152,11 +198,6 @@ void func_80041BB8(void)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80041C30);
 
-typedef struct Snd0x80041dc0 {
-    unsigned short id;
-    char pad2[6];
-} Snd0x80041dc0;
-extern Snd0x80041dc0 D_800187AC[];
 extern Snd0x80041dc0 D_80018824[];
 extern int D_800193BC[];
 extern int D_800193E4[];
@@ -663,9 +704,9 @@ void func_80043958(void)
 }
 
 #define M2C_UNK s32
-M2C_UNK func_80043BF8();
-M2C_UNK func_8006F4F4(M2C_UNK);
-M2C_UNK func_80070124(M2C_UNK);
+void func_80043BF8(); /* was M2C_UNK (T10 w39 draft func_800437F8) */
+void func_8006F4F4(int); /* was M2C_UNK (M2C_UNK) (T10 w39 draft func_800437F8) */
+void func_80070124(int); /* was M2C_UNK (M2C_UNK) (T10 w39 draft func_800437F8) */
 M2C_UNK func_80081284(s32);
 extern int func_80081324(void);
 extern void func_80081334(void);
@@ -746,7 +787,7 @@ void func_80043CC4(int mode)
     func_800710D4(&attr);
 }
 
-extern void func_80043E1C(int);
+extern void func_80043E1C(unsigned int); /* was (int) (T10 w39 draft) */
 
 void func_80043D94(int dir)
 {
@@ -1118,10 +1159,6 @@ void func_800444F0(void *arg0, unsigned char *arg1, int arg2, int arg3, int arg4
     }
 }
 
-typedef struct Obj0x80044834 {
-    char pad0[0x58];
-    unsigned char x58;
-} Obj0x80044834;
 typedef struct Rec0x80044834 {
     signed char b0;
     signed char b1;

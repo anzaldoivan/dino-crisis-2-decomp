@@ -214,7 +214,7 @@ typedef struct Ent0x8003e238 {
     short f4A;
 } Ent0x8003e238;
 char *func_800474B4(int a, int b);
-int func_8003DD34(int, int, unsigned short);
+int func_8003DD34(short, short, unsigned short);
 
 void func_8003E238(Obj0x8003e238 *o)
 {
@@ -322,7 +322,7 @@ typedef struct Obj0x8003e4e0 {
 } Obj0x8003e4e0;
 struct Obj0x8003e488;
 char *func_800474B4(int a, int b);
-int func_8003DD34(int, int, unsigned short);
+int func_8003DD34(short, short, unsigned short);
 unsigned short func_8003DE8C(short a, short b, short c, short d);
 
 void func_8003E4E0(struct Obj0x8003e488 *arg)
@@ -521,16 +521,11 @@ void func_8003EA1C(void *arg0)
     D_80089AB8[WORK->xC50 >> 8](arg0);
 }
 
-typedef struct {
-    char pad0[0xC50];
-    unsigned short xC50;
-} Work0x8003ea64;
-#define WORK0x8003ea64 (*SCRATCH(Work0x8003ea64 *, 0))
 extern void (*D_80089AE0[])(void *);
 
 void func_8003EA64(void *arg0)
 {
-    D_80089AE0[WORK0x8003ea64->xC50 >> 8](arg0);
+    D_80089AE0[WORK->xC50 >> 8](arg0);
 }
 
 typedef struct {
@@ -557,35 +552,13 @@ void func_8003EB18(void)
 #include "../shared/func_8001B530.inc.c"
 }
 
-typedef struct Shot {
-    char pad0[0x20];
-    MATRIX m;
-    short x40;
-    short x42;
-    short x44;
-    signed char x46;
-    signed char x47;
-    short x48;
-    short x4A;
-    char pad4c[2];
-    signed char x4E;
-    signed char x4F;
-    int x50;
-    char pad54[4];
-    short x58;
-    short x5A;
-    short x5C;
-    char pad5e[2];
-    SVECTOR x60;
-    char pad68[8];
-} Shot;
 extern S800B27E0 D_800B27E0;
 extern Pair D_800B2890[];
 void func_80018020(void *, int);
 unsigned int func_8003252C(void *);
 void func_800339AC(void *, Seg *, SVECTOR *);
 int func_80033D4C(void *, void *, SVECTOR *, int);
-int func_8003DD34(int, int, unsigned short);
+int func_8003DD34(short, short, unsigned short);
 int func_8003F154(void *, void *, int);
 void func_80044834(void *, int);
 char *func_800474B4(int a, int b);
@@ -887,7 +860,7 @@ extern Glob0x8004084c *D_800B25DC;
 char *func_800474B4(int a, int b);
 extern void func_8004A240();
 extern void func_8003FE00();
-int func_8003DD34(int, int, unsigned short);
+int func_8003DD34(short, short, unsigned short);
 
 void func_8004084C(Obj0x8004084c *obj, unsigned short mode, short ang)
 {

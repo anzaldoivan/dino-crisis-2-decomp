@@ -1,0 +1,25 @@
+# config/oracle.strnames.aliases.tsv -- written by hand from config/oracle.strnames.tsv: one lead per function, never a rename; checked by tools/psxd_img.py strnames --check.
+# unit	vram	alias	keys	basis
+bin_load	0x801C1A18	memcard_save_name	8faed3433d93	string:config/oracle.strnames.tsv
+bin_load	0x801C443C	memcard_slot_file_name	65e77dc1f68a,8faed3433d93	string:config/oracle.strnames.tsv
+bin_option	0x801C1930	option_menu_labels	7d72e14fa471,4f9bd0a96eae,8cad6364aaef	string:config/oracle.strnames.tsv
+bin_option	0x801C4220	draw_presents_title	0f9db43d5c02	string:config/oracle.strnames.tsv
+bin_save	0x801C1B00	memcard_save_name	8faed3433d93	string:config/oracle.strnames.tsv
+bin_save	0x801C4600	memcard_slot_file_name	65e77dc1f68a,8faed3433d93	string:config/oracle.strnames.tsv
+bin_save	0x801C52D0	memcard_save_title	4c3599bb5e5a,8baf097800ea	string:config/oracle.strnames.tsv
+bin_subscr3	0x801C2650	draw_page_number	618c7535011f,1c89dec13e43	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C1C9C	navi_joke_message	c1e9c64f7496	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C2030	target_point_a_c	3d811c2c4de0,cc2b2ce6074f	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C2718	target_point_a_b	3d811c2c4de0,b159c37acda7	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C2EA0	target_point_c_a	cc2b2ce6074f,3d811c2c4de0	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C35A0	target_point_c_b	cc2b2ce6074f,b159c37acda7	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C3CA8	target_point_b_a	b159c37acda7,3d811c2c4de0	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C4418	target_point_b_c	b159c37acda7,cc2b2ce6074f	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C4B18	target_point_c	cc2b2ce6074f	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C5068	target_point_a	3d811c2c4de0	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C55C4	target_point_b	b159c37acda7	string:config/oracle.strnames.tsv
+bin_subscr6	0x801C61CC	navi_credits	ac04120e477e	string:config/oracle.strnames.tsv
+psx_bin_logo	0x800D5D60	memcard_save_name	8faed3433d93	string:config/oracle.strnames.tsv
+slus_012_79	0x80034F08	number_to_digits	ce27cb141098	string:config/oracle.strnames.tsv
+slus_012_79	0x80056F00	item_debug_message	32c40a6b846c	string:config/oracle.strnames.tsv
+slus_012_79	0x80057A8C	examine_debug_message	6be67b1c1200	string:config/oracle.strnames.tsv

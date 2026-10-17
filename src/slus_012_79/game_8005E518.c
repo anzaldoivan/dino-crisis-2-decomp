@@ -33,7 +33,7 @@ typedef struct State0x8005e6a4 {
     char pad0[4];
     unsigned char x4;
 } State0x8005e6a4;
-extern State0x8005e6a4 D_800B49D0;
+extern int *D_800B49D0;        /* word 0 is a pointer (func_8005EAB4); was extern State0x8005e6a4 */
 /* func_8005E854, func_8005E8F8 (T8 w36: above both) */
 typedef struct {
     char pad[0xA4];
@@ -66,11 +66,6 @@ void func_8005E518(void) {
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E5BC);
 
-typedef struct Elem0x8005e6a4 {
-    unsigned char x0;
-    unsigned char x1;
-    char pad2[0x34 - 0x2];
-} Elem0x8005e6a4;
 extern unsigned int D_800AF5B8;
 extern void func_8001BE08();
 extern void func_8001D9E4(void);
@@ -104,7 +99,7 @@ void func_8005E6A4(void)
     }
     func_8001BE08();
     func_8002EB14(1, 5, 1);
-    D_800B49D0.x4++;
+    ((State0x8005e6a4 *)&D_800B49D0)->x4++;
 }
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E7D8);
@@ -204,7 +199,7 @@ int func_8005ECCC(Ctx0x8005eccc *ctx)
     return 0;
 }
 
-extern void func_8005EAB4(Ctx8005EEF4 *ctx, int a, int b, int c);
+extern int func_8005EAB4(Ctx8005EEF4 *ctx, unsigned char a, int b, int c); /* was void (.., int a, ..) (T10 w39 draft) */
 
 
 

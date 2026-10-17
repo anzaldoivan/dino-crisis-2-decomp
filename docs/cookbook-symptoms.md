@@ -54,6 +54,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `byte-proof`: C0001
 - `c`: C0028
 - `callee-saved`: C0002
+- `carve`: C0055
 - `cdda`: C0009
 - `census`: C0031, C0034, C0036, C0037, C0041, C0042
 - `check`: C0027
@@ -99,9 +100,11 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `hygiene`: C0021
 - `idiom`: C0001
 - `include_asm`: C0028, C0029
+- `initializer`: C0055
 - `input`: C0019
 - `iso`: C0016
 - `iso9660`: C0007, C0009
+- `journal`: C0055
 - `jump-table`: C0020
 - `ladder`: C0026
 - `lever`: C0001
@@ -143,7 +146,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `register-pressure`: C0002
 - `relocation`: C0035
 - `residual`: C0001
-- `rodata`: C0022
+- `rodata`: C0022, C0055
 - `routing`: C0006
 - `sched`: C0051
 - `sched-reorg`: C0051
@@ -152,6 +155,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `smc`: C0014
 - `spill`: C0002
 - `splat`: C0022, C0023, C0028, C0031, C0034, C0035
+- `splice`: C0055
 - `split`: C0053
 - `str`: C0007
 - `strategy`: C0003

@@ -319,13 +319,202 @@ void func_8003B58C(Obj0x8003b58c *o)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003B778);
+typedef struct {
+    char pad0[0xC50];
+    unsigned short xC50;
+} Wk0x8003b778;
+#define WORK0x8003b778 (*SCRATCH(Wk0x8003b778 *, 0))
+#define SPAD_0A0x8003b778 (*SCRATCH(unsigned short, 0xA))
+typedef struct Src0x8003b778 {
+    char pad0[0x20];
+    char x20[0x20];
+    short x40;
+    short x42;
+    short x44;
+} Src0x8003b778;
+typedef struct Eff0x8003b778 {
+    char pad0[0x20];
+    char x20[0x20];
+    short x40;
+    short x42;
+    short x44;
+    short pad46;
+    short x48;
+    short x4A;
+    short x4C;
+    unsigned char x4E;
+    unsigned char x4F;
+    int x50;
+    int x54;
+    int x58;
+    short x5C;
+    short pad5E;
+    short x60;
+    short x62;
+    short x64;
+    short pad66;
+    void *x68;
+} Eff0x8003b778;
+typedef struct Obj0x8003b778 {
+    char pad0[0x4A];
+    short x4A;
+    char pad4c[0x64 - 0x4C];
+    int x64;
+} Obj0x8003b778;
+extern Cam0x80039b7c *D_800B25DC;
+extern int func_80052364();
+extern void func_80044834();
+extern void func_8004AC08();
+extern char *func_800474B4();
+extern int func_8003F154();
+extern void func_8001C5AC();
+extern void func_8001C614();
+extern void func_80047E0C();
+extern void func_8005247C();
+extern void *func_800402EC();
+extern int func_80079704();
+extern void func_8004A240();
+extern void func_8007AA34();
+extern void func_80048048();
+
+int func_8003B778(Obj0x8003b778 *p)
+{
+    SVECTOR v;
+    Src0x8003b778 *s;
+    Eff0x8003b778 *e;
+
+    ((short *)D_800B25DC)[0x3C / 2] = 0;
+    ((char *)D_800B25DC)[0x2F] = 0;
+    if (func_80052364(1) == 0) {
+        if (SPAD_0A0x8003b778 & 0xA0) {
+            func_80044834(p, 0x11);
+        }
+        return 1;
+    }
+    func_8004AC08(p);
+    if ((WORK0x8003b778->xC50 & 0xF) == 10) {
+        s = (Src0x8003b778 *)func_800474B4(p->x64, 3);
+        func_8003F154(s->x20, &s->x40, 10);
+        func_8001C5AC(p, 5);
+        func_8001C614(p, 5, 0x3C);
+        func_80047E0C(p, D_80177920);
+        func_8005247C(0);
+        func_80044834(p, 0x10);
+        return 0;
+    }
+    e = func_800402EC();
+    if (e != 0) {
+        s = (Src0x8003b778 *)func_800474B4(p->x64, 3);
+        v.vx = 0;
+        v.vy = 0xA28;
+        v.vz = 0;
+        func_80079704(s->x20, &v, &v);
+        v.vx += s->x40;
+        v.vy += s->x42;
+        v.vz += s->x44;
+        func_8004A240(&s->x40, &v, &v);
+        e->x68 = D_801789C4;
+        e->x50 = 3;
+        e->x54 = 0;
+        e->x4E = 3;
+        e->x4F = 7;
+        e->x48 = 0x400 - v.vx;
+        e->x4A = p->x4A;
+        e->x4C = 0;
+        func_8007AA34(&e->x48, e->x20);
+        e->x40 = s->x40;
+        e->x42 = s->x42 + 0x1E;
+        e->x44 = s->x44;
+        e->x58 = *(int *)&e->x40;
+        e->x5C = e->x44;
+        e->x60 = 0;
+        e->x62 = 500;
+        e->x64 = 0;
+        func_80047E0C(p, D_80178B88);
+        func_80048048(e, D_80178D48, 0, 0, 10, 0);
+        func_8005247C(1);
+        func_8001C5AC(p, 8);
+        func_8001C614(p, 8, 0x5A);
+        func_80044834(p, 0x10);
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003B9F8);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003C498);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003C688);
+typedef struct Wk0x8003c688 {
+    char pad0[0x214];
+    unsigned short x214;
+    char pad216[0x4C7 - 0x216];
+    unsigned char x4C7;
+    char pad4c8[0xC2B - 0x4C8];
+    unsigned char xC2B;
+    char padc2c[0xC50 - 0xC2C];
+    unsigned short xC50;
+} Wk0x8003c688;
+#define W0x8003c688 (*SCRATCH(Wk0x8003c688 *, 0))
+extern void func_8001CDE4(int);
+extern int func_8001D9D4(void);
+extern void func_8001EC10(int);
+extern unsigned short D_8001878C[];
+extern int (**D_800AE074)(Obj0x80044834 *);
+
+void func_8003C688(Obj0x80044834 *obj)
+{
+    unsigned short idx = 0;
+    unsigned char v;
+
+    switch (W0x8003c688->xC2B) {
+    case 3:
+        obj->x58 = 0x2B;
+        W0x8003c688->xC50 = 12;
+        break;
+    case 4:
+        idx = 1;
+        obj->x58 = 0x14;
+        W0x8003c688->xC50 = 13;
+        break;
+    default:
+        if (W0x8003c688->xC2B >= 7) {
+            v = W0x8003c688->xC2B;
+            obj->x58 = v + 14;
+            idx = v - 5;
+            W0x8003c688->xC50 = W0x8003c688->xC2B + 7;
+            break;
+        }
+        if (W0x8003c688->x4C7 != 0) {
+            switch (W0x8003c688->xC2B) {
+            case 0:
+                W0x8003c688->xC50 = 6;
+                break;
+            case 1:
+                W0x8003c688->xC50 = 0x101;
+                break;
+            case 5:
+                W0x8003c688->xC50 = 0x604;
+                break;
+            case 6:
+                W0x8003c688->xC50 = 5;
+                break;
+            }
+        }
+        D_800AE074[obj->x58](obj);
+        return;
+    }
+    if (W0x8003c688->x214 != D_8001878C[idx]) {
+        while (func_8001D9D4()) {
+            func_8001CDE4(1);
+        }
+        func_8001EC10(D_8001878C[idx]);
+        while (func_8001D9D4()) {
+            func_8001CDE4(1);
+        }
+        W0x8003c688->x214 = D_8001878C[idx];
+    }
+    D_800AE074[obj->x58](obj);
+}
 
 extern Work D_800AE080;
 

@@ -6,7 +6,7 @@
 # extracted retail); `--no-game` runs only game=no rows (decided by a dry run on a tree without game data, T6.c2 log).
 # Mirrors (loadmap, boundaries, cc_fingerprint, compile_only plant) are tool copies + symlinks under .run/harness/: the tools
 # hard-code repo-root paths and are not edited; .run/extracted is fleet_check's extract.
-# wave and wave_usage are game=yes though they read no game data: tools/wave.py and its ledgers are not in
+# wave, wave_usage and leads (T15) are game=yes though they read no game data: tools/wave.py, its ledgers and config/leads.tsv are not in
 # config/public-paths.txt, so no-rom CI (public and -dev) must not run them; the full harness does.
 # name	command	denominator_regex	control_regex	game
 census	python3 tools/census.py --check	^stubs: (\d+) of (\d+) game functions not in C\nledger: (\d+) of (\d+) non-C functions named$	^ledger control: ok[\s\S]*^control: ok$	yes
@@ -32,4 +32,5 @@ plateau	python3 tools/plateau.py --check	^plateau: \d+ of (\d+) planted labelled
 cookbook_index	python3 tools/cookbook_index.py --check	^cookbook-index: \d+ of (\d+) entries indexed$	^control: ok$	no
 wave	python3 tools/wave.py --check	^routing: (\d+) of \1 buckets measured on the manual wave$	^wave control: ok$	yes
 census_set	python3 tools/census.py --check --set exe	^set exe: \d+ aliases, \d+ game fns.*$[\s\S]*^stubs: \d+ of (\d+) game functions not in C \(set exe\)\nledger: \d+ of \d+ non-C functions named \(set exe\)$	^ledger control: ok \(set exe[\s\S]*^control: ok$	yes
-wave_usage	python3 tools/wave.py --check && python3 tools/wave.py --selftest	^usage: \d+ of (\d+) waves with a 5h before/after record$	^selftest rolled usage row: refused ok$[\s\S]*^selftest: 12 of 12 ok$	yes
+wave_usage	python3 tools/wave.py --check && python3 tools/wave.py --selftest	^usage: \d+ of (\d+) waves with a 5h before/after record$	^selftest rolled usage row: refused ok$[\s\S]*^selftest: 15 of 15 ok$	yes
+leads	python3 tools/wave.py leads --check	^leads: \d+ of (\d+) lead names absent from src/ and include/$	^leads control: planted name found ok$	yes
