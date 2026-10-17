@@ -149,7 +149,103 @@ void func_8004BFC8(unsigned short arg0, unsigned short arg1, unsigned short arg2
     func_800506BC(strs.s[arg0], 0x20, 0xC5, 0x64, 0x707070, 0x64, 0);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004BBF4", func_8004C0B4);
+typedef struct {
+    unsigned char x0;
+    unsigned char x1;
+    unsigned char x2;
+    unsigned char x3;
+    char pad4[0x65 - 0x4];
+    signed char x65;
+    char pad66[0x8E - 0x66];
+    short x8E;
+    short x90;
+} Obj8004C0B4;
+
+extern Quad0x8004f450 D_80019B60, D_80019B70, D_80019B80, D_80019B90; /* splat rodata: unit initializers would emit unit .rodata */
+extern u32 D_800AC074[][0x400];
+
+extern void func_80029F7C(void);
+extern void func_8004538C(void);
+extern void func_80050398(short, short, short, short, int, int, int);
+extern void func_80051998(Quad0x8004f450 *, Quad0x8004f450 *, int, int, int, int, int);
+extern void func_8007E194(u32 *, int, int, int, int);
+
+void func_8004C0B4(Obj8004C0B4 *o)
+{
+    int y;
+    unsigned short f0;
+    unsigned char st = o->x2;
+
+    switch ((signed char)st) {
+    case 0:
+        o->x65 = -1;
+        o->x8E = 0;
+        o->x90 = 0;
+        o->x2 = st + 1;
+        func_80044834(0, 7);
+        func_8004538C();
+    case 1:
+        y = (D_800ABA96 == 0) << 4;
+        f0 = y | 0x100;
+        {
+            Quad0x8004f450 a = { 0, o->x90, 255, o->x90, 0, 120, 255, 120 };
+            Quad0x8004f450 b = D_80019B60;
+            func_80051998(&a, &b, 0, f0, 0x808080, 0, 1);
+        }
+        {
+            Quad0x8004f450 a = { 255, o->x90, 320, o->x90, 255, 120, 320, 120 };
+            Quad0x8004f450 b = D_80019B70;
+            func_80051998(&a, &b, 0, (y + 4) | 0x100, 0x808080, 0, 1);
+        }
+        {
+            Quad0x8004f450 a = { 0, 120, 255, 120, 0, 240 - o->x90, 255, 240 - o->x90 };
+            Quad0x8004f450 b = D_80019B80;
+            func_80051998(&a, &b, 0, f0, 0x808080, 0, 1);
+        }
+        {
+            Quad0x8004f450 a = { 255, 120, 320, 120, 255, 240 - o->x90, 320, 240 - o->x90 };
+            Quad0x8004f450 b = D_80019B90;
+            func_80051998(&a, &b, 0, (y + 4) | 0x100, 0x808080, 0, 1);
+        }
+        o->x8E += 6;
+        o->x90 += o->x8E;
+        if (o->x90 > 0x78) {
+            o->x2++;
+        }
+        WORK->x6F8 = 0xA0;
+        WORK->x6F9 = 0xA0;
+        WORK->x6FA = 0xA0;
+        WORK->x6FB = 0;
+        WORK->x6FC = 0;
+        func_80029F7C();
+        break;
+    case 2:
+        o->x8E = 0;
+        o->x90 = 0;
+        o->x2 = st + 1;
+    case 3:
+        func_80050398(o->x90, 120, 320 - o->x90, 120, 0x808080, 1, 1);
+        func_8007E194(PKT, 1, 0, 12, 0);
+        ((Tag0x8004c960 *)PKT)->addr = ((Tag0x8004c960 *)D_800AC074[D_800ABA96])->addr;
+        ((Tag0x8004c960 *)D_800AC074[D_800ABA96])->addr = (unsigned int)PKT;
+        PKT += 3;
+        o->x8E += 4;
+        o->x90 += o->x8E;
+        if (o->x90 > 0xA0) {
+            o->x0 = 3;
+            o->x1 = 0;
+            o->x2 = 0;
+            o->x3 = 0;
+        }
+        WORK->x6F8 = 0xA0;
+        WORK->x6F9 = 0xA0;
+        WORK->x6FA = 0xA0;
+        WORK->x6FB = 0;
+        WORK->x6FC = 0;
+        func_80029F7C();
+        break;
+    }
+}
 
 typedef struct Obj0x8004c6dc {
     char pad0;

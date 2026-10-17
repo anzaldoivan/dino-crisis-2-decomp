@@ -1,10 +1,6 @@
 #include "common.h"
 #include "dc2.h"
 
-typedef struct {
-    char pad0[0x4C];
-    unsigned char x4C;
-} Sub0x8001d28c;
 extern int func_80034CD8(int, int);
 extern void func_8001D338();
 

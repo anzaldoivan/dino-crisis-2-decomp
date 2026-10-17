@@ -163,9 +163,7 @@ void func_8004EEE4(Obj0x8004eee4 *obj)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_8004EF50);
 
-typedef struct Quad0x8004f450 {
-    short x0, y0, x1, y1, x2, y2, x3, y3;
-} Quad0x8004f450;
+/* Quad0x8004f450: dc2.h (T16.c1) */
 /* Lbl0x8004f450: dc2.h (T8 w35) */
 typedef struct Obj0x8004f450 {
     char pad0[0x4D];

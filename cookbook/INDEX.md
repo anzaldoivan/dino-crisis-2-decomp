@@ -54,3 +54,4 @@ C0051 | Check which scheduler file a gcc target builds before citing it | gcc,sc
 C0052 | decomp-permuter --seed is a replay, not a search seed, so seed random in a wrapper | permuter,determinism,seed | 2026-10-02 | 1.7/T6 | phase-ends/current/tasks/T6.md
 C0053 | Sync wipes split asm, so regenerate it with make split ONLY=<alias> | build,split,docker,permuter | 2026-10-02 | 1.7/T6 | phase-ends/current/tasks/T6.md
 C0054 | Plateau classifier: test length drift before index-wise labels | plateau,classifier,diff,codegen-map | 2026-10-02 | 1.7/T7 | phase-ends/current/tasks/T7.md
+C0055 | hand splice a MATCH draft whose constant initializers live in splat rodata (extern labels) | splice,rodata,carve,initializer,journal | 2026-10-14 | 1.8/T16 | T8.c345, T16.c1

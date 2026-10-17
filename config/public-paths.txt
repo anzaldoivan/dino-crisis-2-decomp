@@ -32,6 +32,8 @@ config/loadmap.tsv
 config/mcp.json.template
 config/medium.sha1
 config/names.tsv
+config/oracle.*.tsv
+config/oracle.retail
 config/oracle_exceptions.tsv
 config/probes.tsv
 config/psxdecomp.toml
@@ -90,6 +92,7 @@ tools/probes/
 tools/progress.py
 tools/propagate.py
 tools/psxd_floor.py
+tools/psxd_img.py
 tools/psxd_publish.py
 tools/reconcile.py
 tools/splat_gen.py

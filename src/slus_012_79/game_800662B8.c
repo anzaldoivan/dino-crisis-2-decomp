@@ -411,12 +411,6 @@ void func_80066888(Obj0x80066888 *obj)
     }
 }
 
-typedef struct Sub0x80066a8c {
-    unsigned char x0;
-    unsigned char x1;
-    unsigned char x2;
-    unsigned char x3;
-} Sub0x80066a8c;
 typedef struct Obj0x80066a8c {
     unsigned char pad0[0x40];
     short x40;

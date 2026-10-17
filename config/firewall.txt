@@ -44,3 +44,11 @@ required: config/check.*.sha                     # the per-binary contracts (a g
 
 # ---- psxdecomp: the reference library ----
 purge: refs/
+
+# ---- psxdecomp: a debug file of any build (a symbol file, a linker's debug executable) ----
+# A link map (.MAP) has no line here: a game tracks text files of that name. The checksum file
+# (config/oracle.<id>.sha1, written by psxdecomp's `oracle add`) covers a supplied copy.
+glob:  *.[Ss][Yy][Mm]
+glob:  *.[Cc][Pp][Ee]
+glob:  *.[Pp][Dd][Bb]
+glob:  *.[Dd][Bb][Gg]

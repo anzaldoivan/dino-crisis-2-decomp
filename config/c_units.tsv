@@ -307,7 +307,7 @@ slus_012_79	0x800288ac	game_800288AC	T3 carve
 slus_012_79	0x8002ec38	game_8002EC38	T3 carve
 slus_012_79	0x8001f990	game_8001F990	T3 carve	0x8001f9c0
 slus_012_79	0x80027ad0	game_80027AD0	T3 carve
-slus_012_79	0x800371a0	game_800371A0	T3 carve	0x800371e0
+slus_012_79	0x800371a0	game_800371A0	T3 carve
 slus_012_79	0x8001fb5c	game_8001FB5C	T3 carve
 slus_012_79	0x80027b00	game_80027B00	T3 carve	0x80027b30
 slus_012_79	0x80030ddc	game_80030DDC	T3 carve
@@ -386,7 +386,7 @@ slus_012_79	0x8002e9dc	game_8002E9DC	T3 carve
 slus_012_79	0x80035900	game_80035900	T3 carve
 slus_012_79	0x8001bf5c	game_8001BF5C	T3 carve
 slus_012_79	0x8001e898	game_8001E898	T3 carve
-slus_012_79	0x8001ec10	game_8001EC10	T3 carve	0x8001ecbc
+slus_012_79	0x8001ec10	game_8001EC10	T3 carve
 slus_012_79	0x8001fdf8	game_8001FDF8	T3 carve
 slus_012_79	0x80020724	game_80020724	T3 carve
 slus_012_79	0x80029aec	game_80029AEC	T3 carve
@@ -411,3 +411,5 @@ slus_012_79	0x800289f0	game_800289F0	T3 carve
 slus_012_79	0x80029bb0	game_80029BB0	T3 carve	0x80029c14
 slus_012_79	0x8002c76c	game_8002C76C	T3 carve
 slus_012_79	0x80034c48	game_80034C48	T3 carve	0x80034cd8
+slus_012_79	0x8001ecbc	game_8001ECBC	T3 carve	0x8001ed9c
+slus_012_79	0x800371e0	game_800371E0	T3 carve

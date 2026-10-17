@@ -34,7 +34,13 @@ typedef struct {
 /* slus_012_79 D_800B4A68[32] (func_80063CC4 clears b0 of each): stride 0x28. */
 typedef struct {
     unsigned char b0;
-    unsigned char pad[0x27];
+    unsigned char pad[0x14 - 0x1]; /* was pad[0x27]; pad[0] read by func_8006059C's unit */
+    unsigned short x14;         /* func_800644FC (T10 w39) */
+    char pad16[0x18 - 0x16];
+    unsigned short x18;         /* func_800644FC (T10 w39) */
+    unsigned char x1A;          /* func_800644FC (T10 w39) */
+    unsigned char x1B;          /* func_800644FC (T10 w39) */
+    unsigned char pad1c[0x28 - 0x1C];
 } Elem28;
 
 /* slus_012_79 D_800B53A8 (func_80065004 and the 8003DD34/800458F0/8004B8E8 units). */
@@ -111,10 +117,15 @@ typedef struct {
     unsigned char xFE;          /* func_80037C9C (T8 w28): lbu/sb 0xFE */
     char padff[0x108 - 0xFF];   /* was padfe[0x108 - 0xFE] */
     unsigned short x108;        /* func_80023D8C (T8 w08) */
-    char pad10a[0x174 - 0x10A];
+    char pad10a[0x11B - 0x10A]; /* was pad10a[0x174 - 0x10A] */
+    unsigned char x11B;         /* func_8005EAB4 drafter (T10 w39) */
+    char pad11c[0x174 - 0x11C];
     unsigned short x174;        /* func_80048F60: lhu/andi ~4/sh 0x174 */
     unsigned short x176;        /* func_80048FF0 (T8 w34) */
-    char pad178[0x184 - 0x178]; /* was pad176[0x184 - 0x176] */
+    unsigned short x178;        /* func_8003D22C (T10 w39); was pad178[0x184 - 0x178], pad176[0x184 - 0x176] */
+    char pad17a[0x17E - 0x17A];
+    unsigned short x17E;        /* T10 w39 drafter c2 */
+    char pad180[0x184 - 0x180];
     int x184;                   /* func_80048F60: lw/and ~1/sw 0x184 */
     char pad188[0x190 - 0x188]; /* was pad188[0x1C8 - 0x188] */
     Elem0x8001be08 x190[2];     /* func_8001BE08 (T8 w33): walk 0x190..0x1C0 */
@@ -204,7 +215,7 @@ typedef struct {
     void (*x4D0)(void);         /* func_8004B4C8: lw 0x4D0, jalr, no args */
     char pad4d4[0x4D8 - 0x4D4]; /* was pad4d4[0x4DC - 0x4D4] */
     char x4D8[4];               /* func_8002F654: address passed to func_80018020 */
-    struct Shot *x4DC;          /* func_8003EB20: lw 0x4DC, 12 elements stride 0x70; shape local to that fn */
+    struct Shot *x4DC;          /* func_8003EB20: lw 0x4DC, 12 elements stride 0x70; Shot below (T10 w39), was local to that fn */
     Unit *units;               /* lw 0x4E0(v0); units[0] is the player (func_8003D2D4, func_8003D58C, st1) */
     void *x4E4;                 /* func_8002CC2C, func_80023ED8: entity array, stride 0xAC (T8 w13) */
     void *x4E8;                 /* func_8005E6A4 (T8 w31) */
@@ -212,7 +223,7 @@ typedef struct {
     void *x5DC;                /* func_80037C1C: sw &D_800B24F8 (T8 w10) */
     char pad5e0[0x5E4 - 0x5E0];
     int x5E4;                   /* func_8001D230: lw, arg 1 of func_8001D338 */
-    char pad5e8[0x5EC - 0x5E8];
+    int x5E8;                   /* func_8001D1E4: sw of *x5E4 (T10 w39); func_8001D2E0 loop bound; was pad5e8[0x5EC - 0x5E8] */
     AreaTbl *areas;             /* func_8003D2D4, func_8003D58C: lw 0x5EC */
     void *x5F0;                 /* func_80043714 (T8 w35): table, s16 count at +0; was pad5f0[0x5F4 - 0x5F0] */
     char *x5F4;                 /* func_80064460, func_8005E450: bump cursor */
@@ -228,13 +239,16 @@ typedef struct {
     unsigned int x61C;          /* func_800479FC (T8 w36): sltu vs index */
     unsigned char x620[9];      /* func_8006325C (T8 w34) */
     unsigned char x629;         /* func_8002F654: sb 0xFF */
-    char pad62a[0x658 - 0x62A]; /* was pad62a[0x671 - 0x62A] */
+    char pad62a[0x638 - 0x62A]; /* was pad62a[0x658 - 0x62A], pad62a[0x671 - 0x62A] */
+    unsigned char x638[1];      /* func_8003E6E4 (T10 w39): indexed byte; count unproven */
+    char pad639[0x658 - 0x639];
     Slot0x80035814 x658;        /* func_80035814 (T8 w35) */
     char pad65c[0x671 - 0x65C];
     unsigned char x671;         /* func_8002F654: sb 0xFF */
     char pad672[0x6B0 - 0x672];
     short x6B0;                 /* func_8005AF1C (T8 w15) */
-    char pad6b2[0x6B4 - 0x6B2];
+    unsigned char x6B2;         /* func_8005E7D8 (T10 w39); was pad6b2[0x6B4 - 0x6B2] */
+    char pad6b3[0x6B4 - 0x6B3];
     int x6B4;                   /* func_8005F714: lw 0x6B4 */
     int x6B8;                   /* func_8006335C, func_800633E8 (T8 w03 match) */
     char pad6bc[0x6C4 - 0x6BC]; /* was pad6bc[0x6E8 - 0x6BC] */
@@ -245,7 +259,8 @@ typedef struct {
     unsigned char x6EA;         /* func_8005E450: sb 0xFF */
     unsigned char x6EB;         /* func_8002F654: sb 4; was pad6eb[0x6EC - 0x6EB], pad6eb[0x6F8 - 0x6EB] */
     Ramp0x80030670 x6EC;        /* func_80030670 (T8 w31): lbu 0..3, sb 2 */
-    char pad6f0[0x6F8 - 0x6F0];
+    Unit *x6F0;                 /* func_8003D22C (T10 w39); was pad6f0[0x6F8 - 0x6F0] */
+    char pad6f4[0x6F8 - 0x6F4];
     unsigned char x6F8;         /* func_8004C0B4: sb 0xA0 */
     unsigned char x6F9;         /* func_8004C0B4: sb 0xA0 */
     unsigned char x6FA;         /* func_8004C0B4: sb 0xA0 */
@@ -256,7 +271,9 @@ typedef struct {
     unsigned char x713;         /* func_80034D88 (T8 w36): sb 1 */
     char pad714[0x7B4 - 0x714]; /* was pad713[0x7B4 - 0x713], pad713[0x7C6 - 0x713] */
     int x7B4;                   /* func_80020628 (T8 w34) */
-    char pad7b8[0x7C4 - 0x7B8]; /* was pad7b8[0x7C6 - 0x7B8] */
+    char pad7b8[0x7C0 - 0x7B8]; /* was pad7b8[0x7C4 - 0x7B8], pad7b8[0x7C6 - 0x7B8] */
+    unsigned short x7C0;        /* func_80029A94 (T10 w39) */
+    char pad7c2[0x7C4 - 0x7C2];
     unsigned short x7C4;        /* func_8006BCEC (T8 w37) */
     unsigned char x7C6;         /* func_80031084 (T8 w07) */
     unsigned char x7C7;         /* func_80031084 (T8 w07) */
@@ -380,6 +397,7 @@ typedef struct PolyF4_0x800689f4 {
 
 /* Fixed RAM addresses above every loaded binary, passed by func_80057A8C to func_80050D80. Kept as constants, not
  * extern symbols: the banked bytes were compiled from constants (a symbol form adds %hi/%lo relocations; untested). */
+#define D_80181E48 ((void *)0x80181E48) /* func_8002E650 (T10 w39) */
 #define D_80182398 ((void *)0x80182398) /* func_800253C0 (T8 w34) */
 #define D_80184C60 ((void *)0x80184C60)
 #define D_80184D90 ((void *)0x80184D90)
@@ -409,6 +427,12 @@ typedef struct PolyF4_0x800689f4 {
 /* Same kind, arg 0 of func_80023990 from func_80022EBC (T8 w24). */
 #define D_801850A8 ((void *)0x801850A8)
 #define D_80183620 ((void *)0x80183620)
+
+/* Same kind, args of func_80047E0C / func_80048048 and a stored pointer in func_8003B778 (T17.2 w38, lui/ori). */
+#define D_80177920 ((void *)0x80177920)
+#define D_801789C4 ((void *)0x801789C4)
+#define D_80178B88 ((void *)0x80178B88)
+#define D_80178D48 ((void *)0x80178D48)
 
 /* Same kind, args of func_80047B8C / func_800484F0 from func_800663EC (T8 w31). */
 #define D_80181500 ((void *)0x80181500)
@@ -653,6 +677,7 @@ typedef struct {
     unsigned char *pc;
     char pad04[0x80];
     int *sp;
+    int regs[1];                /* func_8005EAB4 (T10 w39): sw 0x88+4*i; count unproven */
 } Ctx8005EEF4;
 
 /* func_8006335C, func_80063988: one shape for the carved copies (T14.c2). */
@@ -778,6 +803,11 @@ typedef struct Lbl0x8004f450 {
     char *s[4];
 } Lbl0x8004f450;
 
+/* func_8004F450, func_8004C0B4: one shape (T16.c1). */
+typedef struct Quad0x8004f450 {
+    short x0, y0, x1, y1, x2, y2, x3, y3;
+} Quad0x8004f450;
+
 /* func_8005E450, func_8002DC34: one shape (T8 w35). */
 typedef struct {
     char pad0[0xC];
@@ -809,5 +839,63 @@ typedef struct Voice0x800444f0 {
 typedef struct Blk0x800598e0 {
     int w[0x460 / 4];
 } Blk0x800598e0;
+
+/* func_80044834, func_8003C688: one shape, byte at 0x58 (T17.2 w38). */
+typedef struct Obj0x80044834 {
+    char pad0[0x58];
+    unsigned char x58;
+} Obj0x80044834;
+
+/* func_8001D28C, func_8001D2E0: one shape, view of WORK->x318, lbu 0x4C (T10 w39). */
+typedef struct {
+    char pad0[0x4C];
+    unsigned char x4C;
+} Sub0x8001d28c;
+
+/* func_80033C70, func_8002CB24: one shape, halfword xyz (T10 w39). */
+typedef struct {
+    short x;
+    short y;
+    short z;
+} Vec0x80033c70;
+
+/* func_8005E6A4, func_800263A8: one shape, WORK->x4E8 element, stride 0x34 (T10 w39). */
+typedef struct Elem0x8005e6a4 {
+    unsigned char x0;
+    unsigned char x1;
+    char pad2[0x34 - 0x2];
+} Elem0x8005e6a4;
+
+/* func_80066A8C, func_80043E1C: one shape, four bytes (T10 w39). */
+typedef struct Sub0x80066a8c {
+    unsigned char x0;
+    unsigned char x1;
+    unsigned char x2;
+    unsigned char x3;
+} Sub0x80066a8c;
+
+/* Work+0x4DC element, 12 entries stride 0x70 (func_8003EB20 spells it; func_80064578 sb 0x46/0x4E; T10 w39). */
+typedef struct Shot {
+    char pad0[0x20];
+    MATRIX m;
+    short x40;
+    short x42;
+    short x44;
+    signed char x46;
+    signed char x47;
+    short x48;
+    short x4A;
+    char pad4c[2];
+    signed char x4E;
+    signed char x4F;
+    int x50;
+    char pad54[4];
+    short x58;
+    short x5A;
+    short x5C;
+    char pad5e[2];
+    SVECTOR x60;
+    char pad68[8];
+} Shot;
 
 #endif
