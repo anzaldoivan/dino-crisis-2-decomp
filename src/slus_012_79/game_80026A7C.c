@@ -1,25 +1,5 @@
 #include "dc2.h"
 
-typedef struct {
-    char pad0[0x92];
-    unsigned short x92;
-    char pad94[0x280 - 0x94];
-    char x280[0x28];
-    char x2A8[8];
-} Unit0x80026a7c;
-typedef struct {
-    char pad0[0x4E0];
-    Unit0x80026a7c *x4E0;
-    char pad4e4[0xC2B - 0x4E4];
-    unsigned char xC2B;
-} Work0x80026a7c;
-typedef struct {
-    char pad0[0x2477];
-    unsigned char x2477;
-    char pad2478[4];
-    unsigned char x247C;
-} Obj0x80026a7c;
-#define WORK0x80026a7c (*SCRATCH(Work0x80026a7c *, 0))
 extern int func_80034CD8(int, int);
 extern void func_80044834(void *, int);
 extern void func_800484F0();

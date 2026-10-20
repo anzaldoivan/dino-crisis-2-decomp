@@ -59,7 +59,26 @@ int func_8005EDA0(Ctx0x8005eda0 *ctx)
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_8005EE58);
+typedef struct Ctx0x8005ee58 {
+    unsigned char *pc;
+    char pad04[0x80];
+    int *sp;
+    char pad88[0x13];
+    unsigned char x9B;
+    char pad9C;
+    unsigned char x9D;
+} Ctx0x8005ee58;
+
+int func_8005EE58(Ctx0x8005ee58 *ctx)
+{
+    if ((signed char)ctx->x9D != 0) {
+        ctx->x9D--;
+        ctx->pc = (unsigned char *)*ctx->sp++;
+        return 0;
+    }
+    ctx->x9B = 0;
+    return 1;
+}
 
 typedef struct Ctx0x8005ee98 {
     unsigned char *pc;
@@ -110,7 +129,25 @@ s32 func_8005EF48(void *arg0) {
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_8005EF8C);
+typedef struct Ctx0x8005ef8c {
+    unsigned char *pc;
+    char pad04[0x84 - 0x4];
+    int *sp;
+    char pad88[0x9D - 0x88];
+    unsigned char x9D;
+} Ctx0x8005ef8c;
+
+int func_8005EF8C(Ctx0x8005ef8c *ctx)
+{
+    int *p;
+
+    *--ctx->sp = (int)(ctx->pc + 4);
+    p = (int *)WORK->x5F4;
+    p += *(short *)(ctx->pc + 2);
+    ctx->pc = (unsigned char *)WORK->x5F4 + *p;
+    ctx->x9D++;
+    return 0;
+}
 
 int func_8005EFE4(int *a0)
 {
@@ -138,7 +175,16 @@ int func_8005EFFC(Obj0x8005effc *o)
     return 1;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_8005F024);
+extern int func_80065D0C(int, int, char *, int);
+extern unsigned char D_800B49D5;
+
+int func_8005F024(Ctx8005EEF4 *ctx)
+{
+    func_80065D0C(0x19, 0xB0, WORK->x5F4 + *ctx->sp, 2);
+    D_800B49D5 = 0xFF;
+    ctx->pc += 2;
+    return 0;
+}
 
 
 int func_8005F088(Ctx *c)
@@ -342,7 +388,24 @@ int func_8005F3B0(Ctx0x8005f3b0 *ctx)
     return ret;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_8005F410);
+typedef struct Ctx0x8005f410 {
+    unsigned char *pc;
+    char pad4[0x84 - 0x4];
+    int *arg;
+} Ctx0x8005f410;
+typedef struct Elem0x8005f410 {
+    char pad0[0x9B];
+    unsigned char x9B;
+    char pad9C[0xA4 - 0x9C];
+} Elem0x8005f410;
+extern Elem0x8005f410 *D_800B49C8;
+
+int func_8005F410(Ctx0x8005f410 *ctx)
+{
+    D_800B49C8[ctx->arg[0]].x9B |= 0x80;
+    ctx->pc += 2;
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_8005F45C);
 
@@ -477,14 +540,51 @@ void func_8005FFC0(void)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_8006004C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_80060460);
+typedef struct Ctx0x80060460 {
+    char pad0[0x84];
+    unsigned char *arg;
+    char pad88[0x9F - 0x88];
+    signed char x9F;
+} Ctx0x80060460;
+
+void func_80060460(Ctx0x80060460 *ctx)
+{
+    unsigned char *arg;
+    Rec0x80060460 *r;
+
+    r = (Rec0x80060460 *)WORK->x5E4 + ctx->x9F;
+    arg = ctx->arg;
+    switch (((int *)arg)[1]) {
+    case 30:
+        r->x4 = arg[0];
+        break;
+    case 31:
+        r->x6 = arg[0];
+        break;
+    case 32:
+        r->x5 = arg[0];
+        break;
+    }
+}
 
 void func_800604EC(void)
 {
 #include "../shared/func_8001B530.inc.c"
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005EDA0", func_800604F4);
+void func_800604F4(Ctx0x80060460 *ctx)
+{
+    AreaTbl *t;
+    unsigned char *arg;
+    unsigned char *e;
+
+    t = WORK->areas;
+    e = (unsigned char *)t + t->offs[ctx->x9F];
+    arg = ctx->arg;
+    if (((int *)arg)[1] == 30) {
+        e[3] = arg[0];
+    }
+}
 
 
 
@@ -570,7 +670,7 @@ extern unsigned char D_800B49D4;
 
 
 extern int func_80034CD8(int, int);
-extern void func_80065D0C(int, int, char *, int);
+extern int func_80065D0C(int, int, char *, int);
 extern char D_8008EB88[];
 extern char D_8008E98E[];
 

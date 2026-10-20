@@ -412,7 +412,78 @@ void func_80063CFC(void)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006351C", func_80063D78);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006351C", func_800640B8);
+typedef struct {
+    unsigned char b0;
+    unsigned char b1;
+    unsigned char b2;
+    char pad3;
+    char x4[0x19 - 0x4];
+    unsigned char b19;
+    char pad1a[0x28 - 0x1A];
+} Elem0x800640b8;
+typedef struct {
+    char pad0[0x20];
+    MATRIX m;
+    SVECTOR x40;
+    SVECTOR x48;
+    char pad50[0x55 - 0x50];
+    unsigned char b55;
+    char pad56[0x5A - 0x56];
+    short x5A;
+} Unit0x800640b8;
+extern int func_8004A378(void *, void *);
+extern SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+
+int func_800640B8(unsigned char arg)
+{
+    Unit0x800640b8 *u;
+    Elem0x800640b8 *e;
+    Elem0x800640b8 *end;
+    SVECTOR v;
+    SVECTOR *p;
+    int mode;
+
+    end = (Elem0x800640b8 *)WORK->x5FC + 32;
+    mode = WORK->xC50 >> 8;
+    u = (Unit0x800640b8 *)WORK->units;
+    if (u->b55 == 10) {
+        if (mode == 3) {
+            return 0;
+        }
+        if (mode == 6) {
+            return 0;
+        }
+    }
+    for (e = (Elem0x800640b8 *)WORK->x5FC; e < end; e++) {
+        if (!(e->b0 & 1)) {
+            continue;
+        }
+        if (e->b1 != 9) {
+            continue;
+        }
+        if (e->b2 != u->x5A) {
+            continue;
+        }
+        if (e->b0 & 2) {
+            v.vx = 0;
+            v.vy = 0;
+            v.vz = 400;
+            func_80079AA4(&u->x48, &u->m);
+            func_80079704(&u->m, &v, &v);
+            v.vx += u->x40.vx;
+            v.vy += u->x40.vy;
+            v.vz += u->x40.vz;
+            p = &v;
+        } else {
+            p = &u->x40;
+        }
+        if (func_8004A378(p, e->x4) && e->b19 == arg) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 extern int func_8004A378(void *, void *);
 
@@ -454,7 +525,7 @@ extern void func_8001CED4(int);
 extern int func_80034CD8(int, int);
 extern void func_80034D88();
 extern void func_8005AD28();
-extern void func_80065D0C();
+extern int func_80065D0C();
 extern void func_800288AC();
 extern char *D_8008A470[];
 extern int D_800B4F74;
@@ -504,7 +575,7 @@ extern unsigned char D_800B49D4;
 
 
 extern int func_80034CD8(int, int);
-extern void func_80065D0C(int, int, char *, int);
+extern int func_80065D0C(int, int, char *, int);
 extern char D_8008EB88[];
 extern char D_8008E98E[];
 

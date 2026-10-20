@@ -81,7 +81,7 @@ segments:
       - [0x2858, rodata, slus_012_79_2858]  # jtbl jr=0x800592dc sltiu
       - [0x2874, rodata, slus_012_79_2874]
       - [0x288c, rodata, slus_012_79_288c]  # jtbl jr=0x8005b79c sltiu
-      - [0x28a0, rodata, slus_012_79_28a0]  # jtbl jr=0x8005ea5c sltiu
+      - [0x28a0, .rodata, game_8005E518]  # jtbl jr=0x8005ea5c sltiu
       - [0x28bc, rodata, slus_012_79_28bc]
       - [0x28c0, rodata, slus_012_79_28c0]  # jtbl jr=0x8005eb58 sltiu
       - [0x2928, rodata, slus_012_79_2928]  # jtbl jr=0x8005f8d8 sltiu
@@ -127,13 +127,13 @@ segments:
       - [0x3ed0, c, game_8001B6D0]
       - [0x3efc, asm, slus_012_79_3efc]
       - [0x43d0, c, game_8001BBD0]
-      - [0x447c, asm, slus_012_79_447c]
+      - [0x447c, c, game_8001BC7C]
       - [0x4608, c, game_8001BE08]
       - [0x4718, c, game_8001BF18]
       - [0x475c, c, game_8001BF5C]
       - [0x4850, c, game_8001C050]
       - [0x49e4, c, game_8001C1E4]
-      - [0x4a58, asm, slus_012_79_4a58]
+      - [0x4a58, c, game_8001C258]
       - [0x4ab0, c, game_8001C2B0]
       - [0x4c78, c, game_8001C478]
       - [0x4d10, c, game_8001C510]
@@ -142,30 +142,34 @@ segments:
       - [0x4e80, c, game_8001C680]
       - [0x4f2c, c, game_8001C72C]
       - [0x5054, c, game_8001C854]
-      - [0x5418, asm, slus_012_79_5418]
+      - [0x5418, c, game_8001CC18]
       - [0x5474, c, game_8001CC74]
-      - [0x55ac, asm, slus_012_79_55ac]
+      - [0x55ac, c, game_8001CDAC]
       - [0x55e4, c, game_8001CDE4]
       - [0x5618, c, game_8001CE18]
-      - [0x5668, asm, slus_012_79_5668]
+      - [0x5668, c, game_8001CE68]
       - [0x56d4, c, game_8001CED4]
-      - [0x572c, asm, slus_012_79_572c]
+      - [0x572c, c, game_8001CF2C]
+      - [0x5758, c, game_8001CF58]
       - [0x5784, c, game_8001CF84]
       - [0x5828, c, game_8001D028]
       - [0x58c4, c, game_8001D0C4]
       - [0x5934, c, game_8001D134]
-      - [0x5980, asm, slus_012_79_5980]
+      - [0x5980, c, game_8001D180]
+      - [0x59e4, c, game_8001D1E4]
       - [0x5a30, c, game_8001D230]
       - [0x5a8c, c, game_8001D28C]
-      - [0x5ae0, asm, slus_012_79_5ae0]
+      - [0x5ae0, c, game_8001D2E0]
       - [0x5b38, c, game_8001D338]
       - [0x5cac, asm, slus_012_79_5cac]
+      - [0x5fd0, c, game_8001D7D0]
+      - [0x609c, asm, slus_012_79_609c]
       - [0x6100, c, game_8001D900]
       - [0x613c, c, game_8001D93C]
       - [0x6164, c, game_8001D964]
       - [0x61d4, c, game_8001D9D4]
       - [0x61e4, c, game_8001D9E4]
-      - [0x6244, asm, slus_012_79_6244]
+      - [0x6244, c, game_8001DA44]
       - [0x6364, c, game_8001DB64]
       - [0x63fc, asm, slus_012_79_63fc]
       - [0x6b58, c, game_8001E358]
@@ -175,7 +179,7 @@ segments:
       - [0x7098, c, game_8001E898]
       - [0x7144, c, game_8001E944]
       - [0x7254, c, game_8001EA54]
-      - [0x7274, asm, slus_012_79_7274]
+      - [0x7274, c, game_8001EA74]
       - [0x72cc, c, game_8001EACC]
       - [0x7410, c, game_8001EC10]
       - [0x74bc, c, game_8001ECBC]
@@ -186,15 +190,17 @@ segments:
       - [0x7ebc, asm, slus_012_79_7ebc]
       - [0x8100, c, game_8001F900]
       - [0x8190, c, game_8001F990]
-      - [0x81c0, asm, slus_012_79_81c0]
+      - [0x81c0, c, game_8001F9C0]
+      - [0x8270, asm, slus_012_79_8270]
       - [0x835c, c, game_8001FB5C]
       - [0x85f8, c, game_8001FDF8]
       - [0x86a8, c, game_8001FEA8]
       - [0x8778, c, game_8001FF78]
       - [0x882c, c, game_8002002C]
-      - [0x8988, asm, slus_012_79_8988]
+      - [0x8988, c, game_80020188]
       - [0x8a40, c, game_80020240]
-      - [0x8b50, asm, slus_012_79_8b50]
+      - [0x8b50, c, game_80020350]
+      - [0x8c94, c, game_80020494]
       - [0x8dec, c, game_800205EC]
       - [0x8e28, c, game_80020628]
       - [0x8f24, c, game_80020724]
@@ -214,7 +220,7 @@ segments:
       - [0xbd64, c, game_80023564]
       - [0xbf24, c, game_80023724]
       - [0xc0e4, c, game_800238E4]
-      - [0xc190, asm, slus_012_79_c190]
+      - [0xc190, c, game_80023990]
       - [0xc2fc, c, game_80023AFC]
       - [0xc3d0, c, game_80023BD0]
       - [0xc4ec, c, game_80023CEC]
@@ -231,7 +237,7 @@ segments:
       - [0xeed4, c, game_800266D4]
       - [0xeedc, c, game_800266DC]
       - [0xef5c, c, game_8002675C]
-      - [0xefdc, asm, slus_012_79_efdc]
+      - [0xefdc, c, game_800267DC]
       - [0xf154, c, game_80026954]
       - [0xf250, c, game_80026A50]
       - [0xf27c, c, game_80026A7C]
@@ -252,6 +258,8 @@ segments:
       - [0x102d0, c, game_80027AD0]
       - [0x10300, c, game_80027B00]
       - [0x10330, asm, slus_012_79_10330]
+      - [0x105cc, c, game_80027DCC]
+      - [0x106d0, asm, slus_012_79_106d0]
       - [0x110ac, c, game_800288AC]
       - [0x11110, c, game_80028910]
       - [0x111f0, c, game_800289F0]
@@ -265,13 +273,15 @@ segments:
       - [0x11e78, c, game_80029678]
       - [0x11ee4, c, game_800296E4]
       - [0x1200c, c, game_8002980C]
-      - [0x12294, asm, slus_012_79_12294]
+      - [0x12294, c, game_80029A94]
       - [0x122ec, c, game_80029AEC]
       - [0x1234c, c, game_80029B4C]
       - [0x123b0, c, game_80029BB0]
       - [0x12414, asm, slus_012_79_12414]
       - [0x1277c, c, game_80029F7C]
       - [0x127c4, asm, slus_012_79_127c4]
+      - [0x13a28, c, game_8002B228]
+      - [0x13ac8, c, game_8002B2C8]
       - [0x13b50, c, game_8002B350]
       - [0x13b78, c, game_8002B378]
       - [0x13b80, c, game_8002B380]
@@ -280,7 +290,8 @@ segments:
       - [0x13cdc, c, game_8002B4DC]
       - [0x13d60, c, game_8002B560]
       - [0x13e14, c, game_8002B614]
-      - [0x13ed0, asm, slus_012_79_13ed0]
+      - [0x13ed0, c, game_8002B6D0]
+      - [0x13f3c, c, game_8002B73C]
       - [0x13fd8, c, game_8002B7D8]
       - [0x13fe0, c, game_8002B7E0]
       - [0x14000, c, game_8002B800]
@@ -295,7 +306,8 @@ segments:
       - [0x1447c, asm, slus_012_79_1447c]
       - [0x145e4, c, game_8002BDE4]
       - [0x14620, c, game_8002BE20]
-      - [0x1478c, asm, slus_012_79_1478c]
+      - [0x1478c, c, game_8002BF8C]
+      - [0x147d8, c, game_8002BFD8]
       - [0x14824, c, game_8002C024]
       - [0x14974, asm, slus_012_79_14974]
       - [0x14c84, c, game_8002C484]
@@ -304,7 +316,7 @@ segments:
       - [0x14f6c, c, game_8002C76C]
       - [0x1503c, c, game_8002C83C]
       - [0x151b0, c, game_8002C9B0]
-      - [0x15324, asm, slus_012_79_15324]
+      - [0x15324, c, game_8002CB24]
       - [0x153ac, c, game_8002CBAC]
       - [0x153e8, c, game_8002CBE8]
       - [0x1542c, c, game_8002CC2C]
@@ -324,9 +336,10 @@ segments:
       - [0x169d4, c, game_8002E1D4]
       - [0x16a68, asm, slus_012_79_16a68]
       - [0x16c38, c, game_8002E438]
-      - [0x16d4c, asm, slus_012_79_16d4c]
+      - [0x16d4c, c, game_8002E54C]
+      - [0x16da4, c, game_8002E5A4]
       - [0x16e04, c, game_8002E604]
-      - [0x16e50, asm, slus_012_79_16e50]
+      - [0x16e50, c, game_8002E650]
       - [0x16ecc, c, game_8002E6CC]
       - [0x16f14, c, game_8002E714]
       - [0x16f60, c, game_8002E760]
@@ -343,7 +356,7 @@ segments:
       - [0x17b6c, c, game_8002F36C]
       - [0x17b98, c, game_8002F398]
       - [0x17be8, c, game_8002F3E8]
-      - [0x17dc8, asm, slus_012_79_17dc8]
+      - [0x17dc8, c, game_8002F5C8]
       - [0x17e54, c, game_8002F654]
       - [0x18234, c, game_8002FA34]
       - [0x183a8, c, game_8002FBA8]
@@ -359,7 +372,10 @@ segments:
       - [0x1a168, c, game_80031968]
       - [0x1a544, asm, slus_012_79_1a544]
       - [0x1abec, c, game_800323EC]
-      - [0x1ac5c, asm, slus_012_79_1ac5c]
+      - [0x1ac5c, c, game_8003245C]
+      - [0x1ad2c, asm, slus_012_79_1ad2c]
+      - [0x1b068, c, game_80032868]
+      - [0x1b108, asm, slus_012_79_1b108]
       - [0x1c1ac, c, game_800339AC]
       - [0x1c314, c, game_80033B14]
       - [0x1c470, c, game_80033C70]
@@ -372,19 +388,21 @@ segments:
       - [0x1d448, c, game_80034C48]
       - [0x1d4d8, asm, slus_012_79_1d4d8]
       - [0x1d514, c, game_80034D14]
-      - [0x1d560, asm, slus_012_79_1d560]
+      - [0x1d560, c, game_80034D60]
       - [0x1d588, c, game_80034D88]
       - [0x1d624, c, game_80034E24]
       - [0x1d708, asm, slus_012_79_1d708]
       - [0x1dca8, c, game_800354A8]
       - [0x1ddd4, c, game_800355D4]
-      - [0x1de70, asm, slus_012_79_1de70]
+      - [0x1de70, c, game_80035670]
+      - [0x1df44, c, game_80035744]
       - [0x1e014, c, game_80035814]
       - [0x1e100, c, game_80035900]
       - [0x1e1fc, c, game_800359FC]
       - [0x1e288, c, game_80035A88]
       - [0x1e2ac, c, game_80035AAC]
-      - [0x1e3a0, asm, slus_012_79_1e3a0]
+      - [0x1e3a0, c, game_80035BA0]
+      - [0x1e4a8, asm, slus_012_79_1e4a8]
       - [0x1f694, c, game_80036E94]
       - [0x1f868, c, game_80037068]
       - [0x1f9a0, c, game_800371A0]
@@ -404,6 +422,7 @@ segments:
       - [0x2a0dc, c, game_800418DC]
       - [0x2e07c, c, game_8004587C]
       - [0x2e0f0, c, game_800458F0]
+      - [0x32994, c, game_8004A194]
       - [0x32a40, c, game_8004A240]
       - [0x32ac4, c, game_8004A2C4]
       - [0x32cd4, c, game_8004A4D4]
@@ -436,59 +455,67 @@ segments:
       - [0x4eab8, c, game_800662B8]
       - [0x5348c, c, game_8006AC8C]
       - [0x5379c, c, game_8006AF9C]
+      - [0x56c50, c, game_8006E450]
       - [0x56d14, asm, slus_012_79_56d14]  # lib-object psyq470 LIBSND.LIB/UT_ROFF.OBJ; lib-object psyq470 LIBSPU.LIB/S_I.OBJ
       - [0x56d34, asm, slus_012_79_56d34]  # lib-object psyq470 LIBSPU.LIB/S_INI.OBJ
       - [0x56e94, asm, slus_012_79_56e94]  # lib-object psyq470 LIBSPU.LIB/SPU.OBJ
-      - [0x579d4, asm, slus_012_79_579d4]
+      - [0x579d4, asm, slus_012_79_579d4]  # lib-object psyq470 low=1 psyq_objects.tsv:14 LIBSPU.LIB/S_DCB.OBJ
+      - [0x57a04, asm, slus_012_79_57a04]  # lib-object psyq470 low=1 psyq_objects.tsv:15 LIBSPU.LIB/S_SNV.OBJ
       - [0x57a34, asm, slus_012_79_57a34]  # lib-object psyq470 LIBSPU.LIB/S_SAV.OBJ
       - [0x57cf4, asm, slus_012_79_57cf4]  # lib-object psyq470 LIBSPU.LIB/S_SR.OBJ
       - [0x57de4, asm, slus_012_79_57de4]  # lib-object psyq470 LIBSPU.LIB/S_M_UTIL.OBJ
       - [0x57ef4, asm, slus_012_79_57ef4]  # lib-object psyq470 LIBSPU.LIB/S_SRMP.OBJ
       - [0x583d4, asm, slus_012_79_583d4]  # lib-object psyq470 LIBSPU.LIB/S_SRA.OBJ
       - [0x588a4, asm, slus_012_79_588a4]  # lib-object psyq470 LIBSPU.LIB/S_RRWA.OBJ
-      - [0x588f4, asm, slus_012_79_588f4]
+      - [0x588f4, asm, slus_012_79_588f4]  # lib-object psyq470 low=1 psyq_objects.tsv:22 LIBSPU.LIB/S_SRV.OBJ
       - [0x58924, asm, slus_012_79_58924]  # lib-object psyq470 LIBSPU.LIB/S_CRWA.OBJ
       - [0x58ac4, asm, slus_012_79_58ac4]  # lib-object psyq470 LIBSPU.LIB/S_SK.OBJ
       - [0x58c84, asm, slus_012_79_58c84]  # lib-object psyq470 LIBSPU.LIB/S_STSA.OBJ
       - [0x58ce4, asm, slus_012_79_58ce4]  # lib-object psyq470 LIBSPU.LIB/S_STM.OBJ
       - [0x58d14, asm, slus_012_79_58d14]  # lib-object psyq470 LIBSPU.LIB/S_WP.OBJ
       - [0x58da4, asm, slus_012_79_58da4]  # lib-object psyq470 LIBSPU.LIB/S_ITC.OBJ
-      - [0x58e54, asm, slus_012_79_58e54]
+      - [0x58e54, asm, slus_012_79_58e54]  # lib-object psyq470 low=1 psyq_objects.tsv:29 LIBSPU.LIB/S_STC.OBJ
       - [0x58e84, asm, slus_012_79_58e84]  # lib-object psyq470 LIBSPU.LIB/SR_GAKS.OBJ
       - [0x58fe4, asm, slus_012_79_58fe4]  # lib-object psyq470 LIBSPU.LIB/S_SVV.OBJ
       - [0x59064, asm, slus_012_79_59064]  # lib-object psyq470 LIBSPU.LIB/S_SVP.OBJ
       - [0x590d4, asm, slus_012_79_590d4]  # lib-object psyq470 LIBSPU.LIB/S_SVA.OBJ
       - [0x596d4, asm, slus_012_79_596d4]  # lib-object psyq470 LIBSPU.LIB/S_N2P.OBJ
       - [0x598d4, asm, slus_012_79_598d4]  # lib-object psyq470 LIBSPU.LIB/S_SCA.OBJ
-      - [0x59c54, asm, slus_012_79_59c54]
+      - [0x59c54, asm, slus_012_79_59c54]  # lib-object psyq470 low=1 psyq_objects.tsv:36 LIBSPU.LIB/S_SRMD.OBJ
       - [0x59c84, asm, slus_012_79_59c84]  # lib-object psyq470 LIBETC.LIB/VSYNC.OBJ
       - [0x59e94, asm, slus_012_79_59e94]  # lib-object psyq470 LIBETC.LIB/INTR.OBJ
       - [0x5a554, asm, slus_012_79_5a554]  # lib-object psyq470 LIBETC.LIB/INTR_VB.OBJ
       - [0x5a674, asm, slus_012_79_5a674]  # lib-object psyq470 LIBETC.LIB/INTR_DMA.OBJ
       - [0x5a914, asm, slus_012_79_5a914]  # lib-object psyq470 LIBCD.LIB/CDROM.OBJ
       - [0x5a944, asm, slus_012_79_5a944]  # lib-object psyq470 LIBCD.LIB/C_002.OBJ
-      - [0x5a9a4, asm, slus_012_79_5a9a4]
+      - [0x5a9a4, asm, slus_012_79_5a9a4]  # lib-object psyq470 low=1 psyq_objects.tsv:43 LIBCD.LIB/C_003.OBJ
       - [0x5aa24, asm, slus_012_79_5aa24]  # lib-object psyq470 LIBCD.LIB/C_005.OBJ
       - [0x5aab4, asm, slus_012_79_5aab4]  # lib-object psyq470 LIBCD.LIB/C_007.OBJ
       - [0x5ab64, asm, slus_012_79_5ab64]  # lib-object psyq470 LIBCD.LIB/C_008.OBJ
       - [0x5aba4, asm, slus_012_79_5aba4]  # lib-object psyq470 LIBCD.LIB/C_009.OBJ
-      - [0x5ac64, asm, slus_012_79_5ac64]
+      - [0x5ac64, asm, slus_012_79_5ac64]  # lib-object psyq470 low=1 psyq_objects.tsv:48 LIBCD.LIB/C_010.OBJ
       - [0x5ac84, asm, slus_012_79_5ac84]  # lib-object psyq470 LIBCD.LIB/C_011.OBJ
       - [0x5b774, asm, slus_012_79_5b774]  # lib-object psyq470 LIBCD.LIB/C_004.OBJ
       - [0x5b864, asm, slus_012_79_5b864]  # lib-object psyq470 LIBCD.LIB/SYS.OBJ; lib-object psyq470 LIBDS.LIB/D3_006.OBJ
       - [0x5b8e4, asm, slus_012_79_5b8e4]  # lib-object psyq470 LIBCD.LIB/BIOS_1.OBJ
       - [0x5ce64, asm, slus_012_79_5ce64]  # lib-object psyq470 LIBCD.LIB/S_002.OBJ; lib-object psyq470 LIBDS.LIB/D3_005.OBJ
-      - [0x5cf74, asm, slus_012_79_5cf74]
+      - [0x5cf74, asm, slus_012_79_5cf74]  # lib-object psyq470 low=1 psyq_objects.tsv:57 LIBC2.LIB/ATOI_1.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:58 LIBCD.LIB/S_008.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:59 LIBCD.LIB/S_012.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:60 LIBCD.LIB/S_013.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:61 LIBCD.LIB/S_024.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:62 LIBDS.LIB/D2_001.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:63 LIBDS.LIB/D2_003.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:64 LIBDS.LIB/D3_004.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:65 LIBETC.LIB/PADSTOP.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:66 LIBGS.LIB/GS_106.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:67 LIBSND.LIB/SSNOFF.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:68 LIBSND.LIB/SSQUIT.OBJ
+      - [0x5cf94, asm, slus_012_79_5cf94]  # lib-object psyq470 low=1 psyq_objects.tsv:69 LIBCD.LIB/CDR_2.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:70 LIBCD.LIB/CDR_3.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:71 LIBCD.LIB/S_009.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:72 LIBCD.LIB/S_014.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:73 LIBCD.LIB/S_015.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:74 LIBDS.LIB/D3_007.OBJ
+      - [0x5cfb4, asm, slus_012_79_5cfb4]  # lib-object psyq470 low=1 psyq_objects.tsv:79 LIBCD.LIB/S_023.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:80 LIBDS.LIB/DSCB_4.OBJ
       - [0x5cfe4, asm, slus_012_79_5cfe4]  # lib-object psyq470 LIBDS.LIB/DSSYS_2.OBJ
       - [0x5e3d4, asm, slus_012_79_5e3d4]  # lib-object psyq470 LIBDS.LIB/DSSYS_1.OBJ
+      - [0x5e658, asm, slus_012_79_5e658]  # lib-object psyq470 low=1 psyq_objects.tsv:83 LIBCD.LIB/S_003.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:84 LIBCD.LIB/S_004.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:85 LIBCD.LIB/S_005.OBJ
+      - [0x5e668, asm, slus_012_79_5e668]
       - [0x5f514, asm, slus_012_79_5f514]  # lib-object psyq470 LIBCD.LIB/S_020.OBJ; lib-object psyq470 LIBDS.LIB/DSSYS_3.OBJ
       - [0x5f534, asm, slus_012_79_5f534]  # lib-object psyq470 LIBDS.LIB/DSREAD.OBJ
       - [0x5fa44, asm, slus_012_79_5fa44]  # lib-object psyq470 LIBDS.LIB/DSREAD2.OBJ
       - [0x5fb44, asm, slus_012_79_5fb44]  # lib-object psyq470 LIBDS.LIB/DSFILE.OBJ
       - [0x604a4, asm, slus_012_79_604a4]  # lib-object psyq470 LIBDS.LIB/DSREADY.OBJ
-      - [0x60a44, asm, slus_012_79_60a44]
+      - [0x60a44, asm, slus_012_79_60a44]  # lib-object psyq470 low=1 psyq_objects.tsv:92 LIBDS.LIB/D1_001.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:93 LIBDS.LIB/D1_002.OBJ
+      - [0x60a74, asm, slus_012_79_60a74]
       - [0x60aa4, asm, slus_012_79_60aa4]  # lib-object psyq470 LIBDS.LIB/D2_002.OBJ; lib-object psyq470 LIBDS.LIB/D2_004.OBJ
       - [0x60ac4, asm, slus_012_79_60ac4]
+      - [0x60ae4, asm, slus_012_79_60ae4]  # lib-object psyq470 low=1 psyq_objects.tsv:96 LIBDS.LIB/D2_005.OBJ
       - [0x60b24, asm, slus_012_79_60b24]  # lib-object psyq470 LIBDS.LIB/D2_006.OBJ
       - [0x60b74, asm, slus_012_79_60b74]  # lib-object psyq470 LIBCD.LIB/S_021.OBJ; lib-object psyq470 LIBCD.LIB/S_022.OBJ; lib-object psyq470 LIBDS.LIB/D3_002.OBJ; lib-object psyq470 LIBDS.LIB/D3_003.OBJ
       - [0x60b94, asm, slus_012_79_60b94]  # lib-object psyq470 LIBCD.LIB/BIOS_2.OBJ
@@ -498,7 +525,8 @@ segments:
       - [0x60eb4, c, game_800786B4]
       - [0x60f34, asm, slus_012_79_60f34]
       - [0x60f54, asm, slus_012_79_60f54]  # lib-object psyq470 LIBDS.LIB/D3_008.OBJ
-      - [0x60fb4, asm, slus_012_79_60fb4]
+      - [0x60fb4, asm, slus_012_79_60fb4]  # lib-object psyq470 low=1 psyq_objects.tsv:106 LIBDS.LIB/DSCB_1.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:107 LIBDS.LIB/DSCB_2.OBJ; lib-object psyq470 low=1 psyq_objects.tsv:108 LIBDS.LIB/DSCB_3.OBJ
+      - [0x60fd4, asm, slus_012_79_60fd4]
       - [0x61044, asm, slus_012_79_61044]  # lib-object psyq470 LIBGTE.LIB/GEO_00.OBJ
       - [0x61114, asm, slus_012_79_61114]  # lib-object psyq470 LIBGTE.LIB/GEO_01.OBJ
       - [0x611b4, asm, slus_012_79_611b4]  # lib-object psyq470 LIBGTE.LIB/COR_02.OBJ
@@ -517,9 +545,10 @@ segments:
       - [0x61f64, asm, slus_012_79_61f64]  # lib-object psyq470 LIBGTE.LIB/MTX_08.OBJ
       - [0x620a4, asm, slus_012_79_620a4]  # lib-object psyq470 LIBGTE.LIB/MTX_09.OBJ
       - [0x620d4, asm, slus_012_79_620d4]  # lib-object psyq470 LIBGTE.LIB/MTX_12.OBJ
-      - [0x620f4, asm, slus_012_79_620f4]
+      - [0x620f4, asm, slus_012_79_620f4]  # lib-object psyq470 low=1 psyq_objects.tsv:127 LIBGTE.LIB/REG09.OBJ
       - [0x62104, asm, slus_012_79_62104]  # lib-object psyq470 LIBGTE.LIB/REG10.OBJ
-      - [0x62124, asm, slus_012_79_62124]
+      - [0x62124, asm, slus_012_79_62124]  # lib-object psyq470 low=1 psyq_objects.tsv:129 LIBGTE.LIB/REG12.OBJ
+      - [0x62144, asm, slus_012_79_62144]  # lib-object psyq470 low=1 psyq_objects.tsv:130 LIBGTE.LIB/REG13.OBJ
       - [0x62154, asm, slus_012_79_62154]  # lib-object psyq470 LIBGTE.LIB/SMP_02.OBJ
       - [0x62184, asm, slus_012_79_62184]  # lib-object psyq470 LIBGTE.LIB/SMP_03.OBJ
       - [0x621e4, asm, slus_012_79_621e4]  # lib-object psyq470 LIBGTE.LIB/CMB_00.OBJ
@@ -539,22 +568,26 @@ segments:
       - [0x637a4, asm, slus_012_79_637a4]
       - [0x63804, asm, slus_012_79_63804]  # lib-object psyq470 LIBGPU.LIB/SYS.OBJ
       - [0x66704, asm, slus_012_79_66704]
+      - [0x66718, c, game_8007DF18]
+      - [0x66728, asm, slus_012_79_66728]
       - [0x66734, asm, slus_012_79_66734]  # lib-object psyq470 LIBGPU.LIB/E03.OBJ
       - [0x667f4, asm, slus_012_79_667f4]  # lib-object psyq470 LIBGPU.LIB/E04.OBJ
       - [0x66834, asm, slus_012_79_66834]  # lib-object psyq470 LIBGPU.LIB/P00.OBJ
       - [0x66874, asm, slus_012_79_66874]  # lib-object psyq470 LIBGPU.LIB/P06.OBJ
       - [0x668b4, asm, slus_012_79_668b4]  # lib-object psyq470 LIBGPU.LIB/P07.OBJ
-      - [0x668f4, asm, slus_012_79_668f4]
+      - [0x668f4, c, game_8007E0F4]
+      - [0x66908, asm, slus_012_79_66908]
+      - [0x66914, asm, slus_012_79_66914]  # lib-object psyq470 low=1 psyq_objects.tsv:157 LIBGPU.LIB/P26.OBJ
       - [0x66934, asm, slus_012_79_66934]  # lib-object psyq470 LIBGPU.LIB/P34.OBJ
       - [0x66994, asm, slus_012_79_66994]  # lib-object psyq470 LIBGPU.LIB/P41.OBJ
-      - [0x66a34, asm, slus_012_79_66a34]
+      - [0x66a34, asm, slus_012_79_66a34]  # lib-object psyq470 low=1 psyq_objects.tsv:161 LIBMCRD.LIB/INIT.OBJ
       - [0x66a84, asm, slus_012_79_66a84]  # lib-object psyq470 LIBAPI.LIB/C112.OBJ; lib-object psyq470 LIBCARD.LIB/C112.OBJ
       - [0x66a94, asm, slus_012_79_66a94]  # lib-object psyq470 LIBCARD.LIB/INIT.OBJ
       - [0x66b94, asm, slus_012_79_66b94]  # lib-object psyq470 LIBCARD.LIB/A74.OBJ
       - [0x66ba4, asm, slus_012_79_66ba4]  # lib-object psyq470 LIBCARD.LIB/A75.OBJ
       - [0x66bb4, asm, slus_012_79_66bb4]  # lib-object psyq470 LIBCARD.LIB/A76.OBJ
       - [0x66bc4, asm, slus_012_79_66bc4]  # lib-object psyq470 LIBCARD.LIB/PATCH.OBJ
-      - [0x66de4, asm, slus_012_79_66de4]
+      - [0x66de4, asm, slus_012_79_66de4]  # lib-object psyq470 low=1 psyq_objects.tsv:169 LIBCARD.LIB/END.OBJ
       - [0x66e64, asm, slus_012_79_66e64]  # lib-object psyq470 LIBMCRD.LIB/LIBMCRD.OBJ
       - [0x68734, asm, slus_012_79_68734]  # lib-object psyq470 LIBCARD.LIB/C171.OBJ
       - [0x68744, asm, slus_012_79_68744]  # lib-object psyq470 LIBCARD.LIB/C172.OBJ
@@ -568,7 +601,7 @@ segments:
       - [0x69a14, asm, slus_012_79_69a14]  # lib-object psyq470 LIBAPI.LIB/C57.OBJ
       - [0x69a24, asm, slus_012_79_69a24]  # lib-object psyq470 LIBAPI.LIB/C68.OBJ
       - [0x69a34, asm, slus_012_79_69a34]  # lib-object psyq470 LIBAPI.LIB/C73.OBJ
-      - [0x69a44, asm, slus_012_79_69a44]
+      - [0x69a44, asm, slus_012_79_69a44]  # lib-object psyq470 low=1 psyq_objects.tsv:183 LIBAPI.LIB/C114.OBJ
       - [0x69a64, asm, slus_012_79_69a64]  # lib-object psyq470 LIBAPI.LIB/A07.OBJ
       - [0x69a74, asm, slus_012_79_69a74]  # lib-object psyq470 LIBAPI.LIB/A08.OBJ
       - [0x69a84, asm, slus_012_79_69a84]  # lib-object psyq470 LIBAPI.LIB/A09.OBJ
@@ -581,7 +614,8 @@ segments:
       - [0x69af4, asm, slus_012_79_69af4]  # lib-object psyq470 LIBAPI.LIB/A23.OBJ
       - [0x69b04, asm, slus_012_79_69b04]  # lib-object psyq470 LIBAPI.LIB/A24.OBJ
       - [0x69b14, asm, slus_012_79_69b14]  # lib-object psyq470 LIBAPI.LIB/A25.OBJ
-      - [0x69b24, asm, slus_012_79_69b24]
+      - [0x69b24, asm, slus_012_79_69b24]  # lib-object psyq470 low=1 psyq_objects.tsv:196 LIBAPI.LIB/A36.OBJ
+      - [0x69b34, asm, slus_012_79_69b34]  # lib-object psyq470 low=1 psyq_objects.tsv:197 LIBAPI.LIB/A37.OBJ
       - [0x69b44, asm, slus_012_79_69b44]  # lib-object psyq470 LIBAPI.LIB/A50.OBJ
       - [0x69b54, asm, slus_012_79_69b54]  # lib-object psyq470 LIBAPI.LIB/A51.OBJ
       - [0x69b64, asm, slus_012_79_69b64]  # lib-object psyq470 LIBAPI.LIB/A52.OBJ
@@ -603,7 +637,7 @@ segments:
       - [0x6a2d4, asm, slus_012_79_6a2d4]  # lib-object psyq470 LIBAPI.LIB/PATCH.OBJ
       - [0x6a374, asm, slus_012_79_6a374]  # lib-object psyq470 LIBAPI.LIB/CHCLRPAD.OBJ
       - [0x6a3e4, asm, slus_012_79_6a3e4]  # lib-object psyq470 LIBC.LIB/A56.OBJ; lib-object psyq470 LIBC2.LIB/EXIT.OBJ
-      - [0x6a3f4, asm, slus_012_79_6a3f4]
+      - [0x6a3f4, asm, slus_012_79_6a3f4]  # lib-object psyq470 low=1 psyq_objects.tsv:221 LIBC.LIB/A63.OBJ
       - [0x6a414, asm, slus_012_79_6a414]  # lib-object psyq470 LIBC.LIB/C19.OBJ
       - [0x6a424, asm, slus_012_79_6a424]  # lib-object psyq470 LIBC.LIB/C21.OBJ
       - [0x6a434, asm, slus_012_79_6a434]  # lib-object psyq470 LIBC.LIB/C23.OBJ

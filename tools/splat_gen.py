@@ -12,6 +12,9 @@ for its header pc0 and the startup $gp immediates.
 Cuts: edges = {0, size} + every boundaries start/end as file offset (+ 0x800 for the exe header).
 C units (c_units.tsv): each start is a further cut; [start, next cut) -> `c` named <unit> (T6). Optional 5th
 column `end` (hex, exclusive; T3, Phase 1.6): a closing cut, [start, end) -> `c`, [end, …) reverts to `asm`.
+Optional 6th column `rodata` (T27, Phase 1.8): comma list of jtbl starts the unit owns -> `[off, .rodata, <unit>]`
+(splat migrates each table into its INCLUDE_ASM fn's .s; a C body's cc1 emits it into the unit's .rodata). Gen error:
+a start not a jtbl row of the binary, listed by 2 units, or a unit's tables not one contiguous run.
 Types: jtbl -> rodata; [text_start, text_end) -> asm; [base, text_start) -> rodata; after -> data.
 text_start: exe = pc0; overlay = max jtbl end (base if none), moved to the first `addiu $sp,$sp,-N` when the
 words before it hold a MIPS II+ encoding (data head, head_end).
@@ -82,9 +85,10 @@ def boundaries():
 
 def c_units():
     by = {}
-    for r in read_tsv(C_UNITS, ("alias", "start", "unit", "notes", "end")):
+    for r in read_tsv(C_UNITS, ("alias", "start", "unit", "notes", "end", "rodata")):
         r["start"] = int(r["start"], 16)
         r["end"] = int(r["end"], 16) if r.get("end") else None
+        r["rodata"] = [int(x, 16) for x in r.get("rodata", "").split(",") if x]
         by.setdefault(r["alias"], []).append(r)
     return by
 
@@ -177,8 +181,19 @@ def plan(row, rows_b, errs, units=()):
         edges.add(off_of(row, r["start"]))
         edges.add(off_of(row, r["end"]))
     edges.add(off_of(row, text_start))
-    cu = {}
+    cu, ro = {}, {}
+    jts = {r["start"]: r for r in jt}
     for u in units:
+        for s in u["rodata"]:
+            if s not in jts:
+                errs.append(f"{row['path']}: c unit {u['unit']} rodata 0x{s:08x} not a jtbl start")
+            elif s in ro:
+                errs.append(f"{row['path']}: jtbl 0x{s:08x} listed by {ro[s]} and {u['unit']}")
+            else:
+                ro[s] = u["unit"]
+        run = sorted(s for s in u["rodata"] if s in jts)
+        if any(jts[a]["end"] != b for a, b in zip(run, run[1:])):
+            errs.append(f"{row['path']}: c unit {u['unit']} rodata not one contiguous run")
         if not text_start <= u["start"] < text_end or any(
                 r["kind"] == "lib-object" and r["start"] <= u["start"] < r["end"] for r in rows_b):
             errs.append(f"{row['path']}: c unit {u['unit']} 0x{u['start']:08x} not in game text")
@@ -211,6 +226,9 @@ def plan(row, rows_b, errs, units=()):
             continue
         if s in cu:
             subs.append((s, "c", cu[s], notes))
+            continue
+        if addr in ro:
+            subs.append((s, ".rodata", ro[addr], notes))
             continue
         if any(r["start"] <= addr and addr + (e - s) <= r["end"] for r in jt):
             t = "rodata"
@@ -302,7 +320,7 @@ def write(args):
     print(f"wrote {len(files) // 2} yaml + {len(files) // 2} sha under {out}")
 
 
-SUB = re.compile(r"^      - \[0x([0-9a-f]+), (\w+), (\w+)\]")
+SUB = re.compile(r"^      - \[0x([0-9a-f]+), (\.?\w+), (\w+)\]")
 TOP = re.compile(r"^  - \[0x([0-9a-f]+)(?:, (\w+), (\w+))?\]")
 
 
@@ -397,6 +415,9 @@ def check(args):
         for p in pieces:
             if p[1] == "c" and not any(p[0] == off_of(row, u["start"]) and p[2] == u["unit"] for u in units):
                 bad["c_unit"].append(f"{a}:{p[2]} no row")
+        ro = {(off_of(row, s), u["unit"]) for u in units for s in u["rodata"]}
+        if {(p[0], p[2]) for p in pieces if p[1] == ".rodata"} != ro:
+            bad["c_unit"].append(f"{a}:.rodata pieces != c_units rodata")
         cuts = set(starts) | {end}
         for r in by.get(row["path"], []):
             for x in (r["start"], r["end"]):

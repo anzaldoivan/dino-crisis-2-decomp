@@ -46,7 +46,7 @@ void func_80048048(void *, void *, int, int, int, int);
 void func_8004A240(void *, void *, SVECTOR *);
 int func_8004A32C(void);
 void func_800649A8(int, int, int);
-void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007AA34(SVECTOR *, MATRIX *);
 
 
@@ -603,7 +603,44 @@ void func_80043714(Obj0x80043714 *obj, short *out)
     out[2] = e[obj->idx].v[2];
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_800437F8);
+typedef struct Attr0x800437f8 {
+    int mask;
+    int x4;
+    short x8;
+    short xA;
+    char padC[0x18 - 0xC];
+} Attr0x800437f8;
+extern struct Obj0x80043d94 D_800B32F0;
+void func_80018020(void *, int);
+extern void func_8006E514();
+extern void func_80070654(int a);
+extern void func_8006F6F4(Attr0x800437f8 *a);
+extern void func_8006F4F4(int a);
+extern int func_80071484(int arg0);
+extern void func_800700A4(int a);
+extern void func_80070124(int a);
+extern void func_8006F204(int a, int b);
+extern void func_80043BF8();
+
+void func_800437F8(void)
+{
+    Attr0x800437f8 attr;
+
+    func_80018020(&D_800B32F0, 0x1F);
+    func_8006E514();
+    attr.mask = 7;
+    attr.x4 = 0;
+    attr.x8 = 0;
+    attr.xA = 0;
+    func_80070654(0);
+    func_8006F6F4(&attr);
+    func_8006F4F4(0);
+    func_80071484(0x1E);
+    func_800700A4(1);
+    func_80070124(7);
+    func_8006F204(0, 0xFFFFFF);
+    func_80043BF8();
+}
 
 typedef struct Obj0x80043884 {
     char pad0[8];
@@ -721,7 +758,40 @@ void func_80043A2C(void) {
     func_80070124(7);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80043A7C);
+typedef struct Obj0x80043a7c {
+    char pad0[8];
+    short x8;
+    signed char xA;
+    char padB;
+    unsigned char xC;
+} Obj0x80043a7c;
+extern struct Obj0x80043d94 D_800B32F0;
+extern void func_8006F6F4(Attr0x800437f8 *a);
+extern void func_8006F4F4(int a);
+extern void func_800700A4(int a);
+extern void func_80070124(int a);
+extern void func_80071454(int, int);
+
+void func_80043A7C(void)
+{
+    Obj0x80043a7c *o = (Obj0x80043a7c *)&D_800B32F0;
+    Attr0x800437f8 attr;
+
+    func_800700A4(1);
+    func_80070124(o->xA);
+    attr.mask = 7;
+    attr.x4 = o->xA;
+    attr.x8 = attr.xA = o->x8;
+    func_8006F6F4(&attr);
+    func_80071454(o->x8, o->x8);
+    if (o->xA == 0) {
+        o->xC &= ~2;
+        func_8006F4F4(0);
+    } else {
+        o->xC |= 2;
+        func_8006F4F4(1);
+    }
+}
 
 extern void func_80045C18(int arg0);
 
@@ -760,7 +830,20 @@ void func_80043B60(void)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80043BF8);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80043C8C);
+typedef struct Obj0x80043c8c {
+    unsigned char pad0[0xC];
+    unsigned char flagsC;
+} Obj0x80043c8c;
+extern struct Obj0x80043d94 D_800B32F0;
+
+void func_80043C8C(int on)
+{
+    if (on != 0) {
+        ((Obj0x80043c8c *)&D_800B32F0)->flagsC |= 1;
+    } else {
+        ((Obj0x80043c8c *)&D_800B32F0)->flagsC &= ~1;
+    }
+}
 
 typedef struct Obj0x80043d94 {
     unsigned char pad0[0xF];
@@ -805,7 +888,28 @@ void func_80043D94(int dir)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80043E1C);
+typedef Sub0x80066a8c Vol0x80043e1c;
+extern unsigned char D_800B32FC;
+extern void func_80076D14(Vol0x80043e1c *);
+
+void func_80043E1C(unsigned int a0)
+{
+    Vol0x80043e1c v;
+
+    if (D_800B32FC & 1) {
+        v.x0 = a0;
+        v.x1 = 0;
+        v.x2 = a0;
+        v.x3 = 0;
+    } else {
+        unsigned int h = a0 >> 1;
+        v.x0 = h;
+        v.x1 = h;
+        v.x2 = h;
+        v.x3 = h;
+    }
+    func_80076D14(&v);
+}
 
 typedef struct Src0x80043e74 {
     unsigned char b0;
@@ -915,7 +1019,29 @@ void func_80044078(void *obj, int vol, int *outL, int *outR, int dist)
     func_80043F54(pan, dist, outL, outR);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_800441A0);
+extern signed char D_800B32D8[];
+extern signed char D_800B32FB;
+
+int func_800441A0(int arg0, int arg1)
+{
+    int best;
+    int min;
+    int i;
+
+    best = 0;
+    min = 0x7FFF;
+    for (i = D_800B32FB; i < 0x18; i++) {
+        if (D_800B32D8[i] == -1) {
+            best = i;
+            break;
+        }
+        if (D_800B32D8[i] < min) {
+            min = D_800B32D8[i];
+            best = i;
+        }
+    }
+    return (signed char)best;
+}
 
 extern signed char D_800B32D8[];
 
@@ -1245,7 +1371,16 @@ void func_80044834(void *arg0, int arg1)
     } while (--rec.b6 != -1);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80044A88);
+extern Voice0x800444f0 D_800B2BC0[];
+
+void func_80044A88(unsigned short ch, unsigned char b, short h, unsigned char a)
+{
+    Voice0x800444f0 *v = &D_800B2BC0[ch];
+
+    v->x1C = a;
+    v->x1D = b;
+    v->x20 = h;
+}
 
 typedef struct Sys0x80044ab4 {
     unsigned char pad0[0xB];
@@ -1253,7 +1388,7 @@ typedef struct Sys0x80044ab4 {
     unsigned char padC[0x1C - 0xC];
     int x1C;
 } Sys0x80044ab4;
-extern void func_80044A88(int, int, int, int);
+extern void func_80044A88(unsigned short, unsigned char, short, unsigned char);
 extern void func_800700F4();
 
 void func_80044AB4(int arg0)
@@ -1332,7 +1467,7 @@ typedef struct Obj0x8004526c {
 extern struct Ent0x80045638 D_800B2F28[];
 extern void func_80070684(int, int, unsigned char *);
 extern void func_80045B8C();
-extern void func_80044A88(int, int, int, int);
+extern void func_80044A88(unsigned short, unsigned char, short, unsigned char);
 
 void func_8004526C(void)
 {
@@ -1473,7 +1608,7 @@ extern Ent0x80045638 D_800B2F28[];
 extern Src0x80045638 *func_80064998();
 extern unsigned short *func_800458F0(int a, int b);
 extern void func_80045B8C();
-extern void func_80044A88(int, int, int, int);
+extern void func_80044A88(unsigned short, unsigned char, short, unsigned char);
 
 void func_80045638(void)
 {
@@ -1505,10 +1640,36 @@ void func_80045638(void)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_8004579C);
+extern struct Obj0x80043d94 D_800B32F0;
+typedef struct Obj0x8004579c {
+    char pad0[0xB];
+    signed char xB;
+} Obj0x8004579c;
+extern void func_80044A88(unsigned short, unsigned char, short, unsigned char);
+extern void func_80045B8C();
+
+void func_8004579C(void)
+{
+    Obj0x8004579c *o = (Obj0x8004579c *)&D_800B32F0;
+    unsigned short i;
+    int t;
+
+    for (i = 0; i < 4; i++) {
+        func_80045B8C(i, 4, 0, 0x80);
+    }
+    t = o->xB;
+    i = t;
+    while (1) {
+        if (i >= 24) {
+            break;
+        }
+        func_80044A88(i, 4, 0, 0x80);
+        i++;
+    }
+}
 
 extern signed char D_800B32FB;
-extern void func_80044A88(int, int, int, int);
+extern void func_80044A88(unsigned short, unsigned char, short, unsigned char);
 
 void func_80045824(void)
 {

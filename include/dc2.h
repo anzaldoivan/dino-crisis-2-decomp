@@ -43,11 +43,32 @@ typedef struct {
     unsigned char pad1c[0x28 - 0x1C];
 } Elem28;
 
+/* slus_012_79 D_800ABA08[4] (func_8001CC74, func_8001CDAC, func_8001CF2C, func_8001CF58; T10 w40, was local to game_8001CC74.c). */
+typedef struct {
+    unsigned int f0;
+    int f4;
+    int f8;
+    int fC;
+    int f10;
+    int f14;
+} Obj0x8001cc74;
+
+/* slus_012_79 WORK->x5E4 record, stride 0x2C (func_80060460, func_80060E18; T10 w40, was local to game_8005EDA0.c). */
+typedef struct Rec0x80060460 {
+    char pad0[4];
+    unsigned char x4;
+    unsigned char x5;
+    unsigned char x6;
+    char pad7[0x2C - 0x7];
+} Rec0x80060460;
+
 /* slus_012_79 D_800B53A8 (func_80065004 and the 8003DD34/800458F0/8004B8E8 units). */
 typedef struct {
     unsigned char pad0[2];
     unsigned char unk2;
-    unsigned char pad3[0xC];
+    unsigned char pad3[0xC - 0x3]; /* was pad3[0xC] */
+    unsigned short x0C;         /* func_80064DCC (T10 w40) */
+    char padE[0xF - 0xE];
     unsigned char unkF;
     unsigned char b10;          /* func_80065F24 (T8 w06) */
     unsigned char b11;          /* func_80065F24 (T8 w06) */
@@ -135,7 +156,8 @@ typedef struct {
     short x1C8;                 /* func_8006AC8C (T8 w07) */
     char pad1ca[0x1D8 - 0x1CA]; /* was pad1ca[0x1E8 - 0x1CA] */
     void *x1D8;                 /* func_80048FF0 (T8 w34) */
-    char pad1dc[0x1E8 - 0x1DC];
+    int x1DC;                   /* func_8004920C (T10 w40); was pad1dc[0x1E8 - 0x1DC] */
+    char pad1e0[0x1E8 - 0x1E0];
     short x1E8;                 /* func_80048F60: sh zero,0x1E8 of WORK->units */
     char pad1ea[0x260 - 0x1EA];
 } Unit;
@@ -146,7 +168,7 @@ typedef struct {
     unsigned char b1;           /* func_800544FC: lbu 1, indexes D_80019770 */
     char pad2[6];
     short x8;                   /* func_800523EC: lh 8 (T8 w07) */
-    char padA[2];
+    short xA;                   /* func_80051D58 (T10 w40); was padA[2] */
 } Rec12;
 
 /* Work+0x6EC four-byte record (func_80030670, T8 w31). */
@@ -214,7 +236,7 @@ typedef struct {
     void (*x4CC)(void *);       /* func_80039B7C: lw 0x4CC, jalr with a0 = obj */
     void (*x4D0)(void);         /* func_8004B4C8: lw 0x4D0, jalr, no args */
     char pad4d4[0x4D8 - 0x4D4]; /* was pad4d4[0x4DC - 0x4D4] */
-    char x4D8[4];               /* func_8002F654: address passed to func_80018020 */
+    char x4D8[4];               /* func_8002F654: address passed to func_80018020; word view *(T **)WORK->x4D8 (func_8002B560, func_80047960 T10 w40) */
     struct Shot *x4DC;          /* func_8003EB20: lw 0x4DC, 12 elements stride 0x70; Shot below (T10 w39), was local to that fn */
     Unit *units;               /* lw 0x4E0(v0); units[0] is the player (func_8003D2D4, func_8003D58C, st1) */
     void *x4E4;                 /* func_8002CC2C, func_80023ED8: entity array, stride 0xAC (T8 w13) */
@@ -314,7 +336,7 @@ typedef struct {
     short xF26;                 /* func_80041DC0 (T8 w23) */
     char padf28[0x1088 - 0xF28]; /* was padf28[0x108B - 0xF28], padf28[0x108C - 0xF28] */
     signed char x1088;          /* func_80043884 (T8 w36): lb, arg of func_80043C8C */
-    char pad1089[0x108A - 0x1089]; /* was pad1089[0x108B - 0x1089] */
+    signed char x1089;          /* func_80046338 (T10 w42): lb 0x1089; was pad1089[0x108A - 0x1089], pad1089[0x108B - 0x1089] */
     signed char x108A;          /* func_80043CC4 (T8 w37): lb 0x108A */
     signed char x108B;          /* func_8001C72C (T8 w32): lb 0x108B, switch */
     signed char x108C;          /* func_8002F654, func_80031968: lb, arg 2 of func_80034C48 */
@@ -395,9 +417,14 @@ typedef struct PolyF4_0x800689f4 {
 /* Scratchpad word 0x18 (func_8005D930: `lui 0x1f80; lw 0x60`, returned). */
 #define SPAD_60 (*SCRATCH(int, 0x60))
 
+/* Low-RAM word 0x110 (func_8001CC18 (T10 w41): `lw 0x110($zero)`, a pointer slot below the game image). */
+#define D_00000110 ((void *)0x110)
+
 /* Fixed RAM addresses above every loaded binary, passed by func_80057A8C to func_80050D80. Kept as constants, not
  * extern symbols: the banked bytes were compiled from constants (a symbol form adds %hi/%lo relocations; untested). */
 #define D_80181E48 ((void *)0x80181E48) /* func_8002E650 (T10 w39) */
+#define D_801A1500 ((void *)0x801A1500) /* func_8001BC7C (T10 w42): initial PKT */
+#define D_80096EC0 ((int *)0x80096EC0) /* func_8007DF18 (T10 w42): lui/lw on $v0; an extern int reads via $at */
 #define D_80182398 ((void *)0x80182398) /* func_800253C0 (T8 w34) */
 #define D_80184C60 ((void *)0x80184C60)
 #define D_80184D90 ((void *)0x80184D90)
@@ -616,11 +643,35 @@ typedef struct {
     unsigned short x4A;
 } Sub0x80026a7c;
 
+/* func_80026A7C, func_800267DC: one shape for both units (T10.c40, hoisted from game_80026A7C.c). */
+typedef struct {
+    char pad0[0x92];
+    unsigned short x92;
+    char pad94[0x280 - 0x94];
+    char x280[0x28];
+    char x2A8[8];
+} Unit0x80026a7c;
+typedef struct {
+    char pad0[0x4E0];
+    Unit0x80026a7c *x4E0;
+    char pad4e4[0xC2B - 0x4E4];
+    unsigned char xC2B;
+} Work0x80026a7c;
+typedef struct {
+    char pad0[0x2477];
+    unsigned char x2477;
+    char pad2478[4];
+    unsigned char x247C;
+} Obj0x80026a7c;
+#define WORK0x80026a7c (*SCRATCH(Work0x80026a7c *, 0))
+
 /* func_80029458, func_80041810: one shape for the carved copies (T14.c2). */
 typedef struct Elem0x80029458 {
     short x0;
     unsigned short x2;
-    char pad4[0x18 - 0x4];
+    char pad4[0x10 - 0x4];      /* was pad4[0x18 - 0x4] */
+    int x10;                    /* func_80051C38 (T10 w41) */
+    char pad14[0x18 - 0x14];
 } Elem0x80029458;
 
 /* func_8002B874, func_8002BAE8: one shape for the carved copies (T14.c2). */
@@ -830,9 +881,10 @@ typedef struct Voice0x800444f0 {
     char pad17[0x1B - 0x17];
     unsigned char x1B;
     unsigned char x1C;
-    char pad1d;
+    unsigned char x1D;          /* func_80044A88 (T10 w40); was pad1d */
     short x1E;
-    char pad20[0x24 - 0x20];
+    short x20;                  /* func_80044A88 (T10 w40); was pad20[0x24 - 0x20] */
+    char pad22[0x24 - 0x22];
 } Voice0x800444f0;
 
 /* func_800598E0, func_80049D10: one shape, 0x460-byte block (Work+0x7C8 / +0xC28 copies; T8 w36). */

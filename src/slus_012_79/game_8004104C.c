@@ -46,7 +46,7 @@ void func_80018020(void *, int);
 unsigned int func_8003252C(void *);
 void func_80047958(void *);
 int func_8004A32C(void);
-void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007AA34(SVECTOR *, MATRIX *);
 
 int func_8004104C(Src0x8004104c *src, short *pos)

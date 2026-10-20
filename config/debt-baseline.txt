@@ -16,6 +16,7 @@ mode address count
 mode cast count
 mode field count
 mode asm down
+mode gte count
 mode placeholder count
 mode placeholder-use count
 mode struct count
@@ -24,14 +25,18 @@ mode filename count
 raise protected 1 2026-10-14 psxdecomp 0.6.0: the guard hook fails closed (upgrade from the first build of the floor)
 raise protected 1 2026-10-14 [own] gate runs the fleet check in the build container: the host has no toolchain
 raise asm 7 2026-10-16 include/gte.h: GTE inline asm wrappers, 7 macros; no C form matches the original
-33 goto
+raise asm 8 2026-10-18 gte.h macros in game_80032868.c (GTE fn, plan-mandated lane)
+raise asm 8 2026-10-19 gte.h macros in game_80032868.c (GTE fn, plan-mandated lane)
+3 pin
+43 goto
 33 goto-unmarked
-172 offset
-1583 address
+185 offset
+1683 address
 6 cast
-59 field
-967 placeholder
-4755 placeholder-use
-620 struct
-2193 extern
+61 field
+10 gte
+1086 placeholder
+5222 placeholder-use
+695 struct
+2399 extern
 40 filename

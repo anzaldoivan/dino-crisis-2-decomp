@@ -4,7 +4,7 @@
 extern int func_80078E14();
 extern int func_8004A2F8();
 extern void func_8007A824();
-extern void func_80079704();
+extern SVECTOR *func_80079704();
 
 int func_80033B14(short *line, short *pos, SVECTOR *v, SVECTOR *out)
 {

@@ -8,6 +8,8 @@ Draft = preamble (#include/#define/typedef/struct/extern/prototype items) + exac
 body is never edited. Rungs are cumulative, each followed by a scratch build+hash attempt (propagate.scratch_build
 under .run/reconcile/scratch/<alias>/: copied config/ src/ Makefile, seeded-or-fresh asm/ build/, `make build ONLY=<alias>`,
 build/<alias>.bin sha1 vs config/check.<alias>.sha); the verdict names the first green rung:
+  resolve      (T25, every rung) a draft `#ifndef M` block M the unit's headers #define is dropped; a draft shape equal
+               to a dc2.h shape becomes `typedef <dc2 name> <draft name>;`; carve tries `dc2-resolved` first
   as-is        preamble + fn at the fn's INCLUDE_ASM line; draft #includes the unit already has are dropped
   decl-sync    a draft extern/prototype the unit (or its headers) declares differently takes the unit's text
   callee-cast  a callee whose draft prototype decl-sync replaced is cast at its call sites to the draft's shape
@@ -32,6 +34,10 @@ FAIL. Never writes src/. Runs where make builds (the amd64 container).
 .run/waves/<wave>/_reconcile/), so the registered corpus `--check` gates holds only the direct reconcile runs.
 --rung R (T8.c74, R one of the five scratch rungs): compose cumulatively up to R and build first at R (rungs below
 R are not built: wave.py bank passes the rung its score proved green); on FAIL the ladder continues above R.
+Switch lane (T27): a target with >= 1 jtbl (config/boundaries.tsv, jr in the fn's census [start, end)) gets
+carve.migrate_texts before the as-is rung: every scratch rung builds with the migrated config/c_units.tsv + yaml
+(fresh scratch); real-unit writes them in-tree with the unit (restored on failure); the carve rung carves with
+rodata=True. ladder.log line `rodata: <starts>`.
 """
 import argparse
 import hashlib
@@ -46,6 +52,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import banked  # noqa: E402  (strip, HEAD: the one C-body parser)
 import carve  # noqa: E402  (carve(), build(): in-tree relink + sha1sum -c)
 import propagate  # noqa: E402  (scratch_build, census_end, Fail)
+import types_check  # noqa: E402  (strip, shapes: the shape normalisation resolve compares)
 
 OUT = ROOT / ".run/reconcile"
 propagate.SCRATCH = OUT / "scratch"  # scratch_build looks the global up at call time
@@ -162,8 +169,61 @@ def body_hash(fndef, casts):
     return hashlib.sha1(norm(fndef).encode()).hexdigest()[:16]
 
 
+def resolve(pre, unit_text):
+    """T25: draft preamble vs the unit's headers -> (items, notes). (a) a `#ifndef M` / `#if !defined(M)` ... `#endif`
+    span (no #else/#elif) whose M a header the unit includes #defines is dropped; (b) a draft `typedef struct|union
+    {...} N;` whose body (types_check normalisation) equals a dc2.h shape becomes `typedef <dc2 name> N;` (dropped when
+    the names agree; `typedef struct <tag> N;` for a tag-only dc2 shape). Tag-only draft shapes stay."""
+    hdr = header_items(unit_text)
+    macros = {d["name"] for d in hdr if d["kind"] == "define"}
+    out, notes, i = [], [], 0
+    while i < len(pre):
+        it = pre[i]
+        m = it["kind"] == "pp" and re.match(r"#(?:ifndef (\w+)|if!defined\(?(\w+)\)?)$", norm(it["text"]))
+        if m and (m.group(1) or m.group(2)) in macros:
+            depth, j, alt = 0, i, False
+            while j < len(pre):
+                s = norm(pre[j]["text"]) if pre[j]["kind"] == "pp" else ""
+                if re.match(r"#if", s):
+                    depth += 1
+                elif re.match(r"#endif", s):
+                    depth -= 1
+                    if depth == 0:
+                        break
+                elif depth == 1 and re.match(r"#(?:else|elif)", s):
+                    alt = True
+                j += 1
+            if j < len(pre) and not alt:
+                notes.append(f"resolve -ifndef {m.group(1) or m.group(2)}")
+                i = j + 1
+                continue
+        out.append(it)
+        i += 1
+    if "dc2.h" not in {d.get("header") for d in hdr}:
+        return out, notes
+    canon = {}
+    for d in items(DC2.read_text()):
+        sh = d["kind"] in ("typedef", "tag") and next(types_check.shapes(types_check.strip(d["text"])), None)
+        if sh and re.match(r"(?:typedef\s+)?(struct|union)\b", d["text"]):
+            kw = re.match(r"(?:typedef\s+)?(struct|union)\b", d["text"]).group(1)
+            canon.setdefault(sh[2], sh[1] if d["kind"] == "typedef" else f"{kw} {sh[1]}")
+    res = []
+    for it in out:
+        sh = it["kind"] == "typedef" and re.match(r"typedef\s+(?:struct|union)\b", it["text"]) \
+            and next(types_check.shapes(types_check.strip(it["text"])), None)
+        if sh and sh[1] == it["name"] and sh[2] in canon:
+            c = canon[sh[2]]
+            notes.append(f"resolve {it['name']}={c.split()[-1]}")
+            if c == it["name"]:
+                continue
+            it = {"text": f"typedef {c} {it['name']};", "kind": "typedef", "name": it["name"]}
+        res.append(it)
+    return res, notes
+
+
 def rung_state(rung, pre, fndef, unit_text):
     """Cumulative transform up to rung -> (preamble items, fndef, casts, change notes)."""
+    pre, rnotes = resolve(pre, unit_text)  # T25: every rung, as-is included, before decl-sync
     decls = unit_decls(unit_text)
     have_inc = {d["name"] for d in decls if d["kind"] == "include"}
     by_name = {}
@@ -173,7 +233,7 @@ def rung_state(rung, pre, fndef, unit_text):
     defined = {d["name"] for d in decls if d["kind"] in ("typedef", "tag", "define")}
     dc2 = {d["name"]: d for d in items(DC2.read_text()) if d["kind"] == "proto"}
     k = RUNGS.index(rung)
-    cur, notes, casts, orig = [], [], [], {}
+    cur, notes, casts, orig = [], rnotes, [], {}
     for it in pre:
         if it["kind"] == "include" and it["name"] in have_inc:
             continue
@@ -244,7 +304,13 @@ def ladder(draft, alias, start, apply, log, d, unit_override=None, first=None):
     path, text = unit_override or find_unit(alias, name)
     if path is not None and text is None:
         return "failed as-is already-banked"
-    tried, green = {}, None
+    tried, green, cfg = {}, None, {}
+    if path is not None and carve.tables(alias, start, propagate.census_end(alias, start)):
+        try:
+            cfg, _, tabs = carve.migrate_texts(alias, start)
+        except carve.Refused as e:
+            raise propagate.Fail(f"rodata {e}")
+        log(f"rodata: {','.join(f'0x{s:08x}' for s in tabs)}")
     if path is not None:
         rel = path.relative_to(ROOT)
         for rung in RUNGS[RUNGS.index(first) if first else 0:]:
@@ -260,7 +326,7 @@ def ladder(draft, alias, start, apply, log, d, unit_override=None, first=None):
             tried[out] = rung
             try:
                 try:
-                    propagate.scratch_build(alias, {rel: out})
+                    propagate.scratch_build(alias, {rel: out, **cfg})
                 finally:
                     shutil.copy2(propagate.SCRATCH / alias / "make.log", d / f"make.{rung}.log")
                 log(f"rung {rung}: {', '.join(notes) or 'no change'}; scratch build hash-equal")
@@ -269,21 +335,26 @@ def ladder(draft, alias, start, apply, log, d, unit_override=None, first=None):
             except propagate.Fail as e:
                 log(f"rung {rung}: {', '.join(notes) or 'no change'}; scratch FAIL {e}")
     if green is None:
-        return carve_rung(alias, start, pre, fndef, name, before, apply, log)
+        return carve_rung(alias, start, pre, fndef, name, before, apply, log, bool(cfg))
     rung, out = green
     if apply:
         old = path.read_text()
+        olds = {ROOT / k: (ROOT / k).read_bytes() for k in cfg}  # T27: the migrated config goes in with the unit
+        for k, v in cfg.items():
+            (ROOT / k).write_text(v)
         path.write_text(out)
         err = carve.build(alias)
         if err:
             path.write_text(old)
-            log(f"rung real-unit: FAIL {err}; {rel} restored")
+            for p, b in olds.items():
+                p.write_bytes(b)
+            log(f"rung real-unit: FAIL {err}; {rel}" + (" + rodata config" if cfg else "") + " restored")
             return f"failed real-unit {'sha1-mismatch' if err.startswith('sha1') else 'build-error'}"
         log(f"rung real-unit: {rel} written; make build ONLY={alias} + sha1sum -c ok")
     return f"banked {rung}"
 
 
-def carve_rung(alias, start, pre, fndef, name, before, apply, log):
+def carve_rung(alias, start, pre, fndef, name, before, apply, log, rodata=False):
     if not apply:
         log("rung carve: needs --apply (writes config/ and src/)")
         return "failed carve needs-apply"
@@ -293,7 +364,7 @@ def carve_rung(alias, start, pre, fndef, name, before, apply, log):
     files += sorted((ROOT / "src" / alias).glob("*.c"))
     snap = {p: p.read_bytes() for p in files}
     try:
-        unit, _, _, _ = carve.carve(alias, start, end, None)
+        unit, _, _, _ = carve.carve(alias, start, end, None, rodata)
     except carve.Refused as e:
         log(f"rung carve: refused {e}")
         return "failed carve refused"
@@ -301,9 +372,11 @@ def carve_rung(alias, start, pre, fndef, name, before, apply, log):
     base = path.read_text()
     # T5.c32: the draft's own preamble first (as plateau.py compiles it); dc2.h + self-decl only as the fallback,
     # since self-decl drops a draft typedef/tag that dc2.h defines differently (`structure has no member`).
-    variants = [("draft-decls", base, "as-is"),
-                ("dc2", base if '#include "dc2.h"' in base else
-                 base.replace('#include "common.h"\n', '#include "common.h"\n#include "dc2.h"\n', 1), "self-decl")]
+    dc2b = base if '#include "dc2.h"' in base else \
+        base.replace('#include "common.h"\n', '#include "common.h"\n#include "dc2.h"\n', 1)
+    variants = [("draft-decls", base, "as-is"), ("dc2", dc2b, "self-decl")]
+    if resolve([dict(i) for i in pre], dc2b)[1]:  # T25: dc2.h + resolve (stand-in blocks, dc2 shapes) first
+        variants.insert(0, ("dc2-resolved", dc2b, "as-is"))
     err, tried, notes, tag = None, set(), [], None
     for tag, text, rung in variants:
         cur, fd, casts, notes = rung_state(rung, [dict(i) for i in pre], fndef, text)

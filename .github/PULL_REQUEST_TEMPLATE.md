@@ -11,5 +11,4 @@
       the whole binary).
 - [ ] **Names have evidence.** Every new or changed name cites its evidence (a string, a cross-reference chain, a debug
       menu, a live-memory datapoint, a community label with provenance). Unsure → left address-named.
-- [ ] **I answer for every line** (CONTRIBUTING.md, *AI use — conduct*). <!-- A tool wrote a meaningful part? End
-      this description with `Assisted-by: <model> [<tool> …]`. -->
+- [ ] **I answer for every line** (CONTRIBUTING.md, *AI use — conduct*).

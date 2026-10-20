@@ -298,7 +298,43 @@ void func_8005A34C(Tbl_s8005A34C *t, int i, unsigned char *p)
 #include "../shared/func_8005A34C.inc.c"
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80059250", func_8005A37C);
+typedef struct Node0x8005a37c {
+    char pad0[4];
+    unsigned char x4;
+    unsigned char x5;
+    char pad6[2];
+} Node0x8005a37c;
+typedef struct Elem0x8005a37c {
+    int x0;
+    Node0x8005a37c *x4;
+    unsigned char x8;
+    char pad9[3];
+} Elem0x8005a37c;
+typedef struct Obj0x8005a37c {
+    int x0;
+    Elem0x8005a37c x4[1];
+} Obj0x8005a37c;
+
+int func_8005A37C(Obj0x8005a37c *o, int i)
+{
+    Elem0x8005a37c *e = &o->x4[i];
+    Node0x8005a37c *n;
+    int r = 0;
+
+    if (e->x8 != 0) {
+        e->x8--;
+    } else {
+        n = e->x4;
+        if (!((n->x4 >> 5) & 1)) {
+            n += n->x4 & 0x1F;
+            e->x4 = n;
+            if ((e->x8 = n->x5) == 1) {
+                r = (signed char)n->x4 >> 5;
+            }
+        }
+    }
+    return r;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80059250", func_8005A400);
 
@@ -522,7 +558,7 @@ extern unsigned char D_800B49D4;
 
 
 extern int func_80034CD8(int, int);
-extern void func_80065D0C(int, int, char *, int);
+extern int func_80065D0C(int, int, char *, int);
 extern char D_8008EB88[];
 extern char D_8008E98E[];
 

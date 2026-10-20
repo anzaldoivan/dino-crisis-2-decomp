@@ -24,7 +24,7 @@ typedef struct {
     unsigned char attr[1];        
 } Area;
 int func_80032908(Seg *a, Seg *b);
-void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007A824(SVECTOR *r, MATRIX *m);
 void func_8007AFA4(VECTOR *a, VECTOR *b, VECTOR *c);
 

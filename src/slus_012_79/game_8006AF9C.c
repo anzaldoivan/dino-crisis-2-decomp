@@ -110,7 +110,79 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B308);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B674);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B938);
+typedef struct Poly0x8006bba8 {
+    unsigned int tag;
+    unsigned char r0, g0, b0, code;
+    short x0, y0;
+    unsigned char u0, v0;
+    unsigned short clut;
+    short x1, y1;
+    unsigned char u1, v1;
+    unsigned short tpage;
+    short x2, y2;
+    unsigned char u2, v2;
+    unsigned short pad1;
+    short x3, y3;
+    unsigned char u3, v3;
+    unsigned short pad2;
+} Poly0x8006bba8;
+
+typedef struct Hud0x8006b938 {
+    char pad0[0x10];
+    int x10;
+    short h14;
+} Hud0x8006b938;
+extern S0x8006af9c D_800B53C8;
+extern unsigned char D_800ABA96;
+extern unsigned int D_800AC070[][0x400];
+void func_8006BAC8(unsigned int n, short x, short y);
+
+void func_8006B938(void)
+{
+    Poly0x8006bba8 p;
+    unsigned int *pk;
+    unsigned int *ot;
+    short n;
+
+    n = ((Hud0x8006b938 *)&D_800B53C8)->h14;
+    if (n == 0) {
+        return;
+    }
+    if (n < 10) {
+        func_8006BAC8(n, 0x48, 0xB6);
+    } else {
+        func_8006BAC8(n, 0x4C, 0xB6);
+    }
+    func_8006BAC8(((Hud0x8006b938 *)&D_800B53C8)->x10, 0x4C, 0xC8);
+    p.b0 = 0x80;
+    p.code = 0x2E;
+    p.g0 = 0x80;
+    p.r0 = 0x80;
+    p.u3 = 0x80;
+    p.u1 = 0x80;
+    p.v1 = 0x80;
+    p.v0 = 0x80;
+    p.u2 = 0x20;
+    p.v3 = 0xA8;
+    p.u0 = 0x20;
+    p.v2 = 0xA8;
+    p.tpage = 0x18;
+    p.clut = 0x7F40;
+    p.x2 = 0x14;
+    p.x0 = 0x14;
+    p.x3 = 0x74;
+    p.x1 = 0x74;
+    p.y1 = 0xB4;
+    p.y0 = 0xB4;
+    p.y3 = 0xDC;
+    p.y2 = 0xDC;
+    *(Poly0x8006bba8 *)PKT = p;
+    ot = &D_800AC070[D_800ABA96][1];
+    pk = PKT;
+    *pk = *ot | 0x09000000;
+    *ot = (unsigned int)pk & 0xFFFFFF;
+    PKT = (unsigned int *)((unsigned char *)PKT + 0x28);
+}
 
 void func_8006BBA8(unsigned char n, short x, short y);
 
@@ -134,22 +206,6 @@ void func_8006BAC8(unsigned int n, short x, short y)
     }
 }
 
-typedef struct Poly0x8006bba8 {
-    unsigned int tag;
-    unsigned char r0, g0, b0, code;
-    short x0, y0;
-    unsigned char u0, v0;
-    unsigned short clut;
-    short x1, y1;
-    unsigned char u1, v1;
-    unsigned short tpage;
-    short x2, y2;
-    unsigned char u2, v2;
-    unsigned short pad1;
-    short x3, y3;
-    unsigned char u3, v3;
-    unsigned short pad2;
-} Poly0x8006bba8;
 extern unsigned char D_800ABA96;
 extern unsigned int D_800AC070[][0x400];
 
@@ -355,6 +411,23 @@ void func_8006E3B4(Obj80023E04_s80023E04 *obj)
 #include "../shared/func_80023E04.inc.c"
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006E3F0);
+typedef Rect0x8006c2d8 Rect0x8006e3f0;
+typedef struct Obj0x8006e3f0 {
+    unsigned char pad0[3];
+    unsigned char step;
+} Obj0x8006e3f0;
+extern int func_8007B6EC(Rect0x8006e3f0 *, int, int);
+extern void func_8006E450(Obj0x8006e3f0 *);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006E450);
+void func_8006E3F0(Obj0x8006e3f0 *obj)
+{
+    Rect0x8006e3f0 r;
+    r.x = 0x1C0;
+    r.y = 0x100;
+    r.w = 0x20;
+    r.h = 0x100;
+    func_8007B6EC(&r, 0x1E0, 0x100);
+    obj->step++;
+    func_8006E450(obj);
+}
+

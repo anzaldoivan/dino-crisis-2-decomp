@@ -9,16 +9,28 @@
       A new start inside an existing unit E (T5.c32): E keeps [E.lo, start), its fns at/after --end move to a
       continuation row game_<end> (E's text pruned to each range; a C body left in no unit is refused).
       Any failure restores c_units.tsv, the yaml, the sha and the units byte-exactly and exits 1.
+      T10.c40: an --end whose last fn's census row runs past its asm `nonmatching func_X, 0xN` size (trailing
+      alignment nops the C unit does not emit) ends the unit at the fn's last insn; the nops stay in the next asm piece.
+  carve.py <alias> <start> --rodata
+      T27 switch lane: add every jtbl (config/boundaries.tsv) whose `jr=` lies in the fn's census [start, end) to the
+      `rodata` column (6th) of the c_units row whose unit holds the fn; splat_gen --only, `make build ONLY=<alias>` +
+      sha1 (the fn stays INCLUDE_ASM: splat migrates the table into its .s). Refusal restores c_units/yaml/sha/unit
+      byte-exactly, rc 1. carve(..., rodata=True) migrates the tables of the carved range into the new unit; every
+      carve re-owns an alias's listed tables to the unit holding their jr.
   carve.py --check
       every c_units row: `splat_gen.py --check --only`, unit present, relink + sha1 → `carves: C of C build
       hash-equal`; control: a planted carve at a lib-object start (config/boundaries.tsv) must be refused with
-      c_units.tsv, config/splat/ and src/ hashed unchanged → `control: ok`. rc 0 iff all rows and the control pass.
+      c_units.tsv, config/splat/ and src/ hashed unchanged → `control: ok`; rodata control (T27): slus_012_79
+      0x8005ea34's table (jtbl 0x8001a0a0) migrated in a propagate.scratch_build tree, fn INCLUDE_ASM, hash-equal and
+      the tree unchanged → `rodata control: ok`. rc 0 iff all rows and both controls pass.
 Refusals: start not a census fn start; --end not a census fn end (or a fn straddles it); a C body
 (banked.functions) outside the range. Census: .run/census/functions.tsv (end exclusive). Runs where make builds
 (the amd64 container: `bash tools/docker/dc.sh run python3 tools/carve.py …`).
 """
 import argparse
+import contextlib
 import hashlib
+import io
 import re
 import subprocess
 import sys
@@ -33,6 +45,7 @@ CENSUS = ROOT / ".run/census/functions.tsv"
 LOGS = ROOT / ".run/carve"
 INC = re.compile(r'^INCLUDE_ASM\("[^"]*", func_([0-9A-Fa-f]{8})\);\n(\n)?', re.M)
 FUNC = re.compile(r"^func_([0-9A-Fa-f]{8})$")
+RODATA_CONTROL = ("slus_012_79", 0x8005EA34, 0x8001A0A0)  # T27: unit game_8005E518, one 7-word table
 
 
 class Refused(Exception):
@@ -48,6 +61,15 @@ def census(alias):
         if f[0] == alias:
             fns.append((int(f[1], 16), int(f[2], 16)))
     return sorted(fns)
+
+
+def asm_end(alias, start):
+    """T10.c40: start + N from splat's `nonmatching func_<START>, 0xN` in asm/<alias> (the fn's last insn, without
+    trailing alignment nops the census row may include), or None when no asm names it."""
+    p = subprocess.run(["grep", "-rhoE", f"nonmatching func_{start:08X}, 0x[0-9A-Fa-f]+", f"asm/{alias}"],
+                       cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    sizes = {int(x.rsplit(",", 1)[1], 16) for x in p.stdout.split("\n") if x}
+    return start + sizes.pop() if len(sizes) == 1 else None
 
 
 def run(cmd, log):
@@ -204,7 +226,8 @@ def norm_ends(lines, alias):
     for x in lines:
         f = x.rstrip("\n").split("\t")
         if not x.startswith("#") and len(f) >= 5 and f[0] == alias and f[4] and int(f[4], 16) in starts:
-            x = "\t".join(f[:4]) + "\n"
+            f[4] = ""
+            x = join(f)
         out.append(x)
     return out
 
@@ -213,7 +236,110 @@ def rows_text():
     return sg.C_UNITS.read_text().splitlines(keepends=True)
 
 
-def carve(alias, start, end, unit):
+def join(f):
+    """c_units row text from fields, trailing empty optional columns (end, rodata) dropped."""
+    f = list(f)
+    while len(f) > 4 and not f[-1]:
+        f.pop()
+    return "\t".join(f) + "\n"
+
+
+def jtbls(alias):
+    """T27: {table start: jr} of the jtbl rows of alias's binary (config/boundaries.tsv)."""
+    path = next(r["path"] for r in sg.fleet()[0] if r["alias"] == alias)
+    return {r["start"]: int(re.match(r"jr=(0x[0-9a-f]+)", r["basis"]).group(1), 16)
+            for r in sg.boundaries().get(path, []) if r["kind"] == "jtbl"}
+
+
+def tables(alias, lo, hi):
+    """T27: sorted jtbl starts whose jr lies in [lo, hi)."""
+    return sorted(s for s, jr in jtbls(alias).items() if lo <= jr < hi)
+
+
+def reown(lines, alias, extra=()):
+    """T27: lines with every listed rodata start of alias (+ extra) in the row whose unit holds its jr: the row with
+    the greatest start <= jr whose end (if any) is > jr. -> (lines, {start: unit}); a start no row holds is dropped
+    from every row and absent from the map."""
+    jr = jtbls(alias)
+    rows, want = [], set(extra)
+    for i, x in enumerate(lines):
+        f = (x.rstrip("\n").split("\t") + ["", ""])[:6]
+        if not x.startswith("#") and f[0] == alias:
+            rows.append((i, f))
+            want |= {int(s, 16) for s in f[5].split(",") if s}
+    own = {}
+    for s in sorted(want):
+        hold = [f for _, f in rows if int(f[1], 16) <= jr.get(s, -1) and (not f[4] or jr[s] < int(f[4], 16))]
+        if hold:
+            own[s] = max(hold, key=lambda f: int(f[1], 16))[2]
+    for i, f in rows:
+        old = f[5]
+        f[5] = ",".join(f"0x{s:08x}" for s in sorted(s for s, u in own.items() if u == f[2]))
+        if f[5] != old:
+            lines[i] = join(f)
+    return lines, own
+
+
+def migrate_lines(alias, start):
+    """T27: -> (c_units lines, unit, table starts) with the fn's tables owned by the unit holding it."""
+    end = dict(census(alias)).get(start)
+    if end is None:
+        raise Refused(f"{alias}: 0x{start:08x} is not a census function start")
+    starts = tables(alias, start, end)
+    if not starts:
+        raise Refused(f"{alias}: no jtbl with jr in [0x{start:08x}, 0x{end:08x})")
+    lines, own = reown(rows_text(), alias, starts)
+    units = {own.get(s) for s in starts}
+    if len(units) != 1 or None in units:
+        raise Refused(f"{alias}: 0x{start:08x} is in no C unit of config/c_units.tsv")
+    return lines, units.pop(), starts
+
+
+def migrate_texts(alias, start):
+    """T27: ({rel: text} of config/c_units.tsv + config/splat/<alias>.yaml with the fn's tables migrated, unit,
+    starts), generated under .run/carve/rodata/ (splat_gen in-process); the tree is not touched."""
+    lines, unit, starts = migrate_lines(alias, start)
+    d = LOGS / "rodata"
+    d.mkdir(parents=True, exist_ok=True)
+    cu, old = d / "c_units.tsv", sg.C_UNITS
+    cu.write_text("".join(lines))
+    sg.C_UNITS, out = cu, io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out):
+            sg.write(argparse.Namespace(only=alias, force=True, out_dir=str(d)))
+    except SystemExit:
+        raise Refused(f"splat_gen --only {alias}: {' | '.join(out.getvalue().strip().splitlines()[-3:])}")
+    finally:
+        sg.C_UNITS = old
+    yaml = f"config/splat/{alias}.yaml"
+    return {"config/c_units.tsv": cu.read_text(), yaml: (d / yaml).read_text()}, unit, starts
+
+
+def migrate(alias, start):
+    """T27: in-tree migration of the fn's tables into its unit, then split + build + sha1; refusal restores
+    c_units/yaml/sha/unit byte-exactly. -> (unit, starts)."""
+    lines, unit, starts = migrate_lines(alias, start)
+    yaml, sha = ROOT / f"config/splat/{alias}.yaml", ROOT / f"config/check.{alias}.sha"
+    snap = {p: (p.read_bytes() if p.exists() else None) for p in (sg.C_UNITS, yaml, sha, ROOT / f"src/{alias}/{unit}.c")}
+    try:
+        sg.C_UNITS.write_text("".join(lines))
+        rc, tail = run([sys.executable, "tools/splat_gen.py", "--force", "--only", alias], f"splat_gen_{alias}.log")
+        if rc:
+            raise Refused(f"splat_gen --only {alias} rc {rc}: {' | '.join(tail)}")
+        err = build(alias)
+        if err:
+            raise Refused(err)
+    except BaseException:
+        for p, b in snap.items():
+            if b is None:
+                p.unlink(missing_ok=True)
+            else:
+                p.write_bytes(b)
+        raise
+    return unit, starts
+
+
+def carve(alias, start, end, unit, rodata=False):
     fns = census(alias)
     if not fns:
         raise Refused(f"{alias}: no census rows in {CENSUS.relative_to(ROOT)}")
@@ -221,6 +347,10 @@ def carve(alias, start, end, unit):
         raise Refused(f"{alias}: 0x{start:08x} is not a census function start")
     if end is not None and (end not in {e for s, e in fns if s >= start} or any(s < end < e for s, e in fns)):
         raise Refused(f"{alias}: --end 0x{end:08x} is not a census function end")
+    if end is not None:  # T10.c40: trailing alignment nops stay out of the C unit
+        last = max(s for s, _ in fns if s < end)
+        te = asm_end(alias, last)
+        end = te if te and last < te < end else end
     yaml, sha = ROOT / f"config/splat/{alias}.yaml", ROOT / f"config/check.{alias}.sha"
     row = next(r for r in sg.fleet()[0] if r["alias"] == alias)
     addr = (lambda o: o - sg.EXE_HDR + sg.EXE_BASE) if row["class"] == "exe" else (lambda o: o + row["base"])
@@ -241,13 +371,13 @@ def carve(alias, start, end, unit):
         # T5.c32: start inside an existing unit E: E keeps [E.lo, start); E's fns at/after the closing cut go to a
         # continuation unit game_<end> (E's text, pruned) so no C body or INCLUDE_ASM points at a moved .s file.
         for i, line in enumerate(lines):
-            f = (line.rstrip("\n").split("\t") + ["", ""])[:5]
+            f = (line.rstrip("\n").split("\t") + ["", "", ""])[:6]
             r = None if line.startswith("#") or f[0] != alias else rng(f[2])
             if r and r[0] < start < r[1]:
                 encl = (f[2], r, f[4])
                 if f[4]:
                     f[4] = f"0x{start:08x}"
-                    lines[i] = "\t".join(f) + "\n"
+                    lines[i] = join(f)
         cont = None
         if encl and end is not None and end < encl[1][1] and any(end <= s < encl[1][1] for s, _ in fns):
             cont = f"game_{end:08X}"
@@ -255,11 +385,13 @@ def carve(alias, start, end, unit):
                          + (f"\t{encl[2]}" if encl[2] else "") + "\n")
         lines.append(f"{alias}\t0x{start:08x}\t{unit}\tT3 carve" + (f"\t{endf}" if endf else "") + "\n")
     else:
-        f = (lines[hit].rstrip("\n").split("\t") + ["", ""])[:5]
+        f = (lines[hit].rstrip("\n").split("\t") + ["", "", ""])[:6]
         f[2] = unit or f[2]
         unit, f[4] = f[2], endf
-        lines[hit] = "\t".join(f if endf else f[:4]) + "\n"
+        lines[hit] = join(f)
     lines = norm_ends(lines, alias)
+    # T27: listed tables follow their jr into the new rows; rodata=True adds the carved range's own tables
+    lines = reown(lines, alias, tables(alias, start, end if end is not None else dict(fns)[start]) if rodata else ())[0]
     src = ROOT / f"src/{alias}/{unit}.c"
     esrc =ROOT / f"src/{alias}/{encl[0]}.c" if encl else None
     csrc = ROOT / f"src/{alias}/{cont}.c" if encl and cont else None
@@ -338,7 +470,33 @@ def check():
           + ("unchanged" if same else "CHANGED") + f"; {why}")
     ctl = p.returncode == 1 and same
     print("control: ok" if ctl else "control: FAIL")
-    return 0 if rows and ok == len(rows) and ctl else 1
+    rctl = rodata_control()
+    return 0 if rows and ok == len(rows) and ctl and rctl else 1
+
+
+def rodata_control():
+    """T27: migrate RODATA_CONTROL's table in a scratch tree (fn INCLUDE_ASM) -> hash-equal, tree unchanged."""
+    import propagate
+    propagate.SCRATCH = LOGS / "scratch"
+    a, s, want = RODATA_CONTROL
+    before, err = tree_hash(), ""
+    try:
+        texts, unit, starts = migrate_texts(a, s)
+        src = (ROOT / f"src/{a}/{unit}.c").read_text()
+        if starts != [want]:
+            err = f"tables {','.join(f'0x{x:08x}' for x in starts)} != 0x{want:08x}"
+        elif not re.search(rf'^INCLUDE_ASM\("[^"]*", func_{s:08X}\);', src, re.M):
+            err = f"func_{s:08X} is not INCLUDE_ASM in src/{a}/{unit}.c"
+        else:
+            propagate.scratch_build(a, texts)
+    except (Refused, propagate.Fail) as e:
+        err = str(e)
+    same = tree_hash() == before
+    print(f"rodata control {a} 0x{s:08x} jtbl 0x{want:08x}: " + (f"FAIL {err}" if err else "scratch hash-equal")
+          + ", tree " + ("unchanged" if same else "CHANGED"))
+    ok = not err and same
+    print("rodata control: ok" if ok else "rodata control: FAIL")
+    return ok
 
 
 def main():
@@ -347,12 +505,22 @@ def main():
     ap.add_argument("start", nargs="?", type=lambda x: int(x, 16))
     ap.add_argument("--end", type=lambda x: int(x, 16))
     ap.add_argument("--unit")
+    ap.add_argument("--rodata", action="store_true", help="T27: migrate the fn's jump tables into its unit")
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
     if args.check:
         sys.exit(check())
     if args.alias is None or args.start is None:
         ap.error("alias and start are required")
+    if args.rodata:
+        try:
+            unit, starts = migrate(args.alias, args.start)
+        except Refused as e:
+            print(f"REFUSED {e}")
+            sys.exit(1)
+        print(f"migrated {args.alias} 0x{args.start:08x} rodata {','.join(f'0x{x:08x}' for x in starts)} -> {unit}, "
+              "build hash-equal")
+        return
     try:
         unit, lo, hi, n = carve(args.alias, args.start, args.end, args.unit)
     except Refused as e:

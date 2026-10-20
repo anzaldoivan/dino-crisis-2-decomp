@@ -372,7 +372,7 @@ extern void func_8001C614();
 extern void func_80047E0C();
 extern void func_8005247C();
 extern void *func_800402EC();
-extern int func_80079704();
+extern SVECTOR *func_80079704();
 extern void func_8004A240();
 extern void func_8007AA34();
 extern void func_80048048();
@@ -562,15 +562,81 @@ unsigned short func_8003C9D0(unsigned short arg0) {
     return arg0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003CADC);
+typedef struct Unit0x8003cadc {
+    char pad0[0x17E];
+    unsigned short x17E;
+} Unit0x8003cadc;
+typedef struct Work0x8003cadc {
+    char pad0[0x4E0];
+    Unit0x8003cadc *units;
+    char pad4e4[0xC2B - 0x4E4];
+    unsigned char xC2B;
+} Work0x8003cadc;
+#define WORK0x8003cadc (*SCRATCH(Work0x8003cadc *, 0))
+int func_8004A32C(void);
+
+int func_8003CADC(unsigned short a0)
+{
+    Unit0x8003cadc *u;
+
+    u = WORK0x8003cadc->units;
+    if (WORK0x8003cadc->xC2B < 3) {
+        if (u->x17E) {
+            u->x17E += a0 >> 1;
+        }
+        if ((unsigned int)func_8004A32C() < 0x81) {
+            // !FAKE: goto from the w39 match; keeps the target's block order (store tail after return 0)
+            goto store;
+        }
+    }
+    return 0;
+store:
+    u->x17E = a0 + 700;
+    return a0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003CB5C);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003CFC0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003D1E0);
+typedef struct {
+    char pad0[0x4A];
+    short x4A;
+    char pad4c[0x178 - 0x4C];
+    short x178;
+} Obj0x8003d1e0;
+extern unsigned char D_8001879C[];
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003D22C);
+unsigned char func_8003D1E0(Obj0x8003d1e0 *o) {
+    int b;
+    int a;
+    unsigned char *p;
+
+    b = ((o->x178 + 0xA00) >> 10) & 3;
+    a = (((o->x4A + 0x200) >> 10) & 3) + 3;
+    b = a - b;
+    p = &D_8001879C[b];
+    o->x178 = *p;
+    return *p;
+}
+
+extern unsigned char D_800187A4[];
+
+unsigned char func_8003D22C(Unit *a)
+{
+    Unit *t = WORK->units;
+    unsigned char *p;
+    int d;
+
+    if (a->x184 & 0x40) {
+        t = WORK->x6F0;
+    }
+    d = ((t->x48.vy + 0x200) >> 10) & 3;
+    d = 3 - d + (((a->x48.vy + 0x200) >> 10) & 3);
+    p = &D_800187A4[d];
+    t->x178 = *p;
+    return *p;
+}
 
 extern u16 D_800AF132;
 

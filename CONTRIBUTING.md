@@ -32,7 +32,7 @@ force a match with `// !FAKE:` and its reason. Mark an original bug with `//! @b
 
 ## AI use — conduct
 
-The README's [AI policy](README.md#description) applies to every contribution. Every change is justifiable from recorded evidence. A person reviews each phase gate. Names come only from evidence. A person writes outward text. If a tool wrote a meaningful part of a change, name the tool in an `Assisted-by: <model> [<tool> …]` line.
+The README's [AI policy](README.md#description) applies to every contribution. Every change is justifiable from recorded evidence. A person reviews each phase gate. Names come only from evidence. A person writes outward text.
 
 Whoever submits a change answers for all of it. They understand it, have tested it and can defend it in review. Maintainers may decline what they cannot.
 
@@ -54,8 +54,8 @@ These rules keep that honest, for every contributor and every agent:
 
 Submit small, per-function or per-family pull requests. The hash check must be green on every binary the change
 touches. Anything that touches a shared body, a shared header or the executable needs the clean fleet verification.
-The commit message must name what was matched and how it was verified. Add no AI sign-off or co-author trailers
-(`Assisted-by:` names a tool, not an author).
+The commit message must name what was matched and how it was verified. Add no AI trailer of any kind
+(no sign-off, co-author or `Assisted-by:` line).
 
 Pull requests from forks run CI only after the maintainer approves them. After every push, they need the approval
 again. The build runs with the game files present, so approval follows a review of the whole diff, including the

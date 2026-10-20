@@ -102,7 +102,20 @@ void func_8005E6A4(void)
     ((State0x8005e6a4 *)&D_800B49D0)->x4++;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005E7D8);
+extern int *D_800B49D0;
+extern int func_80034CD8(int, int);
+void func_8005E854(signed char i, short off);
+
+void func_8005E7D8(void)
+{
+    if (func_80034CD8(2, 6) == 0) {
+        WORK->x6B2 = 2;
+        WORK->x6B0 = 0xFF;
+        func_8005E854(0, S0x8005e518->x7);
+        S0x8005e518->x7 = 0xFF;
+        S0x8005e518->x4 = 0;
+    }
+}
 
 extern int D_8008A358;
 
@@ -167,13 +180,65 @@ void *func_8005E940(Obj0x8005e940 *o)
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005EA34);
+extern int *D_800B49D0;
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005EAB4);
+int func_8005EA34(Ctx8005EEF4 *ctx, unsigned char kind, int v)
+{
+    switch (kind) {
+    case 0:
+    case 3:
+    case 4:
+    case 5:
+        break;
+    case 1:
+        v = ctx->regs[v];
+        break;
+    case 2:
+        v = ctx->sp[v];
+        break;
+    case 6:
+        v = D_800B49D0[v];
+        break;
+    }
+    return v;
+}
+
+typedef Ctx8005EEF4 Ctx0x8005eab4;
+extern int *D_800B49D0;
+
+int func_8005EAB4(Ctx0x8005eab4 *ctx, unsigned char kind, int i, int v)
+{
+    switch (kind) {
+    case 1:
+        ctx->regs[i] = v;
+        break;
+    case 2:
+        ctx->sp[i] = v;
+        break;
+    case 6:
+        D_800B49D0[i] = v;
+        break;
+    }
+    return v;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005EB34);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8005E518", func_8005EC80);
+struct Ctx0x8005eccc;
+
+void func_8005EC80(struct Ctx0x8005eccc *ctx, int v) {
+    if (v == 0) {
+        ((unsigned char *)ctx)[0x9C] = 0x2A;
+        return;
+    }
+    if (v > 0) {
+        ((unsigned char *)ctx)[0x9C] = 0x4C;
+        return;
+    }
+    if (v < 0) {
+        ((unsigned char *)ctx)[0x9C] = 0x70;
+    }
+}
 
 int func_8005ECB4(int *a0)
 {
@@ -185,14 +250,14 @@ typedef struct Ctx0x8005eccc {
     char pad04[0x88 - 0x4];
     int regs[1];
 } Ctx0x8005eccc;
-extern int func_8005EA34(Ctx0x8005eccc *ctx, int a, int b);
+extern int func_8005EA34(Ctx8005EEF4 *ctx, unsigned char kind, int v);
 extern void func_8005EC80(Ctx0x8005eccc *ctx, int v);
 
 int func_8005ECCC(Ctx0x8005eccc *ctx)
 {
     int v;
 
-    v = func_8005EA34(ctx, ctx->pc[2], *(short *)(ctx->pc + 4));
+    v = func_8005EA34((Ctx8005EEF4 *)ctx, ctx->pc[2], *(short *)(ctx->pc + 4));
     ctx->regs[ctx->pc[1]] = v;
     func_8005EC80(ctx, v);
     ctx->pc += 6;
@@ -249,7 +314,7 @@ extern unsigned char D_800B49D4;
 
 
 extern int func_80034CD8(int, int);
-extern void func_80065D0C(int, int, char *, int);
+extern int func_80065D0C(int, int, char *, int);
 extern char D_8008EB88[];
 extern char D_8008E98E[];
 
