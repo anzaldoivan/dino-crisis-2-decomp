@@ -8,6 +8,7 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 | addu operand order in a scaled-index address: index,base vs base,index (same insns) | expand-cse | shift-scaled-index | C0050 | slus_012_79:0x800604f4 |
 | count-down to -1 vs a hoisted -1 constant (beqz guard, bne) vs reversed count-down to 0 (blez guard, bnez) | loop | while-postdec | C0049 | slus_012_79:0x800474b4 |
 | andi-before-srl vs srl-before-andi on a byte field | combine | mask-then-shift | C0045 | slus_012_79:0x8001b538 |
+| post-call temps in $v0/$v1 swapped: callee extern void vs int (unused return keeps $v0 clobbered) | regalloc | nonvoid-callee-return | C0057 | slus_012_79:0x8002e54c |
 | late pointer-bump temp in $v0 vs $v1 (3 insns after the last call) | regalloc | reuse-user-var | C0046 | slus_012_79:0x8005ed34 |
 | narrowed-param andi+addiu sunk below the constant loads vs leading the fn (same insns, reordered) | sched-reorg | multi-set-param | C0048 | slus_012_79:0x8003e164 |
 | if/else arms in swapped order: early-return arm at fallthrough vs at the branch target (same insns) | sched-reorg | swap-returning-arm | C0047 | slus_012_79:0x8005ee58 |
@@ -26,6 +27,7 @@ Each lever is byte-proven by `tools/codegen_map.py --check` (pinned triple, draf
 
 ## regalloc
 
+- `nonvoid-callee-return`: tell post-call temps in $v0/$v1 swapped: callee extern void vs int (unused return keeps $v0 clobbered); before plateau REGALLOC-PERM; game fn slus_012_79:0x8002e54c; drafts `tools/probes/levers/nonvoid-callee-return.before.c` / `tools/probes/levers/nonvoid-callee-return.after.c`; cookbook C0057
 - `reuse-user-var`: tell late pointer-bump temp in $v0 vs $v1 (3 insns after the last call); before plateau REGALLOC-PERM; game fn slus_012_79:0x8005ed34; drafts `tools/probes/levers/reuse-user-var.before.c` / `tools/probes/levers/reuse-user-var.after.c`; cookbook C0046
 
 ## sched-reorg

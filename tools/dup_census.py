@@ -208,7 +208,7 @@ def load(fixture):
             masks = [a[v][1] for v in vs]
             for i in hi_reuse(words, [a[v][2] for v in vs]):  # kind B
                 masks[i] = True
-        elif not any(v in a for v in vs):
+        elif not any(v in a and a[v][0] for v in vs):  # T10.1.c1: zero asm words only = a C fn's folded carve tail
             words = binary_words(alias, b.path, s, e)
             masks = [False] * len(words)
             for lui, lo, ad in pairs(words):

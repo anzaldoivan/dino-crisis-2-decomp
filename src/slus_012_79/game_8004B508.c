@@ -151,7 +151,20 @@ void func_8004B508(void)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004B508", func_8004B778);
+unsigned char func_8004B778(unsigned char a, unsigned char b)
+{
+    if (a >= 4) {
+        if (a >= 5) {
+            a++;
+        } else {
+            a = 4;
+            if ((unsigned)(b - 7) < 4) {
+                a = 5;
+            }
+        }
+    }
+    return a;
+}
 
 
 

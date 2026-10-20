@@ -59,14 +59,36 @@ void func_80048048(void *, void *, int, int, int, int);
 void func_8004A240(void *, void *, SVECTOR *);
 int func_8004A32C(void);
 void func_800649A8(int, int, int);
-void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007AA34(SVECTOR *, MATRIX *);
 
 
 extern void func_80018020(void *, int);
 
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800412C8", func_800412C8);
+unsigned short func_800412C8(int cur, int step, int tgt)
+{
+    cur = (short)cur;
+    step = (short)step;
+    tgt = (unsigned short)tgt;
+    if (cur == tgt) {
+        return 0;
+    }
+    if (cur < tgt) {
+        cur = tgt - cur;
+        if (step < cur) {
+            cur = step;
+        }
+        cur = (short)cur;
+    } else {
+        cur = cur - tgt;
+        if (step < cur) {
+            cur = step;
+        }
+        cur = (short)-cur;
+    }
+    return cur;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800412C8", func_80041338);
 

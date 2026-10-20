@@ -19,7 +19,67 @@ void func_80037824(int a0, int a1)
     D_800893D0.b = a1;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_8003784C);
+extern Pair D_800893D0;
+struct Obj0x800379c0;
+extern struct Obj0x800379c0 D_800B24A0;
+typedef struct Obj0x8003784c {
+    char pad0[0x10];
+    int x10[2];
+    int x18;
+    char pad1c[0x20 - 0x1C];
+    unsigned int x20;
+    int x24;
+    int x28;
+    char pad2c[0x30 - 0x2C];
+    int x30;
+    int x34;
+    char pad38[0x3C - 0x38];
+    unsigned short x3C;
+    char pad3e[0x44 - 0x3E];
+    unsigned short x44;
+    unsigned short x46;
+} Obj0x8003784c;
+extern int D_800B5DBC;
+extern void func_80072484();
+extern int func_8007B380(int);
+extern int func_8007B62C();
+extern void func_80085738();
+
+void func_8003784C(void)
+{
+    Obj0x8003784c *p = (Obj0x8003784c *)&D_800B24A0;
+    Pair *q;
+    unsigned int i;
+
+    if (p->x30 != 0 && D_800B5DBC != 0) {
+        func_80072484();
+        D_800B5DBC = 0;
+    }
+    i = p->x20;
+    p->x46 += i;
+    for (i = 0; i < p->x20; i++) {
+        int v;
+        q = &D_800893D0;
+        func_8007B62C(q, p->x10[p->x18] + i * p->x24);
+        v = D_800893D0.a;
+        if (p->x30 != 0) {
+            v += 0x18;
+        } else {
+            v += 0x10;
+        }
+        q->a = v;
+        func_8007B380(0);
+    }
+    p->x18 ^= 1;
+    if (p->x46 < p->x44) {
+        func_80085738(p->x10[p->x18], p->x28 * p->x20);
+    } else {
+        p->x46 = 0;
+        p->x34 = 0;
+        D_800893D0.a = p->x3C;
+        WORK->x4B9 = 1;
+    }
+}
 
 typedef struct Obj0x800379c0 {
     char pad0[0x4C];

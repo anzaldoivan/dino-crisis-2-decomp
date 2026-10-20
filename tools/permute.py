@@ -3,10 +3,16 @@
 
   permute.py <lever> [--iters N] [--seed S]   permute the row's before_c against the game fn for exactly N iterations
   permute.py --check [--iters N] [--seed S]   lever = first `regalloc` row of config/levers.tsv, plus the scorer control
+  permute.py --draft <draft.c> --target <alias>:<start>:<end> [--out DIR] [--iters N] [--seed S]
+                                              permute a wave draft (T10.c17): base.c from the draft, target.o from
+                                              func_<START>.s, or (unsplit fn, T10.c28) its lines cut from the
+                                              shared .s and checked against [START,END); DIR default
+                                              .run/permute/draft_<alias>_<start>/
 
 Sets up .run/permute/<lever>/ (wiped first): base.c (before_c through the Makefile's cpp + CPPFLAGS; register pins,
 asm() and __attribute__ refused), target.o (the game fn's split asm func_<START>.s assembled with the Makefile's
-AS/ASFLAGS; `make split ONLY=<alias>` when absent), settings.toml, compile.sh (shim: PERMUTE_ALIAS +
+AS/ASFLAGS; when absent, the fn's lines cut from the unsplit .s holding `glabel func_<START>`, insn
+addresses == [start,end) or refused; never `make split`), settings.toml, compile.sh (shim: PERMUTE_ALIAS +
 tools/permuter/compile.sh). Pre-flight: base.c compiles and has no `*/`, else refused (rc 1). Then
 tools/permuter/permuter_run.py under /opt/permuter/bin/python (single worker, seeded, PYTHONHASHSEED=0, masked
 word scorer; see its docstring) logs every candidate to candidates.log. Prints
@@ -60,14 +66,11 @@ def setup(row, d):
     if probe.ensure_extracted():
         refuse("game data not extracted")
     asm = sorted((ROOT / "asm" / alias / "nonmatchings").glob(f"**/{fn}.s"))
-    if not asm:
-        with open(d / "split.log", "w") as log:
-            rc = subprocess.run(["make", "split", f"ONLY={alias}"], cwd=ROOT, stdout=log,
-                                stderr=subprocess.STDOUT).returncode
-        asm = sorted((ROOT / "asm" / alias / "nonmatchings").glob(f"**/{fn}.s"))
-        if rc or not asm:
-            refuse(f"no split asm for {fn} after `make split ONLY={alias}` (rc {rc}, {d}/split.log)")
-    (d / "target.s").write_text('.include "macro.inc"\n.section .text\n' + asm[0].read_text())
+    if asm:
+        body = asm[0].read_text()
+    else:  # T10.c28: fn in a shared/unsplit .s; cut its lines, never `make split` (rewrites asm/ for all)
+        body = cut_fn(alias, fn, int(row["start"], 16), int(row["end"], 16))
+    (d / "target.s").write_text('.include "macro.inc"\n.section .text\n' + body)
     try:
         sh(f'$AS $ASFLAGS -I build/{alias}/include -o {d}/target.o {d}/target.s', alias)
         probe.extract(d / "target.o", fn)  # sized FUNC symbol (splat glabel/endlabel)
@@ -88,6 +91,31 @@ def setup(row, d):
     if compile_c(d, d / "base.c", d / "preflight.o") is None:
         refuse(f"base.c does not compile via compile.sh ({d}/preflight.err)")
     return fn
+
+
+INSN = re.compile(r"/\*\s+[0-9A-Fa-f]+\s+([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]{8}\s+\*/")
+
+
+def cut_fn(alias, fn, start, end):
+    """fn's lines (`nonmatching`/`glabel` .. `endlabel`) from the unsplit .s holding `glabel fn`; refuse unless
+    its instruction count and addresses are exactly the census range [start, end)."""
+    pat = re.compile(rf"^\s*glabel\s+{fn}\b", re.M)
+    for s in sorted(p for p in (ROOT / "asm" / alias).rglob("*.s") if "nonmatchings" not in p.parts):
+        txt = s.read_text(errors="replace")
+        if not pat.search(txt):
+            continue
+        lines = txt.splitlines(keepends=True)
+        g = next(i for i, ln in enumerate(lines) if pat.match(ln))
+        b = next((i for i in range(g - 1, max(g - 3, -1), -1)
+                  if re.match(rf"\s*nonmatching\s+{fn}\b", lines[i])), g)
+        e = next((i for i in range(g, len(lines)) if re.match(rf"\s*endlabel\s+{fn}\b", lines[i])), None)
+        if e is None:
+            refuse(f"{fn}: no endlabel in {s.relative_to(ROOT)}")
+        addrs = [int(m.group(1), 16) for ln in lines[g:e] for m in [INSN.search(ln)] if m]
+        if addrs != list(range(start, end, 4)):
+            refuse(f"{fn}: {len(addrs)} insns in {s.relative_to(ROOT)} != census range [{start:#x},{end:#x})")
+        return ".set noat\n.set noreorder\n" + "".join(lines[b:e + 1])
+    refuse(f"no asm for {fn} under asm/{alias}/ (split or unsplit)")
 
 
 def compile_c(d, c, o):
@@ -116,12 +144,25 @@ def control(row, d, fn):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("lever", nargs="?")
-    ap.add_argument("--iters", type=int, default=None)
+    ap.add_argument("--iters", type=int, default=None, help="permuter iterations (default 1000; --check 120)")
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--draft", help="permute this wave draft .c instead of a lever row (needs --target)")
+    ap.add_argument("--target", help="<alias>:<start>:<end>, census hex range [start,end), e.g. slus_012_79:0x80010000:0x80010040")
+    ap.add_argument("--out", help="--draft work dir (default .run/permute/draft_<alias>_<start>/)")
     a = ap.parse_args()
     rows = [dict(zip(COLS, ln.split("\t"))) for ln in LEVERS.read_text().splitlines() if ln and not ln.startswith("#")]
-    if a.check:
+    if a.draft:
+        if a.check or a.lever or not a.target or a.target.count(":") != 2:
+            ap.error("--draft needs --target <alias>:<start>:<end> and no lever/--check")
+        alias, start, end = a.target.split(":")
+        start = f"0x{int(start, 16):08x}"
+        draft = Path(a.draft).resolve()
+        if not draft.is_file():
+            refuse(f"no draft {a.draft}")
+        rows = [{"lever": f"draft_{alias}_{start}", "alias": alias, "start": start, "end": end,
+                 "before_c": str(draft)}]
+    elif a.check:
         rows = [r for r in rows if r["group"] == "regalloc"]
     elif a.lever:
         rows = [r for r in rows if r["lever"] == a.lever]
@@ -131,7 +172,7 @@ def main():
         refuse("no matching row in config/levers.tsv")
     row = rows[0]
     iters = a.iters if a.iters is not None else (CHECK_ITERS if a.check else 1000)
-    d = ROOT / ".run/permute" / row["lever"]
+    d = Path(a.out).resolve() if a.draft and a.out else ROOT / ".run/permute" / row["lever"]
     fn = setup(row, d)
     print(f"permute: {row['lever']} {row['alias']}:{fn} seed {a.seed} iters {iters} dir {d.relative_to(ROOT)}",
           flush=True)

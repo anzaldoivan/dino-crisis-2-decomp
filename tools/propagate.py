@@ -193,7 +193,8 @@ def scratch_build(alias, texts):
     T8.c74: seeded from the in-tree asm/<alias> build/<alias>{/,.ld,.override.yaml} (mtimes kept; seed_why) and built
     with REUSE=1, so only objects older than their sources rebuild; every object of a `texts` path and the old
     .bin/.elf/.map are deleted first (a stale object or .bin would hash green). Fresh full build when seed_why says
-    no or a `texts` INCLUDE_ASM/INCLUDE_RODATA names a .s the seed lacks (splat writes .s for INCLUDE_ASM'd fns only).
+    no or a `texts` INCLUDE_ASM/INCLUDE_RODATA names a .s the seed lacks (splat writes .s for INCLUDE_ASM'd fns only),
+    or (T27) a `texts` path is under config/ (a migrated c_units/yaml: resplit).
     make.log line 1: `scratch: seeded` | `scratch: fresh (<why>)`."""
     t = SCRATCH / alias
     shutil.rmtree(t, ignore_errors=True)
@@ -210,6 +211,8 @@ def scratch_build(alias, texts):
         (t / rel).write_text(text)
     want = (ROOT / f"config/check.{alias}.sha").read_text().split()[0]
     why = seed_why(alias, want)
+    if why is None and any(str(rel).startswith("config/") for rel in texts):
+        why = "config in texts"  # T27: a migrated yaml resplits; a seeded make lists deleted asm/ at parse time
     if why is None:
         shutil.copytree(ROOT / f"asm/{alias}", t / f"asm/{alias}")
         shutil.copytree(ROOT / f"build/{alias}", t / f"build/{alias}")

@@ -85,7 +85,19 @@ int func_8004A378(short *p, short *q)
     return 1;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A2C4", func_8004A464);
+int func_8004A464(SVECTOR *p, Rect0x8006c2d8 *r)
+{
+    if (r->x > p->vx) {
+        return 0;
+    }
+    if (r->x + r->w < p->vx) {
+        return 0;
+    }
+    if (r->y > p->vz) {
+        return 0;
+    }
+    return r->y + r->h >= p->vz;
+}
 
 
 extern int func_8004A4FC();

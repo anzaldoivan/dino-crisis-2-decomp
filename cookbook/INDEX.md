@@ -55,3 +55,6 @@ C0052 | decomp-permuter --seed is a replay, not a search seed, so seed random in
 C0053 | Sync wipes split asm, so regenerate it with make split ONLY=<alias> | build,split,docker,permuter | 2026-10-02 | 1.7/T6 | phase-ends/current/tasks/T6.md
 C0054 | Plateau classifier: test length drift before index-wise labels | plateau,classifier,diff,codegen-map | 2026-10-02 | 1.7/T7 | phase-ends/current/tasks/T7.md
 C0055 | hand splice a MATCH draft whose constant initializers live in splat rodata (extern labels) | splice,rodata,carve,initializer,journal | 2026-10-14 | 1.8/T16 | T8.c345, T16.c1
+C0056 | GTE fns: fixed-register ctc2 loader and base-register swc2 macros | gte,cop2,asm,regalloc | 2026-10-17 | 1.8/T10 | T10.c29 0x80032868
+C0057 | REGALLOC-PERM after a call: declare the callee non-void | regalloc,lever,prototype,call | 2026-10-17 | 1.8/T10 | T10.c20 lever nonvoid-callee-return
+C0058 | Block-comment !FAKE markers inside a continued #define | floor,gte,macro,marker,cpp | 2026-10-19 | 1.8/T29 | T29 GTE_CTC2_024 pins

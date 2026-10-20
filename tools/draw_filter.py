@@ -20,12 +20,15 @@ gte, handasm-marked, switch, pin-unproven, has-banked-twin, open-twin-sibling; n
   handasm-marked      (T12) spimdisasm `Handwritten function` marker on an instruction in [start,end), or the BIOS
                       A/B/C-table trampoline shape ($t2 loaded 0xA0/0xB0/0xC0, `jr $t2`, $t1 = call no.); evidence:
                       the marker name or `BIOS A|B|C-table trampoline`
-  switch             a boundaries `jtbl` row whose basis `jr=<addr>` lies in [start,end)
+  switch             a boundaries `jtbl` row whose basis `jr=<addr>` lies in [start,end), unless covered (T27): every
+                      such table's basis has `sltiu` and they form one contiguous run (the switch lane migrates them
+                      into the unit, carve.py --rodata); covered fns go on to the next reasons
   pin-unproven        census family not the family of any config/probes.tsv row (alias `self` ignored)
   has-banked-twin     a .run/twins/twins.tsv row for the fn with twin_banked 1
   open-twin-sibling   the fn is a direct twin (any twins.tsv row) of a candidate accepted earlier in this draw
 Binary path -> alias via census.load_fleet(). Prints `draw: A of D accepted`, then `refused <reason>: n` for all thirteen
-reasons; writes .run/draw/accepted.tsv and .run/draw/refused.tsv (`# alias\tstart\treason\tevidence`).
+reasons, then `switch covered: K` (candidates past every reason before switch whose tables are covered); writes
+.run/draw/accepted.tsv and .run/draw/refused.tsv (`# alias\tstart\treason\tevidence`).
 Control (every run, outputs .run/draw/control/): a planted list from this run's evidence (one banked game fn, one census
 lib fn, a game fn start+4, an unbanked game fn in the lib region, an unbanked marked/trampoline fn and an unbanked
 unmarked fn with a cop2 op (both outside the lib region), two direct twins that pass every other reason) must give exactly
@@ -102,6 +105,7 @@ class Evidence:
         self.path = {a: b.path for a, b in fleet.items()}
         lm = {r[0]: r for r in census.rows(census.LOADMAP) if len(r) > 6}
         self.text, self.jtbl, self.island, libobj = {}, {}, {}, {}
+        self.sltiu, self.covered = set(), set()  # T27: (binary, jtbl start) with basis sltiu; keys past switch covered
         for r in census.rows(census.BOUNDARIES):
             if len(r) < 4:
                 continue
@@ -111,6 +115,7 @@ class Evidence:
             elif r[1] == "jtbl":
                 m = JR.search(r[4] if len(r) > 4 else "")
                 self.jtbl.setdefault(r[0], []).append((s, e, int(m.group(1), 16) if m else None))
+                self.sltiu.update({(r[0], s)} if "sltiu" in (r[4] if len(r) > 4 else "").split() else ())
             elif r[1] == "data-island":
                 self.island.setdefault(r[0], []).append((s, e))
             elif r[1] == "lib-object":
@@ -228,9 +233,14 @@ class Evidence:
         r = self.t12(alias, start, end)
         if r is not None:
             return r
-        for s, e, jr in self.jtbl.get(p, ()):
-            if jr is not None and start <= jr < end:
-                return "switch", "boundaries jtbl %s [0x%08x,0x%08x) jr=0x%08x" % (p, s, e, jr)
+        tabs = sorted((s, e, jr) for s, e, jr in self.jtbl.get(p, ()) if jr is not None and start <= jr < end)
+        if tabs:  # T27: covered = every table sltiu-based and one contiguous run (switch lane migrates it)
+            if all((p, s) in self.sltiu for s, _, _ in tabs) and all(a[1] == b[0] for a, b in zip(tabs, tabs[1:])):
+                self.covered.add(k)
+            else:
+                s, e, jr = tabs[0]
+                return "switch", "boundaries jtbl %s [0x%08x,0x%08x) jr=0x%08x (%d tables, uncovered)" % (
+                    p, s, e, jr, len(tabs))
         if fam not in self.pinned:
             return "pin-unproven", "family %s not in config/probes.tsv families (%s)" % (fam, ",".join(sorted(self.pinned)))
         for ta, ts, tb in self.twins.get(k, ()):
@@ -335,6 +345,7 @@ def main(argv=None):
     print("draw: %d of %d accepted" % (len(acc), len(set(cands))))
     for r in PRINT_ORDER:
         print("refused %s: %d" % (r, sum(1 for x in ref if x[2] == r)))
+    print("switch covered: %d" % len(ev.covered & set(cands)))
     bad = control(ev)
     print("control: ok" if bad is None else "control: FAIL %s" % bad)
     return 0 if bad is None else 1

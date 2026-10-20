@@ -58,7 +58,7 @@ extern void func_800785A4(int a, void *b);
 extern void func_80085564(int a);
 extern void func_800856BC(int a, int b);
 extern void func_80085738(int a, int b);
-extern void func_80085800(void (*f)());
+extern int func_80085800(void (*f)());
 extern int func_80085BF4(int a);
 extern void func_80085C24(int a, int b);
 extern void func_8003784C();

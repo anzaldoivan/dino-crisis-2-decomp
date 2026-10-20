@@ -45,6 +45,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `apple-silicon`: C0024
 - `arm64`: C0015
 - `as`: C0029
+- `asm`: C0056
 - `aspsx`: C0026
 - `banking`: C0041
 - `boundaries`: C0041
@@ -53,6 +54,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `build`: C0004, C0021, C0040, C0053
 - `byte-proof`: C0001
 - `c`: C0028
+- `call`: C0057
 - `callee-saved`: C0002
 - `carve`: C0055
 - `cdda`: C0009
@@ -65,8 +67,10 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `compression`: C0018
 - `config`: C0042
 - `cookbook-format`: C0001
+- `cop2`: C0056
 - `cost`: C0005, C0006
 - `counts`: C0043
+- `cpp`: C0058
 - `cross-jump`: C0002
 - `data-in-text`: C0031
 - `dedup`: C0035, C0036, C0038
@@ -87,12 +91,14 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `filter`: C0043
 - `fingerprint`: C0025
 - `flags`: C0025
+- `floor`: C0058
 - `fresh-volume`: C0030
 - `function-boundary`: C0034
 - `gate`: C0004
 - `gcc`: C0025, C0051
 - `ghidra`: C0010, C0011, C0012, C0013, C0017, C0020, C0032, C0033
 - `gp`: C0025
+- `gte`: C0056, C0058
 - `haifa`: C0051
 - `harness`: C0037, C0040, C0042
 - `headers`: C0039
@@ -107,15 +113,16 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `journal`: C0055
 - `jump-table`: C0020
 - `ladder`: C0026
-- `lever`: C0001
+- `lever`: C0001, C0057
 - `lib`: C0036
 - `linker`: C0023
 - `loader`: C0016
 - `lock`: C0004
 - `lua`: C0019
 - `macos`: C0010
-- `macro`: C0029
+- `macro`: C0029, C0058
 - `make`: C0021, C0027
+- `marker`: C0058
 - `maspsx`: C0029
 - `match`: C0028
 - `mcp`: C0013
@@ -136,6 +143,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `plateau`: C0054
 - `probe`: C0026
 - `propagation`: C0040
+- `prototype`: C0057
 - `ps1`: C0016
 - `psx`: C0007, C0008, C0009, C0022, C0024, C0025
 - `psx_ldr`: C0010, C0011, C0033
@@ -143,6 +151,7 @@ Find the diff tell, open the entry. Pass groups as in docs/codegen-map.md.
 - `ram-proof`: C0014, C0018
 - `recovery`: C0003
 - `reference`: C0008
+- `regalloc`: C0056, C0057
 - `register-pressure`: C0002
 - `relocation`: C0035
 - `residual`: C0001

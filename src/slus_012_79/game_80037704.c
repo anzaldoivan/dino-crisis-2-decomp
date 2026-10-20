@@ -16,7 +16,7 @@ extern void func_80043D94(int);
 extern void func_800721A4();
 extern int func_80075148(int, int, int, int);
 extern void func_800782E4(void);
-extern void func_80085800();
+extern int func_80085800();
 
 void func_80037704(Obj0x80037704 *p)
 {

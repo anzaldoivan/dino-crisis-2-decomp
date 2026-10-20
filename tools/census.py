@@ -4,7 +4,8 @@
     dc.sh run python3 tools/census.py --write-ledger > .run/ledger.tsv  (then mv to config/ledger.tsv on the host)
 
 One record per `glabel` in text (`.section .text` + asm/<alias>/nonmatchings/**) plus one per C-defined
-`func_<ADDR>` in src/<alias>/<unit>.c (fills the gaps of its `c` subsegment). Writes .run/census/functions.tsv
+`func_<ADDR>` in src/<alias>/<unit>.c (fills the gaps of its `c` subsegment; T10.1.c1: an unreferenced all-zero asm
+piece starting at a `c` end, a carve's trailing nops (carve.py T10.c40), folds into that C fn). Writes .run/census/functions.tsv
 (`alias start end size kind family`, sorted, end exclusive), prints per-binary and fleet counts, runs the
 known-true (config/probes.tsv, jr 0x8003500c) and negative controls (fixtures, empty --only).
 Uncovered text spans that are evidenced data (data_spans) leave the denominator and are listed as `data in text`.
@@ -19,6 +20,8 @@ Track rows (T18, 10 cols, `tools/wave.py ledger`): ignored by stubs/ledger; `tra
 (track_why grammar); `track control` plants a set-aside row with blocker `-` and must see it refused.
 --set exe|stage|module (T12.c1, Phase 1.8 replan): full run, then stubs/ledger/ledger control scoped to the set;
 membership from census game rows + .run/census/dup.tsv exact classes (regenerated once on key mismatch); see set_partition.
+--set exe (T10.1.c2): `carry-over: C lib-region fns named (set exe)`, `stubs not on carry-over: K`; --check fails on a
+carry-over row (blocker lib-region-carryover) that is no lib-region stub of the set, and on K > 0 (carry_eval).
 Definitions: phase 1.5 PHASE_PLAN `## Interfaces`; notes: docs/ops/decomp-environment.md "Function census".
 Exit: 0 clean; 1 phantom/truncation/control failure, --check with unknown kinds (and every fixture run);
 2 refused (empty alias list, --set with --only).
@@ -45,6 +48,10 @@ LEDGER_HEAD = (
     "# alias\tstart\tend\ttrack\tbasis\tstate\tbest\tattempts\twave\tblocker\n")
 TRACK_OPEN = ("undrawn", "no-verdict")  # blocker -> state open; every other blocker -> set-aside
 TRACK_GIVEUP = ("referent", "call-set", "cfg", "types", "unknown")  # docs/ops/psxdecomp-campaign.md "The give-up report"
+CARRY = "lib-region-carryover"  # T10.1.c2: set-aside blocker of a lib-region stub with non-pinned-codegen evidence
+CARRY_SHAPES = ("addiu-sp-before-jr-ra", "unfilled-delay-slot", "unsplit-lui-at-store", "bios-table-stub")
+CARRY_BASIS = re.compile(r"(?:%s)(?:,(?:%s))*(?:,journal:[A-Za-z0-9_]+:[A-Z0-9][A-Z0-9_-]*)*"
+                         % (("|".join(CARRY_SHAPES),) * 2))  # carry-over basis: >= 1 shape label, then journal labels (T10.1.c3)
 SPLAT = ROOT / "config/splat"
 OUT = ROOT / ".run/census"
 PREFIX = "extracted/retail/files/"
@@ -357,7 +364,7 @@ def analyze(b, glob, scan):
     res = {"recs": [], "covered": 0, "B": 0, "P": 0, "T": 0, "pd": dict.fromkeys(("no-insn", "outside-text",
            "in-jtbl/data", "unconfirmed"), 0), "cf": dict.fromkeys(CRIT, 0), "sole": dict.fromkeys(CRIT, 0),
            "gaps": [], "data": [], "ovl": [], "cross": [], "pex": [], "split_g": split_g, "nm_g": nm_g, "cdefs": 0,
-           "insns": {}, "jsplit": 0, "gsplit": 0, "why": {}}
+           "insns": {}, "jsplit": 0, "gsplit": 0, "why": {}, "ctail": 0}
     if b.text is None:
         return res
     ts, te = b.text
@@ -385,6 +392,17 @@ def analyze(b, glob, scan):
         cdef_starts |= set(defs)
         res["cdefs"] += len(defs)
     res["cstarts"] = cdef_starts  # Phase 1.8 T1: C-body starts, for the stubs line and the ledger
+    # T10.1.c1: splat opens a glabel at every asm piece start, so a carve's trailing nops (T10.c40: the C unit ends at
+    # its last insn) become a phantom fn; one that is only zero words, starts at a `c` end and is unreferenced is the
+    # C unit's last fn tail (as before the carve): fold it into that C rec
+    cends, rk = {ce for _, ce, _ in b.c_spans}, glob["refs"] if b.family == "exe" else refs
+    for r in [r for r in recs if r[4] == "asm" and r[0] in cends and r[3]
+              and all(scan["wv"].get(x[0]) == 0 for x in r[3]) and "%08X" % r[0] not in rk]:
+        p = next((q for q in recs if q[4] == "c" and q[1] == r[0]), None)
+        if p is not None:
+            p[1] = r[1]
+            recs.remove(r)
+            res["ctail"] += 1
     recs.sort(key=lambda r: (r[0], r[1], r[2]))
     # R1 (T2.c4): a jal target (this binary's census instruction lines) strictly inside a function starts a new one
     jt = {int(h, 16) for r in recs for _, mn, ops in r[3] if mn == "jal" for h in JAL_TOK.findall(ops)}
@@ -504,7 +522,7 @@ def run(bins, only_full, write=True):
             glob["drefs"].setdefault(x, set()).update((a, y) for y in srcs)
     out, results = [], {}
     tot = {"F": 0, "b": 0, "B": 0, "P": 0, "T": 0, "gapB": 0, "gapN": 0, "ovlB": 0, "ovlN": 0, "C": 0,
-           "split_g": 0, "nm_g": 0, "cdefs": 0, "jsplit": 0, "gsplit": 0, "r3": 0, "dB": 0, "dN": 0, "dlabel-head": 0, "invalid-insn": 0}
+           "split_g": 0, "nm_g": 0, "cdefs": 0, "jsplit": 0, "gsplit": 0, "ctail": 0, "r3": 0, "dB": 0, "dN": 0, "dlabel-head": 0, "invalid-insn": 0}
     pd, cf, sole = {}, {}, {}
     for a in sorted(bins):
         b = bins[a]
@@ -523,7 +541,7 @@ def run(bins, only_full, write=True):
         tot["gapN"] += len(r["gaps"]); tot["gapB"] += sum(e - s for s, e, _ in r["gaps"])
         tot["ovlN"] += len(r["ovl"]); tot["ovlB"] += sum(e - s for s, e in r["ovl"])
         tot["C"] += len(r["cross"])
-        for k in ("split_g", "nm_g", "cdefs", "jsplit", "gsplit"):
+        for k in ("split_g", "nm_g", "cdefs", "jsplit", "gsplit", "ctail"):
             tot[k] += r[k]
         tot["r3"] += scans[a]["r3"]
         for k, v in r["pd"].items():
@@ -562,11 +580,11 @@ def run(bins, only_full, write=True):
     if tex:
         print("truncation examples: " + "; ".join(tex[:10]))
     if only_full:
-        n = tot["split_g"] + tot["nm_g"] + tot["cdefs"] + tot["jsplit"] + tot["gsplit"]
+        n = tot["split_g"] + tot["nm_g"] + tot["cdefs"] + tot["jsplit"] + tot["gsplit"] - tot["ctail"]
         print("cross-check: glabels %d (cc_fingerprint split %d + nonmatchings %d) + C-defined %d + jal splits %d"
-              " + transfer splits %d = %d, census %d: %s" % (
+              " + transfer splits %d - folded carve tails %d = %d, census %d: %s" % (
                   tot["split_g"] + tot["nm_g"], tot["split_g"], tot["nm_g"], tot["cdefs"], tot["jsplit"],
-                  tot["gsplit"], n, tot["F"], "ok" if n == tot["F"] else "MISMATCH"))
+                  tot["gsplit"], tot["ctail"], n, tot["F"], "ok" if n == tot["F"] else "MISMATCH"))
     return tot, results
 
 
@@ -698,7 +716,7 @@ def stub_keys(results, led):
 def track_why(l):
     """T18 grammar of one track row (10 cols `alias start end track basis state best attempts wave blocker`) -> the
     first violation, or None. blocker: undrawn | no-verdict | compile-error | plateau:<LABEL> | refused:<draw_filter
-    reason> | a give-up class; state open iff blocker in TRACK_OPEN; best - | nc | NN% (T19 scaffold) | a number;
+    reason> | a give-up class | lib-region-carryover (T10.1.c2: only with basis = CARRY_BASIS evidence labels); state open iff blocker in TRACK_OPEN; best - | nc | NN% (T19 scaffold) | a number;
     attempts int >= 0."""
     import draw_filter  # lazy: draw_filter imports census
     if len(l) != 10:
@@ -706,9 +724,11 @@ def track_why(l):
     _, s, e, _, basis, state, best, att, wave, bl = l
     if not (re.fullmatch(r"0x[0-9a-f]{8}", s) and re.fullmatch(r"0x[0-9a-f]{8}", e)):
         return "start/end not 0x%08x"
-    if basis not in ("journal", "draw", "census"):
-        return "basis %s not journal|draw|census" % basis
-    if not (bl in TRACK_OPEN + ("compile-error",) + TRACK_GIVEUP or re.fullmatch(r"plateau:[A-Z0-9][A-Z0-9_-]*", bl)
+    if (bl == CARRY) != (basis not in ("journal", "draw", "census")):  # T10.1.c2: carry-over basis = evidence labels
+        return "basis %s not journal|draw|census, or blocker %s without evidence labels" % (basis, CARRY)
+    if bl == CARRY and not CARRY_BASIS.fullmatch(basis):
+        return "carry-over basis %s not evidence labels" % basis
+    if not (bl in TRACK_OPEN + ("compile-error", CARRY) + TRACK_GIVEUP or re.fullmatch(r"plateau:[A-Z0-9][A-Z0-9_-]*", bl)
             or (bl.startswith("refused:") and bl[8:] in draw_filter.PRECEDENCE)):
         return "blocker %r not in the grammar" % bl
     if state not in ("open", "set-aside") or (state == "open") != (bl in TRACK_OPEN):
@@ -740,6 +760,27 @@ def track_eval(results, led, members=None):
             stale += 1
     op = sum(1 for l in tr if len(l) == 10 and l[5] == "open")
     return len(tr), op, sum(1 for l in tr if len(l) == 10 and l[5] == "set-aside"), stale, fails
+
+
+def carry_eval(results, led, members):
+    """T10.1.c2 (--set exe) -> (C, K, fails). C = carry-over rows (track, blocker CARRY) whose fn is a stub of the set
+    (members) in its binary's lib region (draw_filter Evidence.lib_region); fails = `alias:start why` for any other
+    carry-over row; K = stubs of the set with no valid carry-over row."""
+    import draw_filter  # lazy: draw_filter imports census
+    ev = draw_filter.Evidence()
+    stubs = {k: e for k, e in stub_keys(results, led).items() if k in members}
+    ok, fails = set(), []
+    for l in led:
+        if not (len(l) == 10 and l[3] == "track" and l[9] == CARRY and l[0] in results):
+            continue
+        k = (l[0], int(l[1], 16))
+        if stubs.get(k) != int(l[2], 16):
+            fails.append("%s:%s not a stub of the set" % (l[0], l[1]))
+        elif ev.lib_region(*k) is None:
+            fails.append("%s:%s not a lib-region fn" % (l[0], l[1]))
+        else:
+            ok.add(k)
+    return len(ok), len(set(stubs) - ok), fails
 
 
 SET_FAMS = {"stage": ("LOGO+ST", "MAP")}  # module = every other non-exe family (Phase 1.8 replan, ## Context)
@@ -1059,6 +1100,15 @@ def main(argv=None):
         set_ok = N == D and not sst and G == len(part[a.set])
         sT, sO, sA, _, _ = track_eval(results, led, part[a.set])
         print("track: %d rows (open %d, set-aside %d) (set %s)" % (sT, sO, sA, a.set))
+        if a.set == "exe":  # T10.1.c2: the lib-region carry-over; every other exe-set stub fails the check
+            C, K, cfail = carry_eval(results, led, part["exe"])
+            print("carry-over: %d lib-region fns named (set exe)" % C)
+            print("stubs not on carry-over: %d" % K)
+            for f in cfail:
+                print("carry-over check: FAIL %s" % f)
+            if K:
+                print("carry-over check: FAIL %d exe-set stubs not on the carry-over" % K)
+            set_ok = set_ok and not cfail and not K
     _, tails_in = odd_tails(bins)
     if a.fixture == "libgame":  # negative control: one exe lib function flipped to game (functions.tsv untouched)
         r = results.get(EXE, {"recs": []})["recs"]

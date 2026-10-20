@@ -19,7 +19,7 @@ typedef struct {
 extern int D_800D94D0[];
 extern int func_80034CD8(int, int);
 extern void func_800484F0(Obj800D5990 *, int, int, int, int);
-extern void func_80079704(void *, SVECTOR *, SVECTOR *);
+extern SVECTOR *func_80079704(void *, SVECTOR *, SVECTOR *);
 extern void func_800D6204(Obj800D5990 *, int);
 
 void func_800D5990(Obj800D5990 *p) {

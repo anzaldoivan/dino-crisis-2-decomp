@@ -1,13 +1,6 @@
 #include "common.h"
+#include "dc2.h"
 
-typedef struct {
-    unsigned int f0;
-    int f4;
-    int f8;
-    int fC;
-    int f10;
-    int f14;
-} Obj0x8001cc74;
 extern Obj0x8001cc74 *D_800AB9F8;
 extern Obj0x8001cc74 D_800ABA08[4];
 extern int func_800812C4();

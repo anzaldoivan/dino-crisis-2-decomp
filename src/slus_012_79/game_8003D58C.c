@@ -19,7 +19,7 @@ typedef struct {
 } Obj8003D58C;
 int func_80032908(Seg *a, Seg *b);
 short func_80033F10(SVECTOR *a, SVECTOR *b, unsigned char c, int d);
-void func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_8007A824(SVECTOR *r, MATRIX *m);
 void func_8007AFA4(VECTOR *a, VECTOR *b, VECTOR *c);
 

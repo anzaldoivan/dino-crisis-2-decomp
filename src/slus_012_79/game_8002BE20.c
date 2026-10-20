@@ -3,7 +3,7 @@
 
 typedef struct { int w[5]; } M20;
 extern int func_80079154(int);
-extern void func_80079704(MATRIX *, SVECTOR *, SVECTOR *);
+extern SVECTOR *func_80079704(MATRIX *, SVECTOR *, SVECTOR *);
 extern void func_80079FC4(SVECTOR *, MATRIX *);
 extern int func_8007AC34(int, int);
 
