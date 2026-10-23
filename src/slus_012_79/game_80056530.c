@@ -104,7 +104,7 @@ extern void func_8004D274(); /* was extern void func_8004D274(Obj_80052AB8 *); T
 extern unsigned short D_800ABA90;
 extern void func_8001CDE4(int);
 extern int func_8001D9D4(void);
-extern void func_8001ED9C(int);
+extern int func_8001ED9C(int);
 extern int func_80034CD8(int, int);
 void func_80044834(void *, int);
 extern void func_800544FC();

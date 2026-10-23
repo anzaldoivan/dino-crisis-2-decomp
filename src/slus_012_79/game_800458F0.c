@@ -886,7 +886,106 @@ void func_80047B60(Obj0x80047b60 *p)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_80047B8C);
+typedef struct Node0x80047b8c {
+    char pad0[0x54];
+    struct Node0x80047b8c *next;           
+    void *parent;                          
+    char pad5c[0x6];
+    unsigned char b62;                     
+    char pad63;
+    short x;                               
+    short y;                               
+    short z;                               
+    char pad6a[0x22];
+    unsigned char c8c;                     
+    unsigned char c8d;                     
+    unsigned char c8e;                     
+} Node0x80047b8c;
+typedef struct Ent0x80047b8c {
+    unsigned short x;                     
+    unsigned short y;                     
+    unsigned short z;                     
+    signed char parent;                   
+    unsigned char b7;                     
+    char pad8[0xc];
+} Ent0x80047b8c;
+typedef struct Src0x80047b8c {
+    char pad0[0x14];
+    unsigned int count;                    
+    unsigned short h18;                    
+    unsigned short h1a;                    
+    Ent0x80047b8c ents[1];                 
+} Src0x80047b8c;
+typedef struct Obj0x80047b8c {
+    char pad0[0x60];
+    Src0x80047b8c *src;                    
+    Node0x80047b8c *head;                  
+    int count;                             
+    int s6c;                               
+    int s70;                               
+    int s74;                               
+    char pad78[0x34];
+    unsigned char bac;                     
+    char padad[0x4b];
+    unsigned char bf8;                     
+    unsigned char bf9;                     
+    unsigned char bfa;                     
+    char padfb;
+    unsigned char bfc;                     
+    char padfd;
+    unsigned char bfe;                     
+    char padff[0x5];
+    short h104;                             
+    short h106;                             
+} Obj0x80047b8c;
+struct Ent0x80047960;
+extern struct Ent0x80047960 *func_80047960(void);
+extern void func_80037E18();
+
+void func_80047B8C(Obj0x80047b8c *obj, Src0x80047b8c *src)
+{
+    Node0x80047b8c *nodes[30];
+    Ent0x80047b8c *e;
+    Node0x80047b8c *p;
+    unsigned int n;
+    unsigned int i;
+
+    e = src->ents;
+    n = src->count;
+    for (i = 0; i < n; i++) {
+        nodes[i] = func_80047960();
+        nodes[i]->x = e->x;
+        nodes[i]->y = e->y;
+        nodes[i]->z = e->z;
+        if (e->parent < 0) {
+            nodes[i]->parent = obj;
+        } else {
+            nodes[i]->parent = nodes[e->parent];
+        }
+        nodes[i]->b62 = e->b7;
+        e++;
+    }
+    for (i = 0; i < n - 1; i++) {
+        nodes[i]->next = nodes[i + 1];
+    }
+    nodes[i]->next = 0;
+    obj->count = n;
+    obj->src = src;
+    obj->bac = ((n * 36 + 31) >> 5) * 4 + 12;
+    obj->s6c = obj->s70 = obj->s74 = 0x1000;
+    obj->bf8 = obj->bf9 = obj->bfa = 0x80;
+    obj->bfc = 5;
+    obj->head = nodes[0];
+    for (p = obj->head; p != 0; p = p->next) {
+        p->c8e = 0x80;
+        p->c8d = 0x80;
+        p->c8c = 0x80;
+    }
+    func_80037E18(obj);
+    obj->bfe = 2;
+    obj->h104 = src->h18;
+    obj->h106 = src->h1a;
+}
 
 struct Obj0x80047e0c *func_80047D5C(void)
 {

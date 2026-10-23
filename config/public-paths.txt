@@ -42,6 +42,7 @@ config/refs.toml
 config/scanners.tsv
 config/splat/
 config/style-ratchet.txt
+config/syms.*.txt
 config/toolchains.tsv
 cookbook/
 docs/codegen-map.md

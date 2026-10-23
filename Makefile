@@ -116,9 +116,10 @@ build/$(1).bin: build/$(1)/split.stamp $$(shell find asm/$(1) -name '*.s' 2>/dev
 	  grep -rhoE '^ *[ag]label func_[0-9A-F]{8}' asm/$(1) | grep -oE 'func_[0-9A-F]{8}' | sort -u | sed p; \
 	  grep -oE '^func_[0-9A-F]{8}' build/$(1)/undefined_funcs_auto.txt | sed p; } | sort | uniq -u \
 	  | sed 's/^func_\(.*\)$$$$/func_\1 = 0x\1;/' > build/$(1)/undefined_jumps_auto.txt
+	@# optional hand-edited config/syms.<alias>.txt (`NAME = 0xADDR;`): link symbols splat does not emit (T10.1)
 	@$(CROSS)ld -nostdlib --no-check-sections -Map build/$(1).map -T build/$(1).ld \
 	  -T build/$(1)/undefined_syms_auto.txt -T build/$(1)/undefined_funcs_auto.txt \
-	  -T build/$(1)/undefined_jumps_auto.txt -o build/$(1).elf \
+	  -T build/$(1)/undefined_jumps_auto.txt $(addprefix -T ,$(wildcard config/syms.$(1).txt)) -o build/$(1).elf \
 	  || { echo "FAILED link: $(1)"; exit 1; }
 	@$(CROSS)objcopy -O binary build/$(1).elf $$@.tmp
 	@t=$$$$(stat -c %s '$(BASEDIR)/$(2)'); b=$$$$(stat -c %s $$@.tmp); \

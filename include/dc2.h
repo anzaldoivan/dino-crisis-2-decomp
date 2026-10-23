@@ -66,7 +66,9 @@ typedef struct Rec0x80060460 {
 typedef struct {
     unsigned char pad0[2];
     unsigned char unk2;
-    unsigned char pad3[0xC - 0x3]; /* was pad3[0xC] */
+    unsigned char pad3[0x4 - 0x3]; /* was pad3[0xC - 0x3], pad3[0xC] */
+    unsigned short *x4;         /* w43 c8 ask (T10.1) */
+    unsigned char pad8[0xC - 0x8];
     unsigned short x0C;         /* func_80064DCC (T10 w40) */
     char padE[0xF - 0xE];
     unsigned char unkF;
@@ -293,7 +295,8 @@ typedef struct {
     unsigned char x713;         /* func_80034D88 (T8 w36): sb 1 */
     char pad714[0x7B4 - 0x714]; /* was pad713[0x7B4 - 0x713], pad713[0x7C6 - 0x713] */
     int x7B4;                   /* func_80020628 (T8 w34) */
-    char pad7b8[0x7C0 - 0x7B8]; /* was pad7b8[0x7C4 - 0x7B8], pad7b8[0x7C6 - 0x7B8] */
+    int x7B8;                   /* func_80066C74 (T10.1 w43) */
+    char pad7bc[0x7C0 - 0x7BC]; /* was pad7b8[0x7C0 - 0x7B8], pad7b8[0x7C4 - 0x7B8], pad7b8[0x7C6 - 0x7B8] */
     unsigned short x7C0;        /* func_80029A94 (T10 w39) */
     char pad7c2[0x7C4 - 0x7C2];
     unsigned short x7C4;        /* func_8006BCEC (T8 w37) */
@@ -318,7 +321,9 @@ typedef struct {
     unsigned short xC50;        /* func_8003EA1C: lhu 0xC50, >> 8 indexes D_80089AB8 */
     char padc52[0xC58 - 0xC52];
     Rec12 xC58[1];              /* func_800544FC: lbu 1 of WORK+0xC58+12*i; count unproven */
-    char padc64[0xD90 - 0xC64]; /* was padc64[0xD94 - 0xC64], padc64[0xE64 - 0xC64] */
+    char padc64[0xD48 - 0xC64]; /* was padc64[0xD90 - 0xC64], padc64[0xD94 - 0xC64], padc64[0xE64 - 0xC64] */
+    Rec12 xD48[1];              /* w43 c12 ask (T10.1); count unproven */
+    char padd54[0xD90 - 0xD54];
     int xD90;                   /* func_80020628 (T8 w34) */
     unsigned short xD94;        /* func_80038FB4 (T8 w22): lhu */
     char padd96[0xD98 - 0xD96];
@@ -363,7 +368,8 @@ typedef struct {
 
 /* func_8006AC8C, func_8006AF9C: view of WORK->x318, lh 0x22, lw 0x40, lbu 0x4C (T8.c465). */
 typedef struct {
-    char pad0[0x22];
+    char pad0[0x20];            /* was pad0[0x22] */
+    short h20;                  /* w43 c7 ask (T10.1) */
     short h22;
     char pad24[0x40 - 0x24];
     Elem0x8006ac8c *x40;
@@ -878,7 +884,9 @@ typedef struct Voice0x800444f0 {
     unsigned char x11;
     char pad12[0x16 - 0x12];    /* was pad12[0x1B - 0x12] */
     unsigned char x16;          /* func_80043884 (T8 w36): sb 0xFF */
-    char pad17[0x1B - 0x17];
+    char pad17[0x19 - 0x17];    /* was pad17[0x1B - 0x17] */
+    unsigned char x19;          /* w43 c7/c12 ask (T10.1) */
+    char pad1a[0x1B - 0x1A];
     unsigned char x1B;
     unsigned char x1C;
     unsigned char x1D;          /* func_80044A88 (T10 w40); was pad1d */
@@ -941,11 +949,11 @@ typedef struct Shot {
     signed char x4E;
     signed char x4F;
     int x50;
-    char pad54[4];
+    Unit *x54;                  /* w43 c9 ask (T10.1); was pad54[4] */
     short x58;
     short x5A;
     short x5C;
-    char pad5e[2];
+    short x5E;                  /* w43 c7 ask (T10.1); was pad5e[2] */
     SVECTOR x60;
     char pad68[8];
 } Shot;

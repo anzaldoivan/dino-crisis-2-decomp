@@ -409,7 +409,102 @@ void func_800428D0(void)
 #include "../shared/func_8001B530.inc.c"
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_800428D8);
+typedef struct Obj0x800428d8 {
+    char pad0[0x40];
+    short x40;
+    short x42;
+    short x44;
+    char pad46[0x50 - 0x46];
+    int flags;
+    char pad54[0x64 - 0x54];
+    int x64;
+    char pad68[0x6C - 0x68];
+    int x6C;
+    char pad70[0xD8 - 0x70];
+    short xD8;
+    short xDA;
+    short xDC;
+    char padde[0x138 - 0xDE];
+    short x138;
+    char pad13a[0x13C - 0x13A];
+    unsigned int x13C;
+    char pad140[0x188 - 0x140];
+    int x188;
+    char pad18c[0x260 - 0x18C];
+} Obj0x800428d8;
+typedef struct Rec0x800428d8 {
+    char pad0[8];
+    short x8;
+    short xA;
+    short xC;
+    short xE;
+    char pad10[4];
+} Rec0x800428d8;
+typedef Pos0x8001d338 Vec0x800428d8;
+typedef struct Work0x800428d8 {
+    char pad0[0x4E0];
+    Obj0x800428d8 *x4E0;
+    char pad4e4[0x5F0 - 0x4E4];
+    char *x5F0;
+    char pad5f4[0x6F0 - 0x5F4];
+    Obj0x800428d8 *x6F0;
+    char pad6f4[0xC2C - 0x6F4];
+    unsigned short xC2C;
+} Work0x800428d8;
+#define W0x800428d8 ((Work0x800428d8 *)WORK)
+extern int D_800AF11C;
+extern char D_800B2B20[];
+char *func_800474B4(int a, int b);
+extern void func_80042AE4();
+extern void func_80042E84();
+extern void func_80043138();
+
+int func_800428D8(Obj0x800428d8 *obj)
+{
+    Vec0x800428d8 save;
+    Rec0x800428d8 *base;
+    Obj0x800428d8 *p;
+    Obj0x800428d8 *u;
+
+    base = (Rec0x800428d8 *)(W0x800428d8->x5F0 + 4);
+    if (obj->flags & 0x100) {
+        p = (Obj0x800428d8 *)func_800474B4(obj->x64, obj->x188);
+        save.x = obj->x40;
+        save.y = obj->x42;
+        save.z = obj->x44;
+        obj->x40 = p->x40;
+        obj->x42 = p->x42;
+        obj->x44 = p->x44;
+    }
+    func_80042E84(obj);
+    obj->xD8 = base[obj->x138].x8;
+    obj->xDA = base[obj->x138].xA;
+    obj->xDC = base[obj->x138].xC;
+    if (base[obj->x138].xE == -0x8000) {
+        obj->xDA = obj->x42;
+    }
+    func_80043138(obj, D_800B2B20);
+    u = W0x800428d8->x4E0 + D_800AF11C;
+    u--;
+    for (;;) {
+        if ((u->flags & 0x20001) == 1 && u != W0x800428d8->x6F0) {
+            func_80042AE4(u, obj);
+            if (W0x800428d8->xC2C == 0x903) {
+                u->x13C = (u->x13C << 4) / (u->x6C >> 8);
+            }
+        }
+        if (u <= W0x800428d8->x4E0 + 1) {
+            break;
+        }
+        u--;
+    }
+    if (obj->flags & 0x100) {
+        obj->x40 = save.x;
+        obj->x42 = save.y;
+        obj->x44 = save.z;
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80042AE4);
 

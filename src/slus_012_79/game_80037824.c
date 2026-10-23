@@ -188,10 +188,6 @@ loop:
     }
 }
 
-typedef struct {
-    char pad0[0x5DC];
-    void *x5DC;
-} Work0x80037c1c;
 extern unsigned char D_800B24F8[];
 extern void *func_80081CA4(void *, int, int);
 
@@ -430,9 +426,6 @@ void func_80038FB4(Obj0x80038fb4 *obj)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_800391E8);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80037824", func_80039430);
 
-
-extern Elem28 D_800B4A68[];
 
 

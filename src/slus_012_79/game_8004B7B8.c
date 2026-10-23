@@ -24,7 +24,7 @@ typedef struct {
 extern int func_80034CD8(int, int);
 extern void func_8001CDE4(int);
 extern int func_8001D9D4(void);
-extern void func_8001ED9C(int);
+extern int func_8001ED9C(int);
 extern void func_8004262C(int);
 extern void func_80042758(int);
 

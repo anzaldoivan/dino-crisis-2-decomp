@@ -470,7 +470,7 @@ typedef struct S0x80066e20 {
 struct S0x800689f4;
 extern struct S0x800689f4 D_800B53C8;
 extern int func_8004A32C(void);
-extern void func_80069890(int, int, int);
+extern void func_80069890(short, unsigned short, unsigned short);
 extern void func_8006BD80();
 
 void func_80066E20(void *arg0)
@@ -604,7 +604,50 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_80068CA0);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_800694A0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_80069890);
+extern unsigned char D_800ABA96;
+extern unsigned int D_800AC074[][0x400];
+extern void func_8007E074();
+extern void func_8007E134();
+
+void func_80069890(short n, unsigned short y, unsigned short h)
+{
+    Box0x8002243c r0;
+    Box0x8002243c r1;
+    int yy;
+
+    if (n == 0) {
+        return;
+    }
+    if (n > 0) {
+        r0.x = 0;
+        r0.y = y;
+        r0.w = 320 - n;
+        r0.h = h;
+        if (D_800ABA96) {
+            yy = y;
+            yy += 0x100;
+        } else {
+            yy = y;
+        }
+        r0.y = yy;
+        func_8007E134(PKT, &r0, n, r0.y);
+    } else {
+        r1.x = 0;
+        r1.y = y;
+        r1.w = n + 320;
+        r1.h = h;
+        if (D_800ABA96) {
+            yy = y;
+            yy += 0x100;
+        } else {
+            yy = y;
+        }
+        r1.y = yy;
+        func_8007E134(PKT, &r1, 0, r1.y);
+    }
+    func_8007E074(D_800AC074[D_800ABA96], PKT);
+    PKT += 6;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800662B8", func_800699A8);
 
