@@ -136,7 +136,53 @@ int func_8004DB98(int x, int y, unsigned short n, unsigned short lead, unsigned 
     return cnt;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_8004DDC4);
+extern unsigned char D_800ABA96;
+extern unsigned int D_800AC070[][0x400];
+void func_8007E194(u32 *p, int a, int b, int c, int d);
+void func_80050C90(unsigned short *rect, unsigned char u, unsigned char v, unsigned short clut, unsigned int color, unsigned short abe, unsigned short idx);
+
+int func_8004DDC4(int x, int y, unsigned short n, unsigned short flag, unsigned int color, unsigned int val, unsigned short idx)
+{
+    unsigned short r[4];
+    unsigned int div;
+    unsigned short i;
+    unsigned short d;
+    int count;
+    unsigned int c;
+    unsigned int abe;
+
+    div = 1;
+    c = color & 0xFFFFFF;
+    abe = color >> 31;
+    count = 0;
+    for (i = 1; i < n; i++) {
+        div *= 10;
+    }
+    for (i = 0; i < n; i++) {
+        d = val / div;
+        if (d) {
+            flag = 1;
+        }
+        val -= d * div;
+        div /= 10;
+        if (div == 0) {
+            flag = 1;
+        }
+        if (flag || d) {
+            r[0] = x + i * 7;
+            r[1] = y;
+            r[2] = 8;
+            r[3] = 12;
+            ((void (*)())func_80050C90)(r, (short)(d << 3), 0x18, 0x7C8F, c, abe, idx);
+            count++;
+        }
+    }
+    func_8007E194(PKT, 1, 0, 0xC, 0);
+    ((Tag0x8004c960 *)PKT)->addr = ((Tag0x8004c960 *)&D_800AC070[D_800ABA96][idx])->addr;
+    ((Tag0x8004c960 *)&D_800AC070[D_800ABA96][idx])->addr = (unsigned int)PKT;
+    PKT += 3;
+    return count;
+}
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_8004DFF4);
 
@@ -542,7 +588,51 @@ void func_800509C8(unsigned short *dst, unsigned short *a, unsigned short *b)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_80050A40);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_80050A90);
+extern unsigned char D_800ABA96;
+extern unsigned int D_800AC070[][0x400];
+void func_80050C90(unsigned short *rect, unsigned char u, unsigned char v, unsigned short clut, unsigned int color, unsigned short abe, unsigned short idx);
+extern void func_8007E194();
+typedef Tag0x8004c960 Tag0x80050a90;
+
+int func_80050A90(char *s, unsigned short x, unsigned short y, unsigned short n, unsigned int color, unsigned short idx)
+{
+    short rect[4];
+    int ret;
+    unsigned short cx;
+    unsigned short cy;
+    unsigned int col;
+    unsigned int abe;
+
+    cx = x;
+    cy = y;
+    col = color & 0xFFFFFF;
+    abe = color >> 31;
+    ret = 0;
+    while ((n = n - 1) != 0xFFFF) {
+        if (*s == '\n') {
+            cx = x;
+            cy += 4;
+        } else if (*s == ' ') {
+            cx += 4;
+        } else if (*s == 0) {
+            ret = 1;
+            break;
+        } else {
+            rect[0] = cx;
+            rect[1] = cy;
+            rect[2] = 4;
+            rect[3] = 4;
+            ((void (*)(short *, int, int, int, int, int, int))func_80050C90)(rect, (short)((*s - 'a') % 13 * 4 + 0x98), (short)((*s - 'a') / 13 * 4), 0x7C8F, col, abe, idx);
+            cx += 4;
+        }
+        s++;
+    }
+    ((void (*)())func_8007E194)(PKT, 1, 0, 0xC, 0);
+    ((Tag0x80050a90 *)PKT)->addr = ((Tag0x80050a90 *)&D_800AC070[D_800ABA96][idx])->addr;
+    ((Tag0x80050a90 *)&D_800AC070[D_800ABA96][idx])->addr = (unsigned int)PKT;
+    PKT += 3;
+    return ret;
+}
 
 extern u8 D_800ABA96;
 extern u32 D_800AC070[][0x400];
@@ -822,7 +912,43 @@ void func_8005189C(unsigned short *xy, int c0, int c1, int c2, unsigned short id
     PKT = (unsigned int *)((unsigned char *)PKT + 0x1C);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_80051998);
+extern unsigned char D_800ABA96;
+extern unsigned int D_800AC070[][0x400];
+
+void func_80051998(unsigned short *xy, unsigned short *uv, unsigned short clut, unsigned short tpage, unsigned int color, unsigned short abe, unsigned short idx)
+{
+    u32 *p;
+    u32 *ot;
+
+    ((Ft40x80050588 *)PKT)->x0 = xy[0];
+    ((Ft40x80050588 *)PKT)->y0 = xy[1];
+    ((Ft40x80050588 *)PKT)->x1 = xy[2];
+    ((Ft40x80050588 *)PKT)->y1 = xy[3];
+    ((Ft40x80050588 *)PKT)->x2 = xy[4];
+    ((Ft40x80050588 *)PKT)->y2 = xy[5];
+    ((Ft40x80050588 *)PKT)->x3 = xy[6];
+    ((Ft40x80050588 *)PKT)->y3 = xy[7];
+    ((Ft40x80050588 *)PKT)->tpage = tpage;
+    ((Ft40x80050588 *)PKT)->clut = clut;
+    ((Ft40x80050588 *)PKT)->u0 = uv[0];
+    ((Ft40x80050588 *)PKT)->v0 = uv[1];
+    ((Ft40x80050588 *)PKT)->u1 = uv[2];
+    ((Ft40x80050588 *)PKT)->v1 = uv[3];
+    ((Ft40x80050588 *)PKT)->u2 = uv[4];
+    ((Ft40x80050588 *)PKT)->v2 = uv[5];
+    ((Ft40x80050588 *)PKT)->u3 = uv[6];
+    ((Ft40x80050588 *)PKT)->v3 = uv[7];
+    if (abe) {
+        ((Ft40x80050588 *)PKT)->code = color | 0x2E000000;
+    } else {
+        ((Ft40x80050588 *)PKT)->code = color | 0x2C000000;
+    }
+    ot = &D_800AC070[D_800ABA96][idx];
+    p = PKT;
+    *p = *ot | 0x09000000;
+    *ot = (u32)p & 0xFFFFFF;
+    PKT = (u32 *)((u8 *)PKT + 0x28);
+}
 
 extern int func_80034CD8(int, int);
 
@@ -1357,7 +1483,7 @@ typedef struct Obj0x80053300 {
 extern unsigned short D_800ABA90;
 extern void func_8001CDE4(int);
 extern int func_8001D9D4(void);
-extern void func_8001ED9C(int);
+extern int func_8001ED9C(int);
 extern int func_80034CD8(int, int);
 void func_80044834(void *, int);
 extern void func_800544FC();
@@ -1526,7 +1652,69 @@ void func_800537C8(Obj0x800537c8 *p)
     func_800544FC(p, 0);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_80053920);
+extern Str12 D_80019770[];
+extern unsigned short D_800ABA90;
+extern void func_8001CDE4(int);
+extern int func_8001D9D4(void);
+extern int func_8001ED9C(int);
+void func_80044834(void *, int);
+extern void func_800544FC();
+extern void func_80055518();
+typedef struct Obj0x80053920 {
+    char pad0[2];
+    unsigned char x2;
+    unsigned char x3;
+    int x4;
+    char pad8[0x20 - 0x8];
+    unsigned char x20[0x24];
+    unsigned short x44;
+    char pad46[0x4C - 0x46];
+    signed char x4C;
+    char pad4d;
+    signed char x4E;
+    char pad4f[0x92 - 0x4F];
+    short x92;
+    short x94;
+} Obj0x80053920;
+
+void func_80053920(Obj0x80053920 *p)
+{
+    int v;
+    int c;
+
+    if (p->x44 & 0x5000) {
+        func_80044834(0, 0);
+        p->x4E ^= 1;
+    } else if (D_800ABA90 & 0x40) {
+        func_80044834(0, 1);
+        p->x2 = 5;
+        p->x3 = 0;
+        p->x4 = 0;
+    } else if (D_800ABA90 & 0xA0) {
+        func_80044834(0, 2);
+        if (p->x4E != 0) {
+            while (func_8001D9D4()) {
+                func_8001CDE4(1);
+            }
+            func_8001ED9C(WORK->xC58[p->x20[p->x4C]].b1);
+            p->x2 = 7;
+            p->x94 = 0;
+        } else {
+            v = WORK->xC50 & 0xFF;
+            if (D_80019770[v].xA & 0x20) {
+                WORK->xC50 = (WORK->xC58[p->x20[p->x4C]].b1 - 0x10) << 8;
+            } else {
+                WORK->xC50 = v | ((WORK->xC58[p->x20[p->x4C]].b1 - 0x10) << 8);
+            }
+            c = (WORK->xC50 & 0xFF) ? 5 : 9;
+            p->x2 = c;
+        }
+        p->x92 = 0;
+        p->x4 = 0;
+    }
+    func_800544FC(p, 0);
+    func_80055518(p);
+}
 
 extern unsigned char D_800ABA96;
 extern unsigned short D_800ABA90;
@@ -2052,7 +2240,7 @@ extern void func_8004D028();
 
 
 extern void func_80051054();
-extern int func_80050A90(char *s, int x, int y, int z, int a, int b);
+extern int func_80050A90(char *s, unsigned short x, unsigned short y, unsigned short n, unsigned int color, unsigned short idx);
 
 
 

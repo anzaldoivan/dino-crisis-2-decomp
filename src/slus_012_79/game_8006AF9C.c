@@ -345,7 +345,81 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006CD30);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006D7F4);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006DABC);
+typedef struct Vec0x8006dabc {
+    short x, y, z, w;
+} Vec0x8006dabc;
+typedef struct Ent0x8006dabc {
+    char pad0[0x40];
+    Vec0x8006dabc x40;
+    char pad48[0x58 - 0x48];
+    unsigned char x58;
+    char pad59[0x6C - 0x59];
+    short x6C;
+    short x6E;
+    char pad70[0x7A - 0x70];
+    unsigned char x7A;
+    char pad7b[0x7C - 0x7B];
+    short x7C;
+    short x7E;
+    short x80;
+    char pad82[0x9E - 0x82];
+    short x9E;
+    short xA0;
+} Ent0x8006dabc;
+extern void func_80044834(void *, int);
+extern Ent0x8006dabc *func_80047714(void);
+extern int func_8007A254();
+extern int func_8007A3F4();
+extern int (**D_800AF124)();
+extern short D_800B5D78;
+
+void func_8006DABC(char *arg0)
+{
+    char *s2;
+    char *p;
+    Ent0x8006dabc *e;
+    MATRIX m;
+    unsigned char *c;
+
+    s2 = WORK->x318;
+    p = arg0 + 0xC;
+    e = func_80047714();
+    if (e != 0) {
+        func_80044834(WORK->units, 0x61);
+        m.m[2][1] = 0;
+        m.m[2][0] = 0;
+        m.m[1][2] = 0;
+        m.m[1][0] = 0;
+        m.m[0][2] = 0;
+        m.m[0][1] = 0;
+        m.m[2][2] = 0xE8C;
+        m.m[1][1] = 0xE8C;
+        m.m[0][0] = 0xE8C;
+        func_8007A3F4(-*(short *)(p + 0x10), &m);
+        func_8007A254(-*(short *)(p + 0xE), &m);
+        e->x7A = 3;
+        e->x58 = 0x14;
+        e->x40 = *(Vec0x8006dabc *)((char *)WORK->units + 0x40);
+        e->x40.x = *(short *)(s2 + 0x38);
+        e->x40.y = -2000;
+        e->x40.z = *(short *)(s2 + 0x3C);
+        e->x7C = m.m[2][0] / 2;
+        e->x7E = m.m[2][1] / 2;
+        e->x80 = m.m[2][2] / 2;
+        e->x6E = 0x10;
+        e->x6C = 0x10;
+        e->x9E = 0x1C;
+        c = (unsigned char *)&D_800B5D78;
+        e->xA0 = c[0x1A] + 12;
+        c[0x1A]++;
+        if (c[0x1A] >= 3) {
+            c[0x1A] = 0;
+        }
+        WORK->x4DC[e->xA0].x4A = *(short *)(p + 0x10);
+        D_800AF124[e->x58](e);
+        D_800AF124[e->x58](e);
+    }
+}
 
 extern short D_800B5D78;
 extern unsigned char D_800ABA96;

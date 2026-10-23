@@ -351,7 +351,68 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_80024944);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_80024E50);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_800250E0);
+extern Ent0x80023ed8 *func_80047714(void);
+SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern void func_80047584();
+extern Rec0x80023ed8 D_80087628[][17];
+typedef struct Ctx0x800250e0 {
+    short x, y, z, pad6;
+    SVECTOR rot;
+    short cnt;
+} Ctx0x800250e0;
+typedef struct Obj0x800250e0 {
+    unsigned char b0, b1, b2, b3;
+    unsigned char pad4[8];
+    Ctx0x800250e0 c;
+} Obj0x800250e0;
+
+void func_800250E0(Obj0x800250e0 *a)
+{
+    MATRIX m;
+    Ctx0x800250e0 *c;
+    Rec0x80023ed8 *r;
+    Ent0x80023ed8 *e;
+    P80x80023ed8 *w;
+    SVECTOR *v;
+
+    c = &a->c;
+    r = D_80087628[a->b2];
+    while (r->v8.q <= c->cnt) {
+        if (r->u0.w == -1) {
+            func_80047584(a);
+            break;
+        }
+        if (c->cnt == r->v8.q) {
+            e = func_80047714();
+            if (e == 0)
+                break;
+            e->x58 = 4;
+            e->x6C = r->u0.b.b1;
+            e->x6E = r->u0.b.b2;
+            e->x84 = r->u0.b.b3;
+            e->x64 = r->x4;
+            e->x66 = r->x6;
+            e->x40 = r->v8;
+            e->x40.x += c->x;
+            e->x40.y += c->y;
+            e->x40.z += c->z;
+            e->x7C = r->v10;
+            e->x7A = r->x1C;
+            w = &e->x98;
+            e->x98.a = r->x20.a;
+            w->b = r->x20.b;
+            v = (SVECTOR *)&e->x7C;
+            if (a->b2 == 1) {
+                func_80079AA4(&c->rot, &m);
+                func_80079704(&m, v, v);
+                *(short *)&w->b += c->rot.vy;
+            }
+        }
+        r++;
+    }
+    c->cnt++;
+}
 
 typedef struct Sub0x800252d0 {
     char pad0[0x10];

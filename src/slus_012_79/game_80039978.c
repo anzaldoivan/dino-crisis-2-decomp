@@ -597,7 +597,87 @@ store:
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003CB5C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80039978", func_8003CFC0);
+typedef struct Elem0x8003cfc0 {
+    short vx, vy, vz, pad;
+    unsigned char lo;
+    unsigned char hi;
+    unsigned char part;
+    unsigned char more;
+    int unkC;
+} Elem0x8003cfc0;
+typedef struct Obj0x8003cfc0 {
+    char pad0[0x40];
+    short px, py, pz;
+    char pad46[0x2];
+    SVECTOR rot;
+    char pad50[0x14];
+    int model;
+    char pad68[0x2A];
+    unsigned short frame;
+    char pad94[0xC];
+    Elem0x8003cfc0 *elems;
+    char padA4[0x5E];
+    unsigned short flags;
+    char pad104[0x15];
+    signed char hit;
+} Obj0x8003cfc0;
+extern char *func_800474B4();
+extern int func_8004A378(void *, void *);
+extern SVECTOR *func_80079704();
+extern void func_8007A824(SVECTOR *r, MATRIX *m);
+
+signed char func_8003CFC0(Obj0x8003cfc0 *obj, int arg)
+{
+    SVECTOR sv;
+    MATRIX mat;
+    Elem0x8003cfc0 *elem;
+    unsigned int div;
+    int i;
+    int ret;
+    char *p;
+
+    elem = obj->elems;
+    if (elem == 0 || (obj->flags & 2)) {
+        obj->hit = -1;
+        return -1;
+    }
+    func_8007A824(&obj->rot, &mat);
+    if (obj->flags & 8) {
+        div = 1;
+    } else if (obj->flags & 4) {
+        div = 4;
+    } else {
+        div = 2;
+    }
+    i = 0;
+    ret = -1;
+    do {
+        if ((unsigned int)(elem->lo * 2) / div <= obj->frame
+            && obj->frame <= (unsigned int)(elem->hi * 2) / div) {
+            sv.pad = elem->pad;
+            if (elem->part == 0xFF) {
+                func_80079704(&mat, elem, &sv);
+                sv.vx += obj->px;
+                sv.vy += obj->py;
+                sv.vz += obj->pz;
+            } else {
+                p = func_800474B4(obj->model, elem->part);
+                func_80079704((MATRIX *)(p + 0x20), elem, &sv);
+                sv.vx += *(short *)(p + 0x40);
+                sv.vy += *(short *)(p + 0x42);
+                sv.vz += *(short *)(p + 0x44);
+            }
+            if (func_8004A378(&sv, (void *)arg)) {
+                obj->hit = i;
+                return i;
+            }
+            ret = -2;
+        }
+        i++;
+    } while ((elem++)->more != 0);
+    obj->hit = ret;
+    return ret;
+}
 
 typedef struct {
     char pad0[0x4A];

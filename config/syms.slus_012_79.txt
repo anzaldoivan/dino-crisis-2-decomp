@@ -1,0 +1,3 @@
+/* hand-edited link symbols for slus_012_79 (Makefile ld -T; T10.1.c4); one `NAME = 0xADDR;` per line, with the fn that needs it */
+D_80088F3A = 0x80088F3A; /* 0x8002c5dc: own lui %hi/%lo, second half of D_80088F38 */
+D_1F800000 = 0x1F800000; /* 0x8006bcec: scratchpad base, lui once + reused base reg */
