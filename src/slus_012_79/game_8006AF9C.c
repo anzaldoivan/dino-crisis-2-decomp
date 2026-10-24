@@ -110,22 +110,7 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B308);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006AF9C", func_8006B674);
 
-typedef struct Poly0x8006bba8 {
-    unsigned int tag;
-    unsigned char r0, g0, b0, code;
-    short x0, y0;
-    unsigned char u0, v0;
-    unsigned short clut;
-    short x1, y1;
-    unsigned char u1, v1;
-    unsigned short tpage;
-    short x2, y2;
-    unsigned char u2, v2;
-    unsigned short pad1;
-    short x3, y3;
-    unsigned char u3, v3;
-    unsigned short pad2;
-} Poly0x8006bba8;
+/* Poly0x8006bba8: dc2.h (hoisted T10.1.c36) */
 
 typedef struct Hud0x8006b938 {
     char pad0[0x10];

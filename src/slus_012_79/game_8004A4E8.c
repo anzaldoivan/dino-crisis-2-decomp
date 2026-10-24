@@ -413,7 +413,40 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A4E8", func_8004AC08);
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A4E8", func_8004ADD0);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004A4E8", func_8004AFC8);
+extern int func_80079D34();
+extern int func_80049C60();
+
+void func_8004AFC8(SVECTOR *a, SVECTOR *b, SVECTOR *out, int t)
+{
+    MATRIX ma;
+    MATRIX mb;
+    short inv;
+    short s;
+
+    a->vx &= 0xfff;
+    a->vy &= 0xfff;
+    a->vz &= 0xfff;
+    b->vx &= 0xfff;
+    b->vy &= 0xfff;
+    b->vz &= 0xfff;
+    func_80079D34(a, &ma);
+    func_80079D34(b, &mb);
+    inv = 0x1000 - t;
+    s = t;
+    ma.m[0][0] = (ma.m[0][0] * inv + mb.m[0][0] * s) / 4096;
+    ma.m[0][1] = (ma.m[0][1] * inv + mb.m[0][1] * s) / 4096;
+    ma.m[0][2] = (ma.m[0][2] * inv + mb.m[0][2] * s) / 4096;
+    ma.m[1][0] = (ma.m[1][0] * inv + mb.m[1][0] * s) / 4096;
+    ma.m[1][1] = (ma.m[1][1] * inv + mb.m[1][1] * s) / 4096;
+    ma.m[1][2] = (ma.m[1][2] * inv + mb.m[1][2] * s) / 4096;
+    ma.m[2][0] = (ma.m[2][0] * inv + mb.m[2][0] * s) / 4096;
+    ma.m[2][1] = (ma.m[2][1] * inv + mb.m[2][1] * s) / 4096;
+    ma.m[2][2] = (ma.m[2][2] * inv + mb.m[2][2] * s) / 4096;
+    func_80049C60(&ma, out);
+    out->vx &= 0xfff;
+    out->vy &= 0xfff;
+    out->vz &= 0xfff;
+}
 
 typedef struct Obj8004B298 {
     unsigned char pad0[0x20];
@@ -433,7 +466,7 @@ typedef struct Obj8004B298 {
     unsigned char vF0[4];
 } Obj8004B298;
 extern void (*D_8008A0EC[])(Obj8004B298 *);
-void func_80079AA4(void *, void *);
+int func_80079AA4(void *, void *);
 void func_80049E44(Obj8004B298 *, void *);
 extern void func_8004AC08(Obj0x8004aabc *obj);
 void func_8003E1B4(Obj8004B298 *);

@@ -55,7 +55,7 @@ int func_8003F154(void *, void *, int);
 void func_80044834(void *, int);
 char *func_800474B4(int a, int b);
 void func_80047958(void *);
-void func_80048048(void *, void *, int, int, int, int);
+int func_80048048(void *, void *, int, int, int, int);
 void func_8004A240(void *, void *, SVECTOR *);
 int func_8004A32C(void);
 void func_800649A8(int, int, int);

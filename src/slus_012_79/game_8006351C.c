@@ -410,30 +410,119 @@ void func_80063CFC(void)
     func_80034C48(2, 10, 0);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8006351C", func_80063D78);
-
-typedef struct {
-    unsigned char b0;
-    unsigned char b1;
-    unsigned char b2;
-    char pad3;
-    char x4[0x19 - 0x4];
-    unsigned char b19;
-    char pad1a[0x28 - 0x1A];
-} Elem0x800640b8;
-typedef struct {
-    char pad0[0x20];
-    MATRIX m;
-    SVECTOR x40;
-    SVECTOR x48;
-    char pad50[0x55 - 0x50];
-    unsigned char b55;
-    char pad56[0x5A - 0x56];
-    short x5A;
-} Unit0x800640b8;
+extern void (*D_8008A3B0[])(Elem28 *);
+extern unsigned short D_800B4F68[3];
+extern unsigned short D_800B4F70;
+extern int func_80034CD8(int, int);
 extern int func_8004A378(void *, void *);
 extern SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
+
+void func_80063D78(void)
+{
+    Unit0x800640b8 *u;
+    Elem0x800640b8 *e;
+    Elem0x800640b8 *end;
+    SVECTOR v;
+    SVECTOR *p;
+    int mode;
+    short t;
+    int k;
+
+    mode = WORK->xC50 >> 8;
+    end = (Elem0x800640b8 *)WORK->x5FC + 32;
+    u = (Unit0x800640b8 *)WORK->units;
+    if (u->b55 == 10 && (mode == 3 || mode == 6)) {
+        mode = 1;
+    } else {
+        mode = 0;
+    }
+    for (e = (Elem0x800640b8 *)WORK->x5FC; e < end; e++) {
+        if (!(e->b0 & 1)) {
+            continue;
+        }
+        if ((e->b0 & 0xC) != 0xC) {
+            t = u->x5A;
+        } else {
+            t = (short)D_800B4F68[1] / -1000;
+        }
+        if (e->b2 != t) {
+            continue;
+        }
+        if (mode && !(e->b0 & 0x40)) {
+            continue;
+        }
+        switch (e->b0 & 0xC) {
+        case 0:
+            if (func_80034CD8(1, 0)) {
+                continue;
+            }
+            if (!func_80034CD8(2, 1)) {
+                continue;
+            }
+            break;
+        case 4:
+            break;
+        case 8:
+            if (func_80034CD8(1, 0)) {
+                continue;
+            }
+            if (!func_80034CD8(2, 13)) {
+                continue;
+            }
+            break;
+        case 0xC:
+            if (!func_80034CD8(2, 10)) {
+                continue;
+            }
+            switch (k = e->b0 & 0xF0) {
+            case 0:
+                break;
+            case 0x10:
+                if (D_800B4F70 != k) {
+                    continue;
+                }
+                break;
+            case 0x20:
+                if (D_800B4F70 != k) {
+                    continue;
+                }
+                break;
+            case 0x30:
+                if ((unsigned char)D_800B4F70 != k) {
+                    continue;
+                }
+                break;
+            }
+            break;
+        }
+        if ((e->b0 & 0xC) == 0xC) {
+            p = (SVECTOR *)D_800B4F68;
+        } else if (e->b0 & 2) {
+            v.vx = 0;
+            v.vy = 0;
+            v.vz = 400;
+            func_80079AA4(&u->x48, &u->m);
+            func_80079704(&u->m, &v, &v);
+            v.vx += u->x40.vx;
+            v.vy += u->x40.vy;
+            v.vz += u->x40.vz;
+            p = &v;
+        } else {
+            p = &u->x40;
+        }
+        if (func_8004A378(p, e->x4)) {
+            D_8008A3B0[e->b1]((Elem28 *)e);
+            if (!(e->b0 & 4)) {
+                return;
+            }
+        }
+    }
+}
+
+extern int func_8004A378(void *, void *);
+extern SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
 
 int func_800640B8(unsigned char arg)
 {

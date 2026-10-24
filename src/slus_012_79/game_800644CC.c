@@ -369,7 +369,85 @@ void func_80065004(void)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800644CC", func_80065038);
+typedef struct {
+    unsigned int tag;
+    unsigned char r, g, b, code;
+    short x, y;
+    unsigned char u, v;
+    unsigned short clut;
+    short w, h;
+} Sprt0x80065038;
+typedef struct {
+    unsigned int w[4];
+} Body0x80065038;
+extern S800B53A8 D_800B53A8;
+extern unsigned short D_800ABA90;
+extern unsigned int *D_800ABA98[];
+extern char D_8008E954[];
+extern unsigned short D_8008A5B4[];
+extern void func_80044834(void *, int);
+extern int func_80065D0C(int, int, char *, int);
+extern void func_8007E194();
+
+void func_80065038(void)
+{
+    S800B53A8 *p = &D_800B53A8;
+    Sprt0x80065038 *sp;
+    unsigned int *pk;
+    unsigned int *ot;
+    char *s;
+    unsigned short n;
+
+    if ((D_800ABA90 & 0x8000) && p->unkF) {
+        p->unkF = 0;
+        p->x0C = 0;
+        func_80044834(0, 0);
+    } else if ((D_800ABA90 & 0x2000) && !p->unkF) {
+        p->unkF = 1;
+        p->x0C = 0;
+        func_80044834(0, 0);
+    }
+    s = D_8008E954;
+    func_80065D0C(p->b10 * 2 + 0xB2, p->b11 * 2 + 0x13, s, 0);
+    func_80065D0C(p->b10 * 2 + 0xE4, p->b11 * 2 + 0x13, s + 8, 0);
+    n = ++p->x0C;
+    if (n >= 0x15) {
+        p->x0C = 0;
+    } else if (n < 10) {
+        sp = SCRATCH(Sprt0x80065038, 0x2C);
+        sp->w = 0xE;
+        sp->h = 0xC;
+        sp->code = 0x64;
+        sp->b = 0xFF;
+        sp->g = 0xFF;
+        sp->r = 0xFF;
+        sp->x = D_8008A5B4[p->unkF];
+        sp->y = 0xC4;
+        sp->u = 0x10;
+        sp->v = 0xF0;
+        sp->clut = 0x7DCD;
+        *(Body0x80065038 *)(PKT + 1) = *(Body0x80065038 *)&sp->r;
+        ot = D_800ABA98[0];
+        pk = PKT;
+        *pk = ot[29] | 0x04000000;
+        ot[29] = (unsigned int)pk & 0xFFFFFF;
+        PKT += 5;
+        func_8007E194(PKT, 1, 1, 0x2B, 0);
+        {
+            unsigned int *o = D_800ABA98[0];
+            unsigned int *q = PKT;
+            *q = (*q & 0xFF000000) | (o[29] & 0xFFFFFF);
+            o[29] = (o[29] & 0xFF000000) | ((unsigned int)PKT & 0xFFFFFF);
+        }
+        PKT += 3;
+    }
+    if (D_800ABA90 & 0xA0) {
+        p->unk2 -= 4;
+    } else if (D_800ABA90 & 0x40) {
+        p->unkF = 1;
+        p->unk2 -= 4;
+    }
+}
 
 typedef struct Obj0x800652dc {
     unsigned char pad0[2];

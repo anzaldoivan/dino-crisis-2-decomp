@@ -4,7 +4,7 @@
 extern int func_80034CD8(int, int);
 extern void func_80044834(void *, int);
 extern void func_800484F0();
-extern void func_80079AA4();
+extern int func_80079AA4();
 
 void func_800267DC(Obj0x80026a7c *p)
 {

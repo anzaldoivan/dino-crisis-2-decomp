@@ -2,7 +2,7 @@
 #include "dc2.h"
 
 extern void func_8001D89C();
-extern void func_80079AA4();
+extern int func_80079AA4();
 
 void func_800266DC(short a, short b, short c)
 {

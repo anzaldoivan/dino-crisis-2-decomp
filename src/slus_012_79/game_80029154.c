@@ -29,8 +29,8 @@ extern int func_800487B8();
 extern void func_80029C14();
 extern void func_80037C9C(void *);
 extern void func_8004AC08();
-extern void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
 
 void func_80029154(Obj0x80029154 *obj)
 {

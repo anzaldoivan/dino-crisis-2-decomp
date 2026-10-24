@@ -25,6 +25,25 @@ typedef struct { short vx, vy, vz, pad; } SVECTOR;
 typedef struct { int vx, vy, vz, pad; } VECTOR;
 typedef struct { short m[3][3]; int t[3]; } MATRIX;
 
+/* 40-byte textured quad prim (POLY_FT4 layout), copied to PKT: func_8006BBA8 and its unit (hoisted from game_8006AF9C.c,
+   T10.1.c36), func_80067F2C, func_800694A0. */
+typedef struct Poly0x8006bba8 {
+    unsigned int tag;
+    unsigned char r0, g0, b0, code;
+    short x0, y0;
+    unsigned char u0, v0;
+    unsigned short clut;
+    short x1, y1;
+    unsigned char u1, v1;
+    unsigned short tpage;
+    short x2, y2;
+    unsigned char u2, v2;
+    unsigned short pad1;
+    short x3, y3;
+    unsigned char u3, v3;
+    unsigned short pad2;
+} Poly0x8006bba8;
+
 /* slus_012_79 func_80037824 and its continuation units: D_800893D0. */
 typedef struct {
     short a;
@@ -127,12 +146,22 @@ typedef struct {
     int x60;                    /* func_80028910 (T8 w36): arg 1 of func_80047B8C */
     int id;                     /* psx_bin_st1 func_800D9000: lw 0x64 of WORK->units, passed as arg 0 */
     int x68;                    /* func_80037C9C (T8 w28): lw 0x68 loop count */
-    char pad6c[0x7C - 0x6C];    /* was pad68[0x7C - 0x68] */
+    char pad6c[0x74 - 0x6C];    /* was pad6c[0x7C - 0x6C], pad68[0x7C - 0x68] */
+    short x74;                  /* func_8003252C drafter (T10.1 w44 c20) */
+    char pad76[0x78 - 0x76];
+    short x78;                  /* func_8003252C drafter (T10.1 w44 c20) */
+    char pad7a[0x7C - 0x7A];
     int x7C;                   /* func_80060F2C (T8 w07) */
-    char pad80[0x88 - 0x80];    /* was pad80[0xFD - 0x80] */
+    char pad80[0x85 - 0x80];    /* was pad80[0x88 - 0x80], pad80[0xFD - 0x80] */
+    unsigned char x85;          /* func_8003252C drafter (T10.1 w44 c20) */
+    char pad86[0x88 - 0x86];
     int x88;                    /* func_80028910 (T8 w36) */
-    char pad8c[0xF0 - 0x8C];
-    short xF0;                  /* func_80028910 (T8 w36) */
+    char pad8c[0xE0 - 0x8C];    /* was pad8c[0xF0 - 0x8C] */
+    short xE0;                  /* func_80036AB4 (T10.1 w45 c35): sh, copy of x40 */
+    short xE2;                  /* func_80036AB4 (T10.1 w45 c35): sh, copy of x42 */
+    short xE4;                  /* func_80036AB4 (T10.1 w45 c35): sh, copy of x44 */
+    char pade6[0xF0 - 0xE6];
+    short xF0;                 /* func_80028910 (T8 w36) */
     short xF2;
     short xF4;
     char padf6[0xFD - 0xF6];
@@ -140,9 +169,13 @@ typedef struct {
     unsigned char xFE;          /* func_80037C9C (T8 w28): lbu/sb 0xFE */
     char padff[0x108 - 0xFF];   /* was padfe[0x108 - 0xFE] */
     unsigned short x108;        /* func_80023D8C (T8 w08) */
-    char pad10a[0x11B - 0x10A]; /* was pad10a[0x174 - 0x10A] */
+    char pad10a[0x10C - 0x10A]; /* was pad10a[0x11B - 0x10A], pad10a[0x174 - 0x10A] */
+    short x10C;                 /* func_80036AB4 (T10.1 w45 c35): sh zero */
+    char pad10e[0x11B - 0x10E];
     unsigned char x11B;         /* func_8005EAB4 drafter (T10 w39) */
-    char pad11c[0x174 - 0x11C];
+    char pad11c[0x170 - 0x11C]; /* was pad11c[0x174 - 0x11C] */
+    unsigned short x170;        /* func_8002D910 (T10.1 w44 c25): sh 0xFFFF */
+    char pad172[0x174 - 0x172];
     unsigned short x174;        /* func_80048F60: lhu/andi ~4/sh 0x174 */
     unsigned short x176;        /* func_80048FF0 (T8 w34) */
     unsigned short x178;        /* func_8003D22C (T10 w39); was pad178[0x184 - 0x178], pad176[0x184 - 0x176] */
@@ -180,6 +213,16 @@ typedef struct {
     unsigned char x2;
     unsigned char x3;
 } Ramp0x80030670;
+
+/* Work+0x668 spawn timer record (func_80036AB4, T10.1 w45 c35); b9 is the byte func_8002F654 sets to 0xFF. */
+typedef struct {
+    unsigned short h0;          /* func_80036AB4: countdown, halved when WORK->padc2a[0] == 2 */
+    char pad2[3];
+    unsigned char b5;
+    char pad6[2];
+    unsigned char b8;
+    unsigned char b9;           /* was Work.x671 (func_8002F654, func_8006059C: sb 0xFF) */
+} Spawn0x80036ab4;
 
 /* Scratchpad-resident work block (word 0 of the scratchpad). Total size unproven. Field users in comments. */
 typedef struct {
@@ -267,8 +310,8 @@ typedef struct {
     unsigned char x638[1];      /* func_8003E6E4 (T10 w39): indexed byte; count unproven */
     char pad639[0x658 - 0x639];
     Slot0x80035814 x658;        /* func_80035814 (T8 w35) */
-    char pad65c[0x671 - 0x65C];
-    unsigned char x671;         /* func_8002F654: sb 0xFF */
+    char pad65c[0x668 - 0x65C]; /* was pad65c[0x671 - 0x65C] */
+    Spawn0x80036ab4 x668;       /* func_80036AB4 (T10.1 w45 c35); was x671 (now x668.b9) */
     char pad672[0x6B0 - 0x672];
     short x6B0;                 /* func_8005AF1C (T8 w15) */
     unsigned char x6B2;         /* func_8005E7D8 (T10 w39); was pad6b2[0x6B4 - 0x6B2] */
@@ -319,7 +362,7 @@ typedef struct {
     unsigned short xC4C;
     unsigned short xC4E;
     unsigned short xC50;        /* func_8003EA1C: lhu 0xC50, >> 8 indexes D_80089AB8 */
-    char padc52[0xC58 - 0xC52];
+    unsigned short xC52[3];     /* func_800611EC drafter (T10.1 w44 c18); was padc52[0xC58 - 0xC52] */
     Rec12 xC58[1];              /* func_800544FC: lbu 1 of WORK+0xC58+12*i; count unproven */
     char padc64[0xD48 - 0xC64]; /* was padc64[0xD90 - 0xC64], padc64[0xD94 - 0xC64], padc64[0xE64 - 0xC64] */
     Rec12 xD48[1];              /* w43 c12 ask (T10.1); count unproven */
@@ -591,6 +634,33 @@ typedef struct {
     char pad0[0x7C];
     unsigned int ot;
 } OtHolder0x8002329c;
+
+/* D_800ABA98 view: func_800310B8, func_80029FC4 (T10.1 w44, was local to game_800310B8.c). */
+typedef struct {
+    char pad0[0x78];
+    unsigned int x78;
+} OtHolder0x800310b8;
+
+/* WORK->x5FC records and WORK->units view: func_80063D78, func_800640B8 (T10.1 w44, was local to game_8006351C.c). */
+typedef struct {
+    unsigned char b0;
+    unsigned char b1;
+    unsigned char b2;
+    char pad3;
+    char x4[0x19 - 0x4];
+    unsigned char b19;
+    char pad1a[0x28 - 0x1A];
+} Elem0x800640b8;
+typedef struct {
+    char pad0[0x20];
+    MATRIX m;
+    SVECTOR x40;
+    SVECTOR x48;
+    char pad50[0x55 - 0x50];
+    unsigned char b55;
+    char pad56[0x5A - 0x56];
+    short x5A;
+} Unit0x800640b8;
 
 /* func_80023CEC, func_80050398: one shape for the carved copies (T14.c2). */
 typedef struct {

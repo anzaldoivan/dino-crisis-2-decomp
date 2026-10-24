@@ -36,7 +36,7 @@ typedef struct {
 } Obj0x8002df30;
 extern void func_80047814();
 extern void func_80048248();
-extern void func_80079AA4();
+extern int func_80079AA4();
 extern void *func_80081CA4();
 
 void func_8002DF30(Obj0x8002df30 *o)

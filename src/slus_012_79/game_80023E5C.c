@@ -271,7 +271,94 @@ void func_80024420(Obj0x80024420 *o)
     func_800244AC(o);
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_800244AC);
+typedef struct {
+    char pad0[0x40];
+    V80x80023ed8 x40;
+    char pad48[0x64 - 0x48];
+    int x64;
+    char pad68[0x6C - 0x68];
+    int x6C;
+} Par0x800244ac;
+typedef struct {
+    Rec0x80023ed8 *ptr;
+    unsigned char lo;
+    unsigned char hi;
+    signed char cnt;
+    unsigned char cur;
+    Par0x800244ac *par;
+    int flags;
+    int x10;
+} Seq0x800244ac;
+extern char *func_800474B4(int a, int b);
+extern void func_80047584();
+extern Ent0x80023ed8 *func_80047714(void);
+void func_800244AC(Obj0x80024420 *o);
+
+void func_800244AC(Obj0x80024420 *arg)
+{
+    Ent0x80023ed8 *o;
+    Rec0x80023ed8 *e;
+    Seq0x800244ac *s;
+
+    e = ((Seq0x800244ac *)&arg->xC)->ptr;
+    s = (Seq0x800244ac *)&arg->xC;
+    while (e->v8.q <= s->cnt) {
+        if (e->u0.w == -1) {
+            if (s->flags & 8) {
+                s->cnt = -1;
+                s->ptr -= s->cur - s->lo;
+                s->cur = s->lo;
+                break;
+            }
+            func_80047584(arg);
+            // !FAKE: a goto past the loop keeps the call arm out of expand_end_loop's rotated exit test
+            goto end;
+        }
+        if (s->cnt == e->v8.q) {
+            if (s->lo <= s->cur && s->cur <= s->hi) {
+                o = func_80047714();
+                if (o == 0) {
+                    break;
+                }
+                o->x8C = (Obj0x80023ed8 *)arg;
+                o->x58 = e->u0.b.b0;
+                o->x64 = e->x4;
+                o->x66 = e->x6;
+                o->x40 = e->v8;
+                o->x7C = e->v10;
+                o->x7A = e->x1C;
+                o->x84 = e->u0.b.b3;
+                if (*(unsigned short *)&s->x10 != 0) {
+                    o->x68 = s->x10;
+                }
+                if (s->flags & 2) {
+                    o->x60 = s->par;
+                } else if (s->flags & 4) {
+                    Par0x800244ac *p = s->par;
+                    o->x40.x += p->x40.x;
+                    o->x40.y += p->x40.y;
+                    o->x40.z += p->x40.z;
+                } else {
+                    o->x60 = func_800474B4(s->par->x64, e->x1F);
+                }
+                if (o->x60 != 0) {
+                    o->x6C = (e->u0.b.b1 * s->par->x6C) / 4096;
+                    o->x6E = (e->u0.b.b2 * s->par->x6C) / 4096;
+                } else {
+                    o->x6C = e->u0.b.b1;
+                    o->x6E = e->u0.b.b2;
+                }
+                o->x98.a = e->x20.a;
+                o->x98.b = e->x20.b;
+            }
+            s->cur++;
+        }
+        e++;
+        s->ptr++;
+    }
+end:
+    s->cnt++;
+}
 
 #define SHARED_D0 D_8008761C
 void func_8002479C(Obj80023E04_s80023E04 *obj)
@@ -353,7 +440,7 @@ INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_80023E5C", func_80024E50);
 
 extern Ent0x80023ed8 *func_80047714(void);
 SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
 extern void func_80047584();
 extern Rec0x80023ed8 D_80087628[][17];
 typedef struct Ctx0x800250e0 {
@@ -547,7 +634,7 @@ typedef struct Lim0x8002628c {
 } Lim0x8002628c;
 extern int func_80025FC0(Buf0x8002628c *);
 SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
 
 void func_8002628C(char *arg0)
 {

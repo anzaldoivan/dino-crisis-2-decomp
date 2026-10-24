@@ -15,7 +15,7 @@ extern char D_8008A8BC[];
 extern void func_80044834(void *, int);
 extern void func_80050030();
 extern int func_80050934();
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 extern void func_8004D028();
 
 void func_8005640C(Obj0x8005640c *obj)

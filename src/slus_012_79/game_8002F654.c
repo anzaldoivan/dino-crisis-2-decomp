@@ -54,7 +54,7 @@ void func_8002F654(void)
     func_80034D88(-1, 0, 0);
     func_80041AE4(D_800E0000);
     WORK->x629 = 0xFF;
-    WORK->x671 = 0xFF;
+    WORK->x668.b9 = 0xFF;
     if (WORK->x4C7 == 0) {
         v = func_8004587C();
         if (v != 0xFFFF) {

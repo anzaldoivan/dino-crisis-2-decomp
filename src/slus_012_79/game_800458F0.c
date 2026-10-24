@@ -1357,9 +1357,268 @@ void func_8004840C(Obj0x8004840c *p, int div)
     }
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_800484F0);
+typedef struct Src0x800484f0 {
+    unsigned int x0;
+    int x4;
+    int x8;
+    int xc;
+    int x10;
+} Src0x800484f0;
+typedef struct Obj0x800484f0 {
+    char pad0[0x68];
+    unsigned int x68;
+    char pad6c[0x78 - 0x6c];
+    unsigned char *x78;
+    unsigned char *x7c;
+    unsigned char *x80;
+    unsigned char *x84;
+    Src0x800484f0 **x88;
+    Src0x800484f0 *x8c;
+    unsigned short x90;
+    unsigned short x92;
+    unsigned short x94;
+    char pad96[2];
+    short x98;
+    short x9a;
+    int x9c;
+    int xa0;
+    int xa4;
+    char pada8[2];
+    short xaa;
+    unsigned char xac;
+    char padad[0x102 - 0xad];
+    unsigned short x102;
+} Obj0x800484f0;
+extern void func_8004840C();
+extern int func_80048AE0();
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_800487B8);
+void func_800484F0(Obj0x800484f0 *o, Src0x800484f0 *p, unsigned int n, int flags, int arg4)
+{
+    unsigned int d;
+    unsigned int e;
+    unsigned int t;
+    unsigned int stride;
+    unsigned char *old;
+    unsigned char *base;
+    int keep;
+    unsigned int w;
+    int sp;
+
+    if (flags < 0) {
+        flags |= 0x200;
+    } else {
+        flags &= ~0x200;
+    }
+    if ((int)p >= 0) {
+        p = o->x88[(int)p];
+    }
+    if (p->x4) {
+        o->x9c = p->x4;
+    } else {
+        o->x9c = 0;
+    }
+    if (p->x8) {
+        o->xa0 = p->x8;
+    } else {
+        o->xa0 = 0;
+    }
+    if (p->xc) {
+        o->xa4 = p->xc;
+    } else {
+        o->xa4 = 0;
+    }
+    if (flags & 0x80) {
+        d = 1;
+        if (!(o->x102 & 8)) {
+            d = 2;
+            if (o->x102 & 4) {
+                d = 4;
+            }
+        }
+        e = 1;
+        if (!(flags & 8)) {
+            e = 2;
+            if (flags & 4) {
+                e = 4;
+            }
+        }
+        n = o->x92 * ((p->x0 * 2) / d) / ((o->x90 * 2) / e) + 2 / e;
+    }
+    old = o->x7c;
+    o->x102 = flags;
+    w = (o->x68 * 6 + 0x13) / 4 * 4;
+    o->xac = w;
+    o->x90 = p->x0;
+    p++;
+    o->x8c = p;
+    o->x78 = old;
+    t = o->x90 - 1;
+    stride = w & 0xfc;
+    if (n < t) {
+        t = n;
+    }
+    o->x7c = (unsigned char *)p + stride * t;
+    o->x80 = (unsigned char *)p + stride * ((n + 1 < o->x90 - 1U) ? n + 1 : o->x90 - 1U);
+    o->x84 = (unsigned char *)p + stride * ((n + 2 < o->x90 - 1U) ? n + 2 : o->x90 - 1U);
+    if (old == 0) {
+        o->x78 = o->x7c;
+    }
+    o->x98 = 0;
+    o->xaa = 0;
+    o->x92 = (unsigned int)(((short *)o->x7c)[1] * n) >> 1;
+    o->x94 = n;
+    o->x9a = arg4;
+    keep = *(unsigned char *)&o->x102 & 0x40;
+    o->x102 &= ~0x40;
+    if (o->x102 & 8) {
+        sp = 1;
+    } else if (o->x102 & 4) {
+        sp = 4;
+    } else {
+        sp = 2;
+    }
+    func_8004840C(o, sp);
+    func_80048AE0(o, sp);
+    o->x102 |= keep;
+}
+
+typedef struct Key0x800487b8 {
+    short x0;
+    short x2;
+} Key0x800487b8;
+typedef struct Obj0x800487b8 {
+    char pad0[0x40];
+    short x40;
+    short x42;
+    short x44;
+    char pad46[2];
+    SVECTOR x48;
+    char pad50[0x6C - 0x50];
+    int x6C;
+    int x70;
+    int x74;
+    Key0x800487b8 *x78;
+    Key0x800487b8 *x7C;
+    Key0x800487b8 *x80;
+    Key0x800487b8 *x84;
+    char pad88[4];
+    char *x8C;
+    unsigned short x90;
+    short x92;
+    short x94;
+    short pad96;
+    short x98;
+    char pad9A[0xAA - 0x9A];
+    unsigned short xAA;
+    unsigned char xAC;
+    char padAD[0xC0 - 0xAD];
+    short xC0;
+    short xC2;
+    short xC4;
+    short padC6;
+    short xC8;
+    short xCA;
+    short xCC;
+    short padCE;
+    short xD0;
+    short xD2;
+    short xD4;
+    char padD6[0x102 - 0xD6];
+    unsigned short x102;
+} Obj0x800487b8;
+extern void func_8004840C();
+extern int func_80048AE0();
+extern SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
+
+int func_800487B8(Obj0x800487b8 *p)
+{
+    SVECTOR v;
+    MATRIX m;
+    int ret;
+    int step;
+    int idx;
+    int n;
+    unsigned short t;
+    Key0x800487b8 *k;
+
+    ret = 0;
+    if (!(p->x102 & 0x20)) {
+        if (p->x102 & 8) {
+            step = 1;
+        } else if (p->x102 & 4) {
+            step = 4;
+        } else {
+            step = 2;
+        }
+        n = p->xAA + step;
+        p->x92 += (short)n / 2;
+        p->xAA = n & 1;
+        func_8004840C(p, step);
+        p->xC8 = p->xC0;
+        p->xCA = p->xC2;
+        p->xCC = p->xC4;
+        k = p->x7C;
+        if (p->x98 >= k->x2) {
+            t = p->x94;
+            p->x94 = t + 1;
+            p->x98 -= k->x2;
+            if (p->x102 & 1) {
+                if (p->x94 >= p->x90) {
+                    ret = 1;
+                    p->x94 = 0;
+                    p->x92 = 0;
+                    p->x98 = 0;
+                    p->xAA = 0;
+                }
+                idx = p->x94 + 2;
+                if (idx >= p->x90) {
+                    idx -= p->x90;
+                }
+            } else {
+                if (p->x94 >= p->x90) {
+                    ret = 1;
+                    p->x94 = t;
+                    p->x92--;
+                }
+                idx = p->x94 + 2;
+                if (idx >= p->x90) {
+                    idx = p->x90 - 1;
+                }
+            }
+            if (p->x90 == 1) {
+                idx = 0;
+            }
+            p->x78 = p->x7C;
+            p->x7C = p->x80;
+            p->x80 = p->x84;
+            p->x84 = (Key0x800487b8 *)(p->x8C + idx * p->xAC);
+        }
+        func_80048AE0(p, step);
+        if (!(p->x102 & 0x200) && !ret && (p->x102 & 0x40)) {
+            v.vx = p->xC0 - p->xC8;
+            p->xD0 = v.vx;
+            v.vy = p->xC2 - p->xCA;
+            p->xD2 = v.vy;
+            v.vz = p->xC4 - p->xCC;
+            p->xD4 = v.vz;
+            func_80079AA4(&p->x48, &m);
+            func_80079704(&m, &v, &v);
+            if (*(unsigned short *)&WORK->xC2C == 0x903) {
+                v.vx = (v.vx * (p->x6C >> 8)) >> 4;
+                v.vy = (v.vy * (p->x70 >> 8)) >> 4;
+                v.vz = (v.vz * (p->x74 >> 8)) >> 4;
+            }
+            p->x40 += v.vx;
+            p->x42 += v.vy;
+            p->x44 += v.vz;
+        }
+        if (ret && !(p->x102 & 1)) {
+            p->x102 |= 0x20;
+        }
+    }
+    return ret;
+}
 
 typedef struct Sv0x80048ae0 {
     short x, y, z, pad;
@@ -1864,7 +2123,7 @@ typedef struct Obj0x8004969c {
     unsigned short x102;
 } Obj0x8004969c;
 #define SPAD0x8004969c (SCRATCH(Sv0x8004969c, 0x2C))
-extern void func_800484F0(Unit *, int, int, int, int);
+extern void func_800484F0();
 extern void func_8004927C(int);
 extern void func_8004948C(int);
 extern void func_8007AE94();
@@ -1930,8 +2189,8 @@ void func_8004969C(int a0, int a1, int a2, int a3, int a4, int a5)
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800458F0", func_80049900);
 
 extern int func_8007AC34(int, int);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
-extern void func_80079A64();
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_80079A64();
 extern void func_800791F4();
 
 SVECTOR *func_80049C60(MATRIX *m, SVECTOR *out)
@@ -2020,7 +2279,7 @@ void func_80049F24(Obj80049F24 *obj, short a1, int a2)
 }
 
 extern SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
 
 void func_80049F7C(SVECTOR *out, SVECTOR *in, short ry)
 {

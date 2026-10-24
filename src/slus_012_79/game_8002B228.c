@@ -19,7 +19,7 @@ typedef struct {
     unsigned char xF0[4];
 } Obj0x8002b228;
 extern void (*D_80088DF8[])(Obj0x8002b228 *);
-extern void func_80079AA4(SVECTOR *r, MATRIX *m);
+extern int func_80079AA4(SVECTOR *r, MATRIX *m);
 extern void func_80049E44(Obj0x8002b228 *, void *);
 extern void func_8004AC08();
 extern void func_8004AB14(Obj0x8002b228 *p);

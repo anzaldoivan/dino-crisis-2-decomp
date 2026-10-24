@@ -42,7 +42,7 @@ int func_8003F154(void *, void *, int);
 void func_80044834(void *, int);
 char *func_800474B4(int a, int b);
 void func_80047958(void *);
-void func_80048048(void *, void *, int, int, int, int);
+int func_80048048(void *, void *, int, int, int, int);
 void func_8004A240(void *, void *, SVECTOR *);
 int func_8004A32C(void);
 void func_800649A8(int, int, int);
@@ -456,7 +456,7 @@ extern int D_800AF11C;
 extern char D_800B2B20[];
 char *func_800474B4(int a, int b);
 extern void func_80042AE4();
-extern void func_80042E84();
+extern int func_80042E84();
 extern void func_80043138();
 
 int func_800428D8(Obj0x800428d8 *obj)
@@ -548,7 +548,7 @@ typedef struct Act0x80042d3c {
 } Act0x80042d3c;
 extern Obj0x80042d3c D_800B28C0;
 extern char D_800B2B20[];
-extern void func_80042E84();
+extern int func_80042E84();
 extern void func_80043138();
 extern void func_80042AE4();
 
@@ -580,7 +580,99 @@ int func_80042D3C(Act0x80042d3c *act, Pos0x80042d3c *pos)
     return 0;
 }
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80042E84);
+typedef struct Elem0x80042e84 {
+    char pad0[0x8];
+    short x8[3];
+    short xE;
+    char pad10[0x4];
+} Elem0x80042e84;
+typedef struct List0x80042e84 {
+    short count;
+    short pad2;
+    Elem0x80042e84 e[1];
+} List0x80042e84;
+typedef struct Obj0x80042e84 {
+    char pad0[0x40];
+    short x40[3];
+    char pad46[0x5A - 0x46];
+    short x5A;
+    char pad5c[0x138 - 0x5C];
+    short x138;
+    short pad13a;
+    unsigned int x13C;
+} Obj0x80042e84;
+typedef struct Pair0x80042e84 {
+    unsigned int dist;
+    int idx;
+} Pair0x80042e84;
+extern int func_800436C8();
+extern int func_80043284();
+
+int func_80042E84(Obj0x80042e84 *obj)
+{
+    Pair0x80042e84 arr[16];
+    short *pos;
+    Elem0x80042e84 *e;
+    short j;
+    short n;
+    short k;
+    int l;
+    int swapped;
+    unsigned int t0;
+    unsigned int t1;
+    int i0;
+    int i1;
+
+    pos = obj->x40;
+    e = ((List0x80042e84 *)WORK->x5F0)->e;
+    n = ((List0x80042e84 *)WORK->x5F0)->count;
+    do {
+        n--;
+        arr[n].dist = func_800436C8(obj->x40, e[n].x8);
+        arr[n].idx = n;
+    } while (n != 0);
+
+    swapped = 0;
+    n = ((List0x80042e84 *)WORK->x5F0)->count;
+    for (k = 0; k < n - 1; k++) {
+        l = k + 1;
+        for (j = 0; j < n - l; j++) {
+            t0 = arr[j].dist;
+            if (arr[j + 1].dist < t0) {
+                i0 = arr[j].idx;
+                swapped = 1;
+                t1 = arr[j + 1].dist;
+                i1 = arr[j + 1].idx;
+                arr[j + 1].dist = t0;
+                arr[j + 1].idx = i0;
+                arr[j].dist = t1;
+                arr[j].idx = i1;
+            }
+        }
+        if (!swapped) {
+            break;
+        }
+    }
+
+    obj->x138 = 0;
+    obj->x13C = 0x7FFFFFFF;
+    for (k = 0; k < ((List0x80042e84 *)WORK->x5F0)->count; k++) {
+        Elem0x80042e84 *p = &e[arr[k].idx];
+        if (obj->x5A == p->xE || p->xE == -0x8000) {
+            if (func_80043284(obj, pos, p->x8, 1) == 0) {
+                obj->x138 = arr[k].idx;
+                obj->x13C = arr[k].dist;
+                break;
+            }
+        }
+    }
+    if (obj->x13C == 0x7FFFFFFF) {
+        obj->x138 = arr[0].idx;
+        obj->x13C = arr[0].dist;
+        return 1;
+    }
+    return 0;
+}
 
 typedef struct Node0x80043138 {
     unsigned short done;
@@ -662,7 +754,68 @@ void func_80043138(Obj0x80043138 *obj, Node0x80043138 *nodes)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_80043284);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_800418DC", func_800434DC);
+int func_800434DC(Seg *a, Seg *b)
+{
+    int ax0, ax1, bx0, bx1;
+    int az0, az1, bz0, bz1;
+    int dax, dbz, daz, dbx;
+    int d, s, t, ox, oz;
+
+    ax0 = a->x0;
+    ax1 = a->x1;
+    bx0 = b->x0;
+    bx1 = b->x1;
+    if (ax1 < ax0) {
+        if (bx0 < bx1) {
+            if (ax0 < bx0) return 0;
+            if (bx1 < ax1) return 0;
+        } else {
+            if (ax0 < bx1) return 0;
+            if (bx0 < ax1) return 0;
+        }
+    } else {
+        if (bx0 < bx1) {
+            if (ax1 < bx0) return 0;
+            if (bx1 < ax0) return 0;
+        } else {
+            if (ax1 < bx1) return 0;
+            if (bx0 < ax0) return 0;
+        }
+    }
+    az0 = a->z0;
+    az1 = a->z1;
+    bz0 = b->z0;
+    bz1 = b->z1;
+    if (az1 < az0) {
+        if (bz0 < bz1) {
+            if (az0 < bz0) return 0;
+            if (bz1 < az1) return 0;
+        } else {
+            if (az0 < bz1) return 0;
+            if (bz0 < az1) return 0;
+        }
+    } else {
+        if (bz0 < bz1) {
+            if (az1 < bz0) return 0;
+            if (bz1 < az0) return 0;
+        } else {
+            if (az1 < bz1) return 0;
+            if (bz0 < az0) return 0;
+        }
+    }
+    d = (ax1 - ax0) * (bz1 - bz0) - (az1 - az0) * (bx1 - bx0);
+    dax = ax1 - ax0;
+    dbz = bz1 - bz0;
+    daz = az1 - az0;
+    dbx = bx1 - bx0;
+    if (d == 0) return 0;
+    oz = az0 - bz0;
+    ox = ax0 - bx0;
+    s = oz * dbx - ox * dbz;
+    t = oz * dax - ox * daz;
+    return (((d > 0 && s >= 0 && s <= d) || (d < 0 && s >= d && s <= 0)) &&
+            ((d > 0 && t >= 0 && t <= d) || (d < 0 && t >= d && t <= 0))) ? (unsigned int)(daz * dbx - dax * dbz) >> 31 : 0;
+}
 
 int func_800436C8(V3s_s800436C8 *a, V3s_s800436C8 *b)
 {

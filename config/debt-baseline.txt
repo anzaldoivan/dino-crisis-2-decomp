@@ -24,19 +24,22 @@ mode extern count
 mode filename count
 raise protected 1 2026-10-14 psxdecomp 0.6.0: the guard hook fails closed (upgrade from the first build of the floor)
 raise protected 1 2026-10-14 [own] gate runs the fleet check in the build container: the host has no toolchain
+raise protected 1 2026-10-24 keep CLAUDE_CODE_AUTO_MODE_SERVER=0 in settings env
+raise protected 1 2026-10-24 keep CLAUDE_CODE_AUTO_MODE_SERVER=0 in settings env
+raise protected 1 2026-10-24 keep CLAUDE_CODE_AUTO_MODE_SERVER=0 in settings env
 raise asm 7 2026-10-16 include/gte.h: GTE inline asm wrappers, 7 macros; no C form matches the original
 raise asm 8 2026-10-18 gte.h macros in game_80032868.c (GTE fn, plan-mandated lane)
 raise asm 8 2026-10-19 gte.h macros in game_80032868.c (GTE fn, plan-mandated lane)
 3 pin
-43 goto
+44 goto
 33 goto-unmarked
-205 offset
-1735 address
-6 cast
-62 field
+217 offset
+1804 address
+7 cast
+70 field
 10 gte
-1099 placeholder
-5364 placeholder-use
-711 struct
-2459 extern
+1113 placeholder
+5569 placeholder-use
+726 struct
+2532 extern
 40 filename
