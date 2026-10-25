@@ -521,7 +521,7 @@ void func_8005FFB8(void)
 }
 
 extern void func_8001D7D0();
-extern void func_80079AA4();
+extern int func_80079AA4();
 
 void func_8005FFC0(void)
 {

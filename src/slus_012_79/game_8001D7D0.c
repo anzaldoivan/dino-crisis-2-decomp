@@ -1,7 +1,7 @@
 #include "common.h"
 
 #include "dc2.h"
-extern void func_80079D34();
+extern int func_80079D34();
 SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 
 void func_8001D7D0(SVECTOR *base, SVECTOR *ofs, SVECTOR *rot, SVECTOR *out)

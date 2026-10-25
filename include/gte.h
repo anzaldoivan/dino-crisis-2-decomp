@@ -66,6 +66,17 @@ struct gte_w3_ {
 #define GTE_LD_IR(base) __asm__ volatile("lwc2 $11, 8(%0)\n\tlwc2 $9, 0(%0)\n\tlwc2 $10, 4(%0)" : : "r"(base) : "memory")
 /* MAC1-3 to three words at base in one statement: `swc2 $25, 0(base); swc2 $26, 4(base); swc2 $27, 8(base)` (T10.1.c23) */
 #define GTE_ST_MAC(base) __asm__ volatile("swc2 $25, 0(%0)\n\tswc2 $26, 4(%0)\n\tswc2 $27, 8(%0)" : : "r"(base) : "memory")
+/* three SVECTORs at bases a, b, c into V0, V1, V2 in one statement: `lwc2 $0, 0(a); lwc2 $1, 4(a); lwc2 $2, 0(b);
+ * lwc2 $3, 4(b); lwc2 $4, 0(c); lwc2 $5, 4(c)` (T10.1.c34) */
+#define GTE_LD_V012(a, b, c)                                                       \
+    __asm__ volatile("lwc2 $0, 0(%0)\n\tlwc2 $1, 4(%0)\n\tlwc2 $2, 0(%1)\n\t"      \
+                     "lwc2 $3, 4(%1)\n\tlwc2 $4, 0(%2)\n\tlwc2 $5, 4(%2)"          \
+                     : : "r"(a), "r"(b), "r"(c) : "memory")
+/* SXY0, SXY1, SXY2 to the words at a, b, c in one statement: `swc2 $12, 0(a); swc2 $13, 0(b); swc2 $14, 0(c)`
+ * (T10.1.c34) */
+#define GTE_ST_SXY012(a, b, c)                                                     \
+    __asm__ volatile("swc2 $12, 0(%0)\n\tswc2 $13, 0(%1)\n\tswc2 $14, 0(%2)"      \
+                     : : "r"(a), "r"(b), "r"(c) : "memory")
 /* five words at base (offsets 0-16, a rotation matrix) into control regs 0-4 through fixed $12-$14 (T10.1.c13):
  * lw $12,$13 / ctc2 0,1 / lw $12,$13,$14 / ctc2 2,3,4. The loads stay in the template: the original passes the
  * matrix in a register (`addiu rX, s, off` then offsets 0-16); C loads fold the first one into s+off. Mixed. */
@@ -79,6 +90,12 @@ struct gte_w3_ {
 #define GTE_CTC2_024_R(base)                                                       \
     __asm__ volatile("lw $12, 0(%0)\n\tlw $13, 4(%0)\n\tctc2 $12, $0\n\t"          \
                      "lw $14, 8(%0)\n\tctc2 $13, $2\n\tctc2 $14, $4"               \
+                     : : "r"(base) : "$12", "$13", "$14")
+/* a MATRIX's translation (words at base+20, +24, +28) into control regs 5-7 through fixed $12-$14 (T10.1.c27):
+ * lw $12,$13 / ctc2 5 / lw $14 / ctc2 6,7, the SetTransMatrix shape. Mixed, for the same reason as GTE_CTC2_ROT. */
+#define GTE_CTC2_TRANS(base)                                                       \
+    __asm__ volatile("lw $12, 20(%0)\n\tlw $13, 24(%0)\n\tctc2 $12, $5\n\t"        \
+                     "lw $14, 28(%0)\n\tctc2 $13, $6\n\tctc2 $14, $7"              \
                      : : "r"(base) : "$12", "$13", "$14")
 /* SVECTOR (halfwords at base+0, +2, +4) to data regs 9-11 and back, through fixed $12-$14 (T10.1.c13). C halfword
  * moves into pins (fields of gte_h3_, no offset cast), one mtc2/mfc2 asm each: the floor's `gte` kind, where the

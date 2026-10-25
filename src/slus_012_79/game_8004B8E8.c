@@ -82,7 +82,7 @@ extern unsigned short D_800ABA68;
 extern u32 D_800AC200[][0x400];
 unsigned short func_8003DD34(int a, int b, int c);
 void func_800501C4(void *p, int a, int b, int c, int d, int e, int f);
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 void func_80054A68(int x, int y);
 void func_80054B60(int x, int y);
@@ -90,7 +90,7 @@ SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_800798A4(MATRIX *m);
 void func_800798D4(MATRIX *m);
 unsigned int func_80079954(SVECTOR *v, int *xy, int *p, int *flag);
-void func_80079AA4(SVECTOR *r, MATRIX *m);
+int func_80079AA4(SVECTOR *r, MATRIX *m);
 void func_8007E194(u32 *p, int a, int b, int c, int d);
 
 

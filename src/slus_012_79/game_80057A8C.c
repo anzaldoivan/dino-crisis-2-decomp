@@ -19,7 +19,7 @@ extern Str55 D_80019FC4;
 extern Str33 D_8001A01C;
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 void func_8004DB98(int a0, int a1, int a2, int a3, int a4, int a5, int a6);
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050A90(char *s, int x, int y, int z, int a, int b);
 
 void func_80057A8C(Obj80057A8C *obj)

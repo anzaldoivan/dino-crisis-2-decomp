@@ -4,7 +4,7 @@
 extern void func_80018020(void *, int);
 extern void func_8001D89C();
 extern void func_80079944();
-void func_80079AA4(SVECTOR *r, MATRIX *m);
+int func_80079AA4(SVECTOR *r, MATRIX *m);
 
 void func_80028A80(short *a)
 {

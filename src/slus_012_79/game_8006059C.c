@@ -1288,7 +1288,7 @@ int func_8006325C(ScriptCtx0x8006325c *ctx)
         }
         func_80018020(WORK->x620, 0x12);
         WORK->x629 = 0xFF;
-        WORK->x671 = 0xFF;
+        WORK->x668.b9 = 0xFF;
         func_80041DC0(p[1], p[4]);
     }
     ctx->pc += 2;

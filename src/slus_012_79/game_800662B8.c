@@ -61,7 +61,7 @@ typedef struct Obj0x800662b8 {
     Sub0x800662b8 x1C0;
 } Obj0x800662b8;
 extern void (*D_8008F7AC[])(Obj0x800662b8 *);
-extern void func_80079D34(void *, void *, int);
+extern int func_80079D34(void *, void *, int);
 extern void func_80049E44(Obj0x800662b8 *, void *);
 extern void func_8004AC08(Obj0x800662b8 *);
 extern void func_80047AA0(Obj0x800662b8 *);

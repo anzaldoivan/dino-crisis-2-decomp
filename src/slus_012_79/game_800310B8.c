@@ -1,10 +1,6 @@
 #include "dc2.h"
 
 typedef struct {
-    char pad0[0x78];
-    unsigned int x78;
-} OtHolder0x800310b8;
-typedef struct {
     unsigned char pad0[3];
     unsigned char len;
     unsigned int code;

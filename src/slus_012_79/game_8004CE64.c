@@ -86,7 +86,53 @@ void func_8004D274(Obj0x8004d274 *p)
 
 INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_8004D51C);
 
-INCLUDE_ASM("asm/slus_012_79/nonmatchings/game_8004CE64", func_8004D964);
+extern unsigned char D_800ABA96;
+extern unsigned int D_800AC070[][0x400];
+void func_80050C90(unsigned short *rect, unsigned char u, unsigned char v, unsigned short clut, unsigned int color, unsigned short abe, unsigned short idx);
+void func_8007E194(u32 *p, int a, int b, int c, int d);
+
+int func_8004D964(int x, int y, unsigned short n, unsigned short lead, unsigned int color, unsigned int val, unsigned short idx)
+{
+    short rect[4];
+    unsigned int div;
+    unsigned short i;
+    unsigned short d;
+    int cnt;
+    unsigned int col;
+    unsigned int abe;
+
+    div = 1;
+    col = color & 0xFFFFFF;
+    abe = color >> 31;
+    cnt = 0;
+    for (i = 1; i < n; i++) {
+        div *= 10;
+    }
+    for (i = 0; i < n; i++) {
+        d = val / div;
+        if (d) {
+            lead = 1;
+        }
+        val -= d * div;
+        div /= 10;
+        if (div == 0) {
+            lead = 1;
+        }
+        if (lead || d) {
+            rect[0] = x + i * 7;
+            rect[1] = y;
+            rect[2] = 8;
+            rect[3] = 8;
+            ((void (*)())func_80050C90)(rect, (short)(d << 3), 0x10, 0x7C8F, col, abe, idx);
+            cnt++;
+        }
+    }
+    func_8007E194(PKT, 1, 0, 12, 0);
+    ((Tag0x8004c960 *)PKT)->addr = ((Tag0x8004c960 *)&D_800AC070[D_800ABA96][idx])->addr;
+    ((Tag0x8004c960 *)&D_800AC070[D_800ABA96][idx])->addr = (unsigned int)PKT;
+    PKT += 3;
+    return cnt;
+}
 
 extern unsigned char D_800ABA96;
 extern unsigned int D_800AC070[][0x400];
@@ -462,7 +508,7 @@ void func_80050398(short x, short y, unsigned short w, unsigned short h, unsigne
 
 extern char D_8008A5C4[];
 extern void func_80050030();
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 
 void func_80050454(unsigned short x, unsigned short y, unsigned short sel, unsigned short idx) {
     unsigned int c0, c1;
@@ -690,7 +736,7 @@ typedef struct {
 } PolyF40x80051054;
 extern unsigned int D_800AC200[][0x400];
 SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
-void func_80079AA4(SVECTOR *r, MATRIX *m);
+int func_80079AA4(SVECTOR *r, MATRIX *m);
 
 void func_80051054(short ang, unsigned short x, unsigned short y, int r0, int r1, int col)
 {
@@ -1379,7 +1425,7 @@ extern char D_8008A772[];
 extern void func_8004F450();
 extern void func_8004F710(int a, int b, int c);
 extern void func_8004F9A4(int a, int b);
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 extern void *func_80081CA4();
 
@@ -1794,7 +1840,7 @@ extern char D_8008A904[];
 void func_80044834(void *, int);
 extern void func_80050030();
 extern int func_80050934();
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 extern void func_8004D028();
 
 void func_80053DB0(Obj0x80053db0 *obj)
@@ -1838,7 +1884,7 @@ extern Blk16 D_80019EF0;
 extern u32 D_800AC200[][0x400];
 unsigned short func_8003DD34(int a, int b, int c);
 void func_800501C4(void *p, int a, int b, int c, int d, int e, int f);
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 void func_80054A68(int x, int y);
 void func_80054B60(int x, int y);
@@ -1847,7 +1893,7 @@ SVECTOR *func_80079704(MATRIX *m, SVECTOR *in, SVECTOR *out);
 void func_800798A4(MATRIX *m);
 void func_800798D4(MATRIX *m);
 unsigned int func_80079954(SVECTOR *v, int *xy, int *p, int *flag);
-void func_80079AA4(SVECTOR *r, MATRIX *m);
+int func_80079AA4(SVECTOR *r, MATRIX *m);
 void func_8007E194(u32 *p, int a, int b, int c, int d);
 
 void func_800544FC(Sel *p, int mode)
@@ -1973,7 +2019,7 @@ typedef struct Obj0x80055518 {
 } Obj0x80055518;
 struct Box0x8002243c;
 extern char D_8008A89C[];
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 void func_800514C4(struct Box0x8002243c *r, unsigned short idx, short n, unsigned short size, unsigned int col);
 
@@ -2061,7 +2107,7 @@ extern void func_8004DFF4();
 extern void func_8004F450();
 extern void func_8004F710(int a, int b, int c);
 extern void func_8004F9A4(int a, int b);
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 extern void *func_80081CA4();
 
@@ -2128,7 +2174,7 @@ extern void func_8004DFF4();
 extern void func_8004F450();
 extern void func_8004F710(int a, int b, int c);
 extern void func_8004F9A4(int a, int b);
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 void func_80050D80(void *p, int x, int y, int z, int a, int b, int c);
 extern void func_80051BAC();
 
@@ -2235,7 +2281,7 @@ extern char D_8008A9E0[];
 extern void func_80044834(void *, int);
 extern void func_80050030();
 extern int func_80050934();
-void func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
+int func_800506BC(char *s, int x, int y, int z, int a, int b, int c);
 extern void func_8004D028();
 
 
